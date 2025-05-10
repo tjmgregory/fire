@@ -1,5 +1,36 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Transaction Categorization Standards
+
+## Implementation Guidelines
+- Use Google Apps Script for all implementation
+- Store OpenAI API key in Properties Service
+- Use UrlFetchApp for OpenAI API calls
+- Include both AI-suggested and manual override columns
+- Prioritize manual overrides over AI suggestions
+
+## Code Structure
+- Keep transaction processing functions separate from categorization logic
+- Use batch processing for API calls to stay within rate limits
+- Include comprehensive error handling for API failures
+- Document all functions with JSDoc comments
+
+## Testing Requirements
+- Test with real transaction data from all bank sources
+- Verify handling of different currency formats
+- Test edge cases like refunds and transfers
+- Validate manual override functionality
+
+## Security Notes
+- No need to sanitize transaction data for OpenAI API
+- Store API keys in Properties Service
+- Include error handling for API failures
+- Log errors for troubleshooting
+
+## Maintenance
+- Document any manual steps required
+- Include setup instructions in plan documents
+- Note any dependencies or prerequisites
