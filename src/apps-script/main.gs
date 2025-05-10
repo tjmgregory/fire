@@ -25,11 +25,16 @@ function setupTriggers() {
   const triggers = ScriptApp.getProjectTriggers();
   triggers.forEach(trigger => ScriptApp.deleteTrigger(trigger));
   
-  // Create new trigger that runs immediately and then every hour
+  // Create a one-time trigger to run immediately
   ScriptApp.newTrigger('processNewTransactions')
     .timeBased()
-    .at(new Date()) // Run immediately
-    .everyHours(1)  // Then continue with hourly schedule
+    .at(new Date())
+    .create();
+
+  // Create a recurring trigger to run every hour
+  ScriptApp.newTrigger('processNewTransactions')
+    .timeBased()
+    .everyHours(1)
     .create();
 }
 
