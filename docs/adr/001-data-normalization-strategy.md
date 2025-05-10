@@ -6,12 +6,12 @@ Proposed
 
 ## Context
 
-We need to handle transaction data from various sources:
-- Bank exports (different formats from different banks)
-- CSV imports (from various tools and manual exports)
-- Google Sheets (different column layouts)
+We need to handle transaction data from various Google Sheets:
+- Monzo transaction sheet
+- Revolut transaction sheet
+- Yonder transaction sheet
 
-Each source has its own:
+Each sheet has its own:
 - Column naming conventions
 - Date formats
 - Amount formats
@@ -20,72 +20,41 @@ Each source has its own:
 
 ## Research Findings
 
-### Bank Export Formats
+### Source Sheet Formats
 
-#### Chase
-- Format: CSV
-- Columns:
-  - Transaction Date
-  - Post Date
-  - Description
-  - Amount
-  - Type
-  - Category
-  - Account Name
-  - Account Number
-- Date Format: MM/DD/YYYY
-- Amount Format: Negative for debits, positive for credits
-- Transaction ID: None provided
+#### Monzo Transaction Sheet
+- Format: Google Sheet
+- Columns: TBD
+- Date Format: TBD
+- Amount Format: TBD
+- Transaction ID: TBD
 
-#### Bank of America
-- Format: CSV
-- Columns:
-  - Date
-  - Description
-  - Amount
-  - Running Balance
-  - Account
-- Date Format: MM/DD/YYYY
-- Amount Format: Negative for debits, positive for credits
-- Transaction ID: None provided
+#### Revolut Transaction Sheet
+- Format: Google Sheet
+- Columns: TBD
+- Date Format: TBD
+- Amount Format: TBD
+- Transaction ID: TBD
 
-#### Wells Fargo
-- Format: CSV
-- Columns:
-  - Date
-  - Amount
-  - Balance
-  - Check Number
-  - Description
-- Date Format: MM/DD/YYYY
-- Amount Format: Negative for debits, positive for credits
-- Transaction ID: None provided
-
-### CSV Import Formats
-
-#### Excel Exports
-- Common delimiters: comma, tab, semicolon
-- Header row typically present
-- Date formats vary by region settings
-- Amount formats vary by region settings
-
-#### Google Sheets
-- Similar to Excel but with more consistent formatting
-- Date formats follow sheet locale
-- Amount formats follow sheet locale
+#### Yonder Transaction Sheet
+- Format: Google Sheet
+- Columns: TBD
+- Date Format: TBD
+- Amount Format: TBD
+- Transaction ID: TBD
 
 ## Decision
 
 We will implement a flexible data normalization system with the following components:
 
 1. **Column Mapping System**
-   - Configuration-based mapping for known formats
-   - Fuzzy matching for unknown formats
+   - Configuration-based mapping for known sheet formats
+   - Fuzzy matching for unknown column names
    - Support for custom mappings
 
 2. **Transaction ID Generation**
    - For transactions with existing IDs:
-     - Prefix with source name
+     - Prefix with source sheet name
      - Append original ID
    - For transactions without IDs:
      - Generate hash from:
@@ -103,16 +72,16 @@ We will implement a flexible data normalization system with the following compon
 ## Consequences
 
 ### Positive
-- Handles all known input formats
+- Handles all known sheet formats
 - Deterministic transaction IDs
 - Consistent output format
-- Extensible for new formats
+- Extensible for new sheets
 
 ### Negative
 - Complex normalization logic
 - Need to maintain format mappings
 - Potential performance impact from normalization
-- May need updates for new bank formats
+- May need updates for new sheet formats
 
 ## Implementation Notes
 

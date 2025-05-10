@@ -5,9 +5,9 @@
 ```
 +------------------------+      +------------------------+      +------------------------+
 | Source Google Sheets   |      | Processing Layer       |      | Output/Analysis Sheet  |
-| - Live account sheet   | ---> | - Google Apps Script   | ---> | - Categories as columns|
-| - Manual CSV sheets    |      | - ChatGPT 4.1 nano API |      | - Months as rows      |
-| - Existing sheets      |      | - Learning mechanism   |      | - Monthly summaries   |
+| - Monzo transactions   | ---> | - Google Apps Script   | ---> | - Categories as columns|
+| - Revolut transactions |      | - ChatGPT 4.1 nano API |      | - Months as rows      |
+| - Yonder transactions  |      | - Learning mechanism   |      | - Monthly summaries   |
 +------------------------+      +------------------------+      +------------------------+
 ```
 
@@ -22,7 +22,7 @@
 ## 3. Data Schema
 
 ### Input Format Research
-Before implementing the system, we need to research and document the actual formats of our input sources. This research will be documented in [ADR 001: Data Normalization Strategy](../docs/adr/001-data-normalization-strategy.md).
+Before implementing the system, we need to research and document the actual formats of our input sheets. This research will be documented in [ADR 001: Data Normalization Strategy](../docs/adr/001-data-normalization-strategy.md).
 
 ### Output Sheet Structure
 The output sheet structure is defined in [ADR 003: Output Sheet Structure](../docs/adr/003-output-sheet-structure.md).
@@ -30,7 +30,7 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
 ## 4. Implementation Steps
 
 1. **Research and Analysis**
-   - Collect sample exports from all input sources
+   - Document the structure of each source sheet (Monzo, Revolut, Yonder)
    - Document findings in ADR 001
    - Review and approve ADR 001
    - Create test cases based on research
@@ -42,9 +42,9 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
 
 3. **Source Data Processing**
    - Implement data normalization based on ADR 001
-   - Create functions to read from each bank sheet
-   - Set up triggers for the live-updating sheet
-   - Create import handlers for CSV sheets
+   - Create functions to read from each source sheet
+   - Set up triggers for the live-updating sheets
+   - Create handlers for new transaction rows
 
 4. **ChatGPT Integration**
    - Implement categorization system based on [ADR 002: Transaction Categorization Strategy](../docs/adr/002-transaction-categorization-strategy.md)
@@ -66,10 +66,10 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
 
 7. **Testing and Validation**
    - Create test suite for data normalization
-   - Test with various input formats
+   - Test with various sheet formats
    - Validate ID generation and uniqueness
    - Test categorization accuracy
-   - Verify data consistency across imports
+   - Verify data consistency across sheets
 
 ## 5. Security Considerations
 
