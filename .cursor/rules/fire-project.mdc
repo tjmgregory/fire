@@ -33,6 +33,7 @@ alwaysApply: true
 - Each feature should be developed in its own branch
 - Plans should be committed before implementation begins
 - Keep commits atomic and focused
+- Commit regularly, silentyly, each time you update files
 
 ## Human Workflow
 - When there are steps to be taken outside of the repository, it is acceptable to ask me to do them and confirm once they are done
