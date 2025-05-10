@@ -15,10 +15,13 @@ class Utils {
   getNewTransactions(sheet) {
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
-    
-    // Get column mappings based on sheet name
-    const columnMap = this.getColumnMap(sheet.getName());
-    
+    let columnMap;
+    try {
+      columnMap = this.getColumnMap(sheet.getName());
+    } catch (err) {
+      this.logError('getNewTransactions', err);
+      return [];
+    }
     // Find column indices using the mapping
     const indices = {};
     Object.entries(columnMap).forEach(([key, possibleNames]) => {
@@ -27,7 +30,6 @@ class Utils {
         throw new Error(`Required column not found in sheet ${sheet.getName()}: ${possibleNames.join(', ')}`);
       }
     });
-    
     // Process transactions (skip header row)
     return data.slice(1).map(row => this.normalizeTransaction(row, indices, sheet.getName()));
   }
@@ -39,8 +41,7 @@ class Utils {
    */
   getColumnMap(sheetName) {
     const lowerName = sheetName.toLowerCase();
-    
-    if (lowerName.includes('monzo')) {
+    if (lowerName === 'monzo') {
       return {
         date: ['Date'],
         time: ['Time'],
@@ -51,7 +52,7 @@ class Utils {
         type: ['Type'],
         originalId: ['Transaction ID']
       };
-    } else if (lowerName.includes('revolut')) {
+    } else if (lowerName === 'revolut') {
       return {
         date: ['Started Date', 'Completed Date'],
         time: ['Started Date', 'Completed Date'],
@@ -60,7 +61,7 @@ class Utils {
         currency: ['Currency'],
         type: ['Type']
       };
-    } else if (lowerName.includes('yonder')) {
+    } else if (lowerName === 'yonder') {
       return {
         date: ['Date/Time of transaction'],
         time: ['Date/Time of transaction'],
@@ -71,13 +72,9 @@ class Utils {
         type: ['Debit or Credit']
       };
     }
-    
-    // Default mapping for unknown sheets
-    return {
-      date: ['Date', 'Transaction Date'],
-      description: ['Description', 'Name', 'Merchant'],
-      amount: ['Amount', 'Transaction Amount']
-    };
+    // If not recognized, log and throw
+    this.logError('getColumnMap', `Unsupported sheet name: ${sheetName}`);
+    throw new Error(`Unsupported sheet name: ${sheetName}`);
   }
   
   /**
