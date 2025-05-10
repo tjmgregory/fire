@@ -50,10 +50,14 @@ class Config {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheets = ss.getSheets();
     const expectedNames = ['monzo', 'revolut', 'yonder'];
-    return sheets.filter(sheet => {
+    const allNames = sheets.map(s => s.getName());
+    console.log(`[getSourceSheets] All sheet names: ${JSON.stringify(allNames)}`);
+    const selected = sheets.filter(sheet => {
       const name = sheet.getName().toLowerCase();
       return expectedNames.includes(name);
     });
+    console.log(`[getSourceSheets] Selected source sheets: ${JSON.stringify(selected.map(s => s.getName()))}`);
+    return selected;
   }
   
   /**
@@ -63,12 +67,13 @@ class Config {
   getOutputSheet() {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName(this.SHEET_NAMES.OUTPUT);
-    
     if (!sheet) {
+      console.log(`[getOutputSheet] Output sheet not found. Creating: ${this.SHEET_NAMES.OUTPUT}`);
       sheet = ss.insertSheet(this.SHEET_NAMES.OUTPUT);
       this.initializeOutputSheet(sheet);
+    } else {
+      console.log(`[getOutputSheet] Output sheet found: ${this.SHEET_NAMES.OUTPUT}`);
     }
-    
     return sheet;
   }
   
@@ -86,7 +91,7 @@ class Config {
       this.COLUMNS.MANUAL_OVERRIDE,
       this.COLUMNS.CONFIDENCE
     ];
-    
+    console.log(`[initializeOutputSheet] Initializing output sheet with headers: ${JSON.stringify(headers)}`);
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     sheet.setFrozenRows(1);
   }

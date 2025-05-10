@@ -13,13 +13,16 @@ class Utils {
    * @returns {Array} Array of normalized transaction objects
    */
   getNewTransactions(sheet) {
+    console.log(`[getNewTransactions] Processing sheet: ${sheet.getName()}`);
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
+    console.log(`[getNewTransactions] Header row: ${JSON.stringify(headers)}`);
     let columnMap;
     try {
       columnMap = this.getColumnMap(sheet.getName());
     } catch (err) {
       this.logError('getNewTransactions', err);
+      console.log(`[getNewTransactions] Skipping unsupported sheet: ${sheet.getName()}`);
       return [];
     }
     // Find column indices using the mapping
@@ -27,10 +30,14 @@ class Utils {
     Object.entries(columnMap).forEach(([key, possibleNames]) => {
       indices[key] = this.findColumnIndex(headers, possibleNames);
       if (indices[key] === -1) {
-        throw new Error(`Required column not found in sheet ${sheet.getName()}: ${possibleNames.join(', ')}`);
+        const msg = `Required column not found in sheet ${sheet.getName()}: ${possibleNames.join(', ')}`;
+        this.logError('getNewTransactions', msg);
+        console.log(`[getNewTransactions] ${msg}`);
+        throw new Error(msg);
       }
     });
     // Process transactions (skip header row)
+    console.log(`[getNewTransactions] Found ${data.length - 1} data rows in sheet: ${sheet.getName()}`);
     return data.slice(1).map(row => this.normalizeTransaction(row, indices, sheet.getName()));
   }
   
@@ -74,6 +81,7 @@ class Utils {
     }
     // If not recognized, log and throw
     this.logError('getColumnMap', `Unsupported sheet name: ${sheetName}`);
+    console.log(`[getColumnMap] Unsupported sheet name: ${sheetName}`);
     throw new Error(`Unsupported sheet name: ${sheetName}`);
   }
   
@@ -119,33 +127,57 @@ class Utils {
   
   /**
    * Parse date and time from various formats
-   * @param {string} dateStr - Date string
+   * @param {string|Date} dateStr - Date string or Date object
    * @param {string} timeStr - Time string
    * @param {string} sourceSheet - Name of the source sheet
    * @returns {Object} Normalized date and time
    */
   parseDateTime(dateStr, timeStr, sourceSheet) {
     let date, time;
-    
-    if (sourceSheet.toLowerCase().includes('monzo')) {
-      // Monzo format: DD/MM/YYYY and HH:mm:ss
-      const [day, month, year] = dateStr.split('/');
-      date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      time = timeStr;
-    } else if (sourceSheet.toLowerCase().includes('revolut') || 
-               sourceSheet.toLowerCase().includes('yonder')) {
-      // ISO format: YYYY-MM-DD HH:mm:ss
-      const [datePart, timePart] = dateStr.split(' ');
-      date = datePart;
-      time = timePart;
-    } else {
-      // Default to current date/time if format unknown
+
+    // Defensive: handle undefined/null
+    if (!dateStr) {
       const now = new Date();
-      date = this.formatDate(now);
-      time = now.toTimeString().split(' ')[0];
+      console.log(`[parseDateTime] dateStr is undefined/null. Defaulting to now: ${now}`);
+      return { date: this.formatDate(now), time: now.toTimeString().split(' ')[0] };
     }
-    
-    return { date, time };
+
+    // If dateStr is a Date object, convert to string
+    if (dateStr instanceof Date) {
+      date = this.formatDate(dateStr); // 'yyyy-MM-dd'
+      time = dateStr.toTimeString().split(' ')[0];
+      console.log(`[parseDateTime] dateStr is Date object. Parsed date: ${date}, time: ${time}`);
+      return { date, time };
+    }
+
+    if (sourceSheet.toLowerCase() === 'monzo') {
+      // Monzo format: DD/MM/YYYY and HH:mm:ss
+      if (typeof dateStr === 'string') {
+        const [day, month, year] = dateStr.split('/');
+        date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        time = timeStr;
+        console.log(`[parseDateTime] Monzo string. Parsed date: ${date}, time: ${time}`);
+        return { date, time };
+      } else {
+        console.log(`[parseDateTime] Monzo dateStr is not a string:`, dateStr);
+      }
+    } else if (sourceSheet.toLowerCase() === 'revolut' || 
+               sourceSheet.toLowerCase() === 'yonder') {
+      // ISO format: YYYY-MM-DD HH:mm:ss
+      if (typeof dateStr === 'string') {
+        const [datePart, timePart] = dateStr.split(' ');
+        date = datePart;
+        time = timePart;
+        console.log(`[parseDateTime] ${sourceSheet} string. Parsed date: ${date}, time: ${time}`);
+        return { date, time };
+      } else {
+        console.log(`[parseDateTime] ${sourceSheet} dateStr is not a string:`, dateStr);
+      }
+    }
+    // Default to current date/time if format unknown
+    const now = new Date();
+    console.log(`[parseDateTime] Unknown format for dateStr (${typeof dateStr}):`, dateStr, '. Defaulting to now.');
+    return { date: this.formatDate(now), time: now.toTimeString().split(' ')[0] };
   }
   
   /**

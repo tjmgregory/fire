@@ -10,32 +10,40 @@ let utils;
  * Initialize the script and set up necessary configurations
  */
 function initialize() {
+  console.log('[initialize] Starting initialization...');
   config = new Config();
   utils = new Utils();
   
   // Set up triggers if they don't exist
   setupTriggers();
+  console.log('[initialize] Initialization complete.');
 }
 
 /**
  * Set up time-based triggers for the script
  */
 function setupTriggers() {
+  console.log('[setupTriggers] Setting up triggers...');
   // Delete existing triggers
   const triggers = ScriptApp.getProjectTriggers();
-  triggers.forEach(trigger => ScriptApp.deleteTrigger(trigger));
+  triggers.forEach(trigger => {
+    console.log(`[setupTriggers] Deleting existing trigger for function: ${trigger.getHandlerFunction()}`);
+    ScriptApp.deleteTrigger(trigger);
+  });
   
   // Create a one-time trigger to run immediately
   ScriptApp.newTrigger('processNewTransactions')
     .timeBased()
     .at(new Date())
     .create();
+  console.log('[setupTriggers] Created one-time immediate trigger for processNewTransactions');
 
   // Create a recurring trigger to run every hour
   ScriptApp.newTrigger('processNewTransactions')
     .timeBased()
     .everyHours(1)
     .create();
+  console.log('[setupTriggers] Created hourly recurring trigger for processNewTransactions');
     
   // Create an edit trigger for each source sheet
   const sourceSheets = config.getSourceSheets();
@@ -44,7 +52,9 @@ function setupTriggers() {
       .forSpreadsheet(SpreadsheetApp.getActive())
       .onEdit()
       .create();
+    console.log(`[setupTriggers] Created onEdit trigger for sheet: ${sheet.getName()}`);
   });
+  console.log('[setupTriggers] Trigger setup complete.');
 }
 
 /**
@@ -61,11 +71,17 @@ function onSheetEdit(e) {
   const sheet = e.source.getActiveSheet();
   const range = e.range;
   
+  console.log(`[onSheetEdit] Edit event on sheet: ${sheet.getName()}, range: ${range.getA1Notation()}`);
+  
   // Check if the edit was in a source sheet
-  if (!config.getSourceSheets().includes(sheet)) return;
+  if (!config.getSourceSheets().includes(sheet)) {
+    console.log(`[onSheetEdit] Sheet ${sheet.getName()} is not a source sheet. Skipping.`);
+    return;
+  }
   
   // Process only if a new row was added
   if (range.getNumRows() === 1 && range.getRow() > 1) {
+    console.log('[onSheetEdit] New row detected. Processing new transactions...');
     processNewTransactions();
   }
 }
@@ -74,6 +90,7 @@ function onSheetEdit(e) {
  * Main function to process new transactions
  */
 function processNewTransactions() {
+  console.log('[processNewTransactions] Starting transaction processing...');
   // Ensure config and utils are initialized
   if (!config) config = new Config();
   if (!utils) utils = new Utils();
@@ -90,6 +107,7 @@ function processNewTransactions() {
     
     // Process each source sheet
     sourceSheets.forEach(sheet => {
+      console.log(`[processNewTransactions] Processing source sheet: ${sheet.getName()}`);
       const transactions = utils.getNewTransactions(sheet);
       
       // Filter out already processed transactions
@@ -101,11 +119,15 @@ function processNewTransactions() {
         )
       );
       
+      console.log(`[processNewTransactions] Found ${newTransactions.length} new transactions in sheet: ${sheet.getName()}`);
+      
       if (newTransactions.length > 0) {
         categorizeTransactions(newTransactions);
       }
     });
+    console.log('[processNewTransactions] Transaction processing complete.');
   } catch (error) {
+    console.error('[processNewTransactions] Error:', error);
     utils.logError('processNewTransactions', error);
   }
 }
@@ -115,6 +137,7 @@ function processNewTransactions() {
  * @param {Array} transactions - Array of transaction objects
  */
 function categorizeTransactions(transactions) {
+  console.log(`[categorizeTransactions] Called with ${transactions.length} transactions.`);
   // Ensure config and utils are initialized
   if (!config) config = new Config();
   if (!utils) utils = new Utils();
