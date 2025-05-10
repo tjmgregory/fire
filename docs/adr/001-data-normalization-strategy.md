@@ -86,16 +86,14 @@ We will implement a flexible data normalization system with the following compon
    - Fuzzy matching for unknown column names
    - Support for custom mappings
 
-2. **Transaction ID Generation**
+2. **Transaction ID & Reference Generation**
    - For transactions with existing IDs:
-     - Prefix with source sheet name
-     - Append original ID
+     - Store original ID in `originalReference` field
    - For transactions without IDs:
-     - Generate hash from:
-       - Transaction date (YYYY-MM-DD)
-       - Description (normalized)
+     - Generate `originalReference` using:
+       - Transaction date (YYYY-MM-DDThh:mm)
        - Amount (with 2 decimal places)
-       - Source sheet name
+  - Then, for both, create the ID field using `Utilities.getUuid()`
 
 3. **Data Normalization Rules**
    - Dates: Convert to YYYY-MM-DD
@@ -125,7 +123,8 @@ All transactions will be normalized to the following structure:
 
 ```typescript
 interface NormalizedTransaction {
-  id: string;              // Unique transaction identifier
+  id: string;              // Consistent hash-based identifier
+  originalReference: string; // Original or generated reference ID
   date: string;            // ISO 8601 date format (YYYY-MM-DD)
   time: string;            // 24-hour time format (HH:mm:ss)
   description: string;     // Transaction description/merchant name
@@ -163,7 +162,8 @@ Example normalization for Monzo:
 
 // Normalized output:
 {
-  id: "tx_00009OTxGTgBsccfxgpscD",
+  id: "550e8400-e29b-41d4-a716-446655440000",
+  originalReference: "tx_00009OTxGTgBsccfxgpscD",
   date: "2017-09-13",
   time: "18:13:37",
   description: "GREGORY T J M",
@@ -202,7 +202,8 @@ Example normalizations for Revolut:
 
 // Normalized output (EUR):
 {
-  id: "revolut_2025-02-05_21:54:11_transfer_to_revolut_user_-0.01",
+  id: "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+  originalReference: "2025-02-05T21:54_-0.01",
   date: "2025-02-05",
   time: "21:54:11",
   description: "Transfer to Revolut user",
@@ -238,7 +239,8 @@ Example normalizations for Revolut:
 
 // Normalized output (GBP):
 {
-  id: "revolut_2025-02-12_07:56:48_payment_from_theodore_gregory_1307",
+  id: "9c9e6679-7425-40de-944b-e07fc1f90ae8",
+  originalReference: "2025-02-12T07:56_1307.00",
   date: "2025-02-12",
   time: "07:56:48",
   description: "Payment from Theodore Gregory",
