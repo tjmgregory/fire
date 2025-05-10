@@ -3,12 +3,12 @@
 ## 1. Architecture Overview
 
 ```
-+------------------------+      +------------------------+      +------------------------+
-| Source Google Sheets   |      | Processing Layer       |      | Output/Analysis Sheet  |
-| - Monzo transactions   | ---> | - Google Apps Script   | ---> | - Categories as columns|
-| - Revolut transactions |      | - ChatGPT 4.1 nano API |      | - Months as rows      |
-| - Yonder transactions  |      | - Learning mechanism   |      | - Monthly summaries   |
-+------------------------+      +------------------------+      +------------------------+
++------------------------+      +------------------------+      +------------------------+      +------------------------+
+| Source Google Sheets   |      | Normalization Layer    |      | Categorization Layer  |      | Output/Analysis Sheet  |
+| - Monzo transactions   | ---> | - Google Apps Script   | ---> | - ChatGPT 4.1 nano    | ---> | - Categories as columns|
+| - Revolut transactions |      | - Data standardization |      | - Batch processing    |      | - Months as rows      |
+| - Yonder transactions  |      | - Currency conversion  |      | - Learning mechanism  |      | - Monthly summaries   |
++------------------------+      +------------------------+      +------------------------+      +------------------------+
 ```
 
 ## 2. Technical Components
@@ -52,24 +52,30 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
    - Create functions to read from each source sheet ✅
    - Set up triggers for the live-updating sheets ✅
    - Create handlers for new transaction rows ✅
+   - Implement immediate persistence of normalized data 🔄
+   - Add status tracking for normalization phase 🔄
 
 4. **ChatGPT Integration** 🔄
    - Implement categorization system based on [ADR 002: Transaction Categorization Strategy](../docs/adr/002-transaction-categorization-strategy.md) 🔄
    - Set up OpenAI API connection 🔄
    - Implement batch processing ❌
    - Add learning mechanism ❌
+   - Create separate categorization triggers ❌
+   - Implement rate limiting and error handling ❌
 
 5. **Output Generation** ❌
    - Implement output structure based on ADR 003
    - Create monthly summary sheet
    - Set up automatic updates
    - Add data visualization options
+   - Implement status tracking columns ❌
 
 6. **Trigger System** ✅
    - Implement trigger system based on [ADR 004: Trigger System Design](../docs/adr/004-trigger-system-design.md) ✅
    - Set up time-based triggers ✅
    - Implement event-based triggers ✅
    - Add error handling ✅
+   - Update triggers for separated processes ❌
 
 7. **Testing and Validation** 🔄
    - Create test suite for data normalization 🔄
@@ -77,12 +83,14 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
    - Validate ID generation and uniqueness 🔄
    - Test categorization accuracy ❌
    - Verify data consistency across sheets 🔄
+   - Test separation of processes ❌
 
 ## 5. Security Considerations
 
 - Store API keys securely using Google Apps Script's Properties Service
 - Implement error handling for API failures
 - Set up logging for troubleshooting
+- Add monitoring for API usage and rate limits
 
 ## 6. Potential Challenges and Solutions
 
@@ -90,6 +98,7 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
 - **Accuracy Issues**: Create a manual override system and learning mechanism
 - **Data Consistency**: Add validation and error checking
 - **Multiple Currencies**: Store exchange rates and implement conversion
+- **Process Separation**: Implement robust state tracking and error recovery
 
 ## 7. Recommended Tools
 
@@ -112,16 +121,19 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
   - Create categorization functions ❌
   - Add AI-suggested and override columns ❌
   - Test with sample transactions ❌
+  - Implement process separation ❌
 
 - **Phase 3 (2 hours)**: Output sheet generation ❌
   - Create monthly summary sheet ❌
   - Implement automatic updates ❌
   - Set up triggers for sheet updates ❌
+  - Add status tracking ❌
 
 - **Phase 4 (1 hour)**: Testing and refinement 🔄
   - Test end-to-end workflow 🔄
   - Fix any issues 🔄
   - Document the system 🔄
+  - Verify process separation ❌
 
 - **Total**: 8 hours for complete implementation
 
@@ -131,6 +143,7 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
 - Create a manual correction interface
 - Document the system thoroughly
 - Plan for periodic review of categorization accuracy
+- Monitor process separation effectiveness
 
 ## Additional FIRE Features
 

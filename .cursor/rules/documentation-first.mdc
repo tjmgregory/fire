@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+If you choose to diverge from any documented decisions (e.g., documentation, ADRs, plans, READMEs, etc.), you must first update the relevant documents to reflect this change. This ensures the documentation always represents the most current thinking before any action is taken.
