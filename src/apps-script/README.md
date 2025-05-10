@@ -32,13 +32,13 @@ A Google Apps Script project that automatically categorizes financial transactio
 
 ## Project Structure
 
-- `Code.gs`: Main script file with core functionality
+- `main.gs`: Main script file with core functionality
 - `config.gs`: Configuration settings and constants
 - `utils.gs`: Utility functions for data processing
 
 ## Features
 
-- Automatic transaction categorization using GPT-4
+- Automatic transaction categorization using GPT-4.1
 - Support for multiple source sheets
 - Manual override capability
 - Error logging and monitoring
