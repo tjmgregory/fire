@@ -132,9 +132,6 @@ interface NormalizedTransaction {
   currency: string;        // Always "GBP" in normalized output
   category: string;        // Transaction category
   type: string;           // Transaction type (e.g., "PAYMENT", "TRANSFER", "ATM")
-  metadata: {             // Additional source-specific data
-    [key: string]: any;
-  };
 }
 ```
 
@@ -170,17 +167,7 @@ Example normalization for Monzo:
   amount: 1000.00,
   currency: "GBP",
   category: "Income",
-  type: "TRANSFER",
-  metadata: {
-    emoji: "",
-    localAmount: 1000.00,
-    localCurrency: "GBP",
-    notes: "MONZO",
-    address: "",
-    receipt: "",
-    description: "MONZO",
-    categorySplit: ""
-  }
+  type: "TRANSFER"
 }
 ```
 
@@ -210,17 +197,7 @@ Example normalizations for Revolut:
   amount: -0.0085, // Converted from EUR to GBP using exchange rate
   currency: "GBP", // Always GBP in normalized output
   category: "Transfer",
-  type: "TRANSFER",
-  metadata: {
-    product: "Current",
-    completedDate: "2025-02-05 21:54:12",
-    fee: 0,
-    state: "COMPLETED",
-    balance: 255.47,
-    originalAmount: -0.01,
-    originalCurrency: "EUR",
-    exchangeRate: 0.85 // EUR to GBP rate on transaction date
-  }
+  type: "TRANSFER"
 }
 
 // Input row (GBP):
@@ -247,16 +224,7 @@ Example normalizations for Revolut:
   amount: 1307.00, // Already in GBP, no conversion needed
   currency: "GBP",
   category: "Transfer",
-  type: "TRANSFER", // TOPUP mapped to TRANSFER
-  metadata: {
-    product: "Current",
-    completedDate: "2025-02-12 07:56:48",
-    fee: 0,
-    state: "COMPLETED",
-    balance: 2268.73,
-    originalAmount: 1307.00,
-    originalCurrency: "GBP"
-  }
+  type: "TRANSFER" // TOPUP mapped to TRANSFER
 }
 ```
 
@@ -283,12 +251,7 @@ Example normalization for Yonder:
   amount: -20.45,
   currency: "GBP",
   category: "Holiday",
-  type: "PAYMENT",
-  metadata: {
-    originalAmount: 254,
-    originalCurrency: "MAD",
-    country: "MAR"
-  }
+  type: "PAYMENT"
 }
 ```
 

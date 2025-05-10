@@ -28,6 +28,7 @@ We will implement a multi-sheet output structure with the following components:
    - Confidence
    - Source Sheet
    - Transaction ID
+   - Original Reference
    - Notes
    - Last Updated
 
