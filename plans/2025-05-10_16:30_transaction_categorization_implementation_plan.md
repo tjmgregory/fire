@@ -58,17 +58,8 @@
 
 ## 3. Data Schema
 
-### Input Sheet Format
-Each source sheet (bank statement, CSV import, etc.) should contain the following columns:
-
-| Column Name | Data Type | Description | Example |
-|------------|-----------|-------------|---------|
-| Date | Date | Transaction date | 2024-05-10 |
-| Description | String | Transaction description | "AMZN Mktp US*1234" |
-| Amount | Number | Transaction amount (negative for debits) | -29.99 |
-| Account | String (Optional) | Account identifier | "Chase Checking" |
-| Transaction ID | String (Optional) | Unique transaction identifier | "T123456789" |
-| Notes | String (Optional) | Additional transaction notes | "Monthly subscription" |
+### Input Format Research
+Before implementing the system, we need to research and document the actual formats of our input sources. This research will be documented in [ADR 001: Data Normalization Strategy](../docs/adr/001-data-normalization-strategy.md).
 
 ### Output Sheet Format
 The system will generate a categorized transaction sheet with the following columns:
@@ -173,12 +164,18 @@ This ensures:
 
 ## 4. Implementation Steps
 
-1. **Setup Google Apps Script Project**
+1. **Research and Analysis**
+   - Collect sample exports from all input sources
+   - Document findings in ADR 001
+   - Review and approve ADR 001
+   - Create test cases based on research
+
+2. **Setup Google Apps Script Project**
    - Create a new Apps Script project in Google Drive
    - Set up necessary permissions and API access
    - Configure script properties for API keys
 
-2. **Source Data Processing**
+3. **Source Data Processing**
    - Create functions to read from each bank sheet
    - Implement column mapping system:
      - Create mapping configuration for common bank formats
@@ -196,27 +193,27 @@ This ensures:
    - Set up triggers for the live-updating sheet
    - Create import handlers for CSV sheets
 
-3. **ChatGPT Integration**
+4. **ChatGPT Integration**
    - Set up OpenAI API connection
    - Design prompts for transaction categorization
    - Implement batch processing to optimize API usage
    - Include context from previous categorizations
 
-4. **Categorization System**
+5. **Categorization System**
    - Create functions to process transactions using ChatGPT
    - Implement confidence scoring for categorizations
    - Add columns for both AI-suggested categories and manual override columns
    - Design system to prioritize manual overrides over AI suggestions
    - Track categorization patterns to improve future suggestions
 
-5. **Output Sheet Generation**
+6. **Output Sheet Generation**
    - Create monthly summary sheet
    - Set up automatic updates
    - Add data visualization options
    - Implement transaction deduplication using generated IDs
    - Add support for transaction history tracking
 
-6. **Testing and Validation**
+7. **Testing and Validation**
    - Create test suite for data normalization
    - Test with various input formats
    - Validate ID generation and uniqueness
