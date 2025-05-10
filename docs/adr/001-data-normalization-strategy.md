@@ -102,6 +102,20 @@ We will implement a flexible data normalization system with the following compon
    - Descriptions: Remove special chars, normalize whitespace
    - Amounts: Standardize to negative for debits
    - Account Names: Map to consistent types
+   - Transaction Types: Map to standard types:
+     - "PAYMENT" for card payments and other purchases
+     - "TRANSFER" for bank transfers and top-ups
+     - "ATM" for cash withdrawals
+   - Currencies: 
+     - Use primary currency (GBP) if available
+     - Fall back to transaction currency if primary not available
+     - Store original currency and amount in metadata
+     - Only convert amounts if primary currency not available
+   - Categories:
+     - Use provided categories if available
+     - Generate categories for uncategorized transactions
+     - Store original categories in metadata
+     - Support category splits in metadata
 
 4. **Standardized Transaction Format**
 All transactions will be normalized to the following structure:
@@ -153,7 +167,7 @@ Example normalization for Monzo:
   amount: 1000.00,
   currency: "GBP",
   category: "Income",
-  type: "Faster payment",
+  type: "TRANSFER",
   metadata: {
     emoji: "",
     localAmount: 1000.00,
@@ -185,13 +199,13 @@ Example normalization for Revolut:
 
 // Normalized output:
 {
-  id: "revolut_2025-02-05_21:54:11_transfer_to_revolut_user_-0.01", // Generated ID
+  id: "revolut_2025-02-05_21:54:11_transfer_to_revolut_user_-0.01",
   date: "2025-02-05",
   time: "21:54:11",
   description: "Transfer to Revolut user",
   amount: -0.01,
   currency: "EUR",
-  category: "Transfer", // Will be determined by categorization system
+  category: "Transfer",
   type: "TRANSFER",
   metadata: {
     product: "Current",
@@ -219,14 +233,14 @@ Example normalization for Yonder:
 
 // Normalized output:
 {
-  id: "yonder_2025-01-31_18:21:10_lodging_h_gyraffe_host_20.45", // Generated ID
+  id: "yonder_2025-01-31_18:21:10_lodging_h_gyraffe_host_20.45",
   date: "2025-01-31",
   time: "18:21:10",
   description: "Lodging H Gyraffe Host",
-  amount: -20.45, // Negative for debit
-  currency: "GBP", // Using GBP as primary currency
+  amount: -20.45,
+  currency: "GBP",
   category: "Holiday",
-  type: "Debit",
+  type: "PAYMENT",
   metadata: {
     originalAmount: 254,
     originalCurrency: "MAD",
