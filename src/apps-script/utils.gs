@@ -290,15 +290,15 @@ class Utils {
     
     if (!logSheet) {
       logSheet = ss.insertSheet(this.config.SHEET_NAMES.LOGS);
-      logSheet.getRange(1, 1, 1, 3).setValues([['Timestamp', 'Function', 'Error']]);
+      logSheet.getRange(1, 1, 1, 4).setValues([["Timestamp", "Function", "Error", "Stack Trace"]]);
       logSheet.setFrozenRows(1);
     }
     
     const timestamp = new Date();
-    logSheet.appendRow([timestamp, functionName, error.toString()]);
+    logSheet.appendRow([timestamp, functionName, error.toString(), error.stack]);
     
     // Also log to console for debugging
-    console.error(`Error in ${functionName}:`, error);
+    console.error(`Error in ${functionName}:`, error, error.stack);
   }
   
   /**
