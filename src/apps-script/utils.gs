@@ -307,4 +307,33 @@ class Utils {
   formatDate(date) {
     return Utilities.formatDate(date, Session.getScriptTimeZone(), 'yyyy-MM-dd');
   }
+  
+  /**
+   * Write normalized transactions to the output sheet
+   * @param {Array} transactions - Array of normalized transaction objects
+   * @param {Sheet} outputSheet - The output sheet
+   */
+  writeNormalizedTransactions(transactions, outputSheet) {
+    if (!transactions.length) return;
+    const now = new Date();
+    const rows = transactions.map(t => [
+      t.date,
+      t.description,
+      t.amount,
+      '', // Category (final, to be filled after categorization)
+      '', // AI Category (to be filled after categorization)
+      '', // Manual Override
+      '', // Confidence
+      t.sourceSheet || '',
+      t.id,
+      t.originalReference,
+      '', // Notes
+      '', // Last Updated
+      'UNPROCESSED', // Processing Status
+      now, // Normalization Timestamp
+      '', // Categorization Timestamp
+      ''  // Error Details
+    ]);
+    outputSheet.getRange(outputSheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+  }
 } 

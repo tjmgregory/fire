@@ -31,14 +31,23 @@ class Config {
       LOGS: 'System Logs'
     };
     
-    this.COLUMNS = {
+    this.OUTPUT_COLUMNS = {
       DATE: 'Date',
       DESCRIPTION: 'Description',
       AMOUNT: 'Amount',
       CATEGORY: 'Category',
       AI_CATEGORY: 'AI Category',
       MANUAL_OVERRIDE: 'Manual Override',
-      CONFIDENCE: 'Confidence'
+      CONFIDENCE: 'Confidence',
+      SOURCE_SHEET: 'Source Sheet',
+      TRANSACTION_ID: 'Transaction ID',
+      ORIGINAL_REFERENCE: 'Original Reference',
+      NOTES: 'Notes',
+      LAST_UPDATED: 'Last Updated',
+      PROCESSING_STATUS: 'Processing Status',
+      NORMALIZATION_TIMESTAMP: 'Normalization Timestamp',
+      CATEGORIZATION_TIMESTAMP: 'Categorization Timestamp',
+      ERROR_DETAILS: 'Error Details'
     };
   }
   
@@ -83,13 +92,22 @@ class Config {
    */
   initializeOutputSheet(sheet) {
     const headers = [
-      this.COLUMNS.DATE,
-      this.COLUMNS.DESCRIPTION,
-      this.COLUMNS.AMOUNT,
-      this.COLUMNS.CATEGORY,
-      this.COLUMNS.AI_CATEGORY,
-      this.COLUMNS.MANUAL_OVERRIDE,
-      this.COLUMNS.CONFIDENCE
+      this.OUTPUT_COLUMNS.DATE,
+      this.OUTPUT_COLUMNS.DESCRIPTION,
+      this.OUTPUT_COLUMNS.AMOUNT,
+      this.OUTPUT_COLUMNS.CATEGORY,
+      this.OUTPUT_COLUMNS.AI_CATEGORY,
+      this.OUTPUT_COLUMNS.MANUAL_OVERRIDE,
+      this.OUTPUT_COLUMNS.CONFIDENCE,
+      this.OUTPUT_COLUMNS.SOURCE_SHEET,
+      this.OUTPUT_COLUMNS.TRANSACTION_ID,
+      this.OUTPUT_COLUMNS.ORIGINAL_REFERENCE,
+      this.OUTPUT_COLUMNS.NOTES,
+      this.OUTPUT_COLUMNS.LAST_UPDATED,
+      this.OUTPUT_COLUMNS.PROCESSING_STATUS,
+      this.OUTPUT_COLUMNS.NORMALIZATION_TIMESTAMP,
+      this.OUTPUT_COLUMNS.CATEGORIZATION_TIMESTAMP,
+      this.OUTPUT_COLUMNS.ERROR_DETAILS
     ];
     console.log(`[initializeOutputSheet] Initializing output sheet with headers: ${JSON.stringify(headers)}`);
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);

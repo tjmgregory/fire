@@ -100,29 +100,21 @@ function processNewTransactions() {
     const sourceSheets = config.getSourceSheets();
     const outputSheet = config.getOutputSheet();
     
-    // Get the last processed row from the output sheet
+    // Get all existing transaction IDs in the output sheet
     const lastRow = outputSheet.getLastRow();
-    const processedTransactions = lastRow > 1 ? 
-      outputSheet.getRange(2, 1, lastRow - 1, 3).getValues() : [];
-    
+    const idCol = 9; // Transaction ID column (1-based)
+    const existingIds = lastRow > 1 ? outputSheet.getRange(2, idCol, lastRow - 1, 1).getValues().flat() : [];
+
     // Process each source sheet
     sourceSheets.forEach(sheet => {
       console.log(`[processNewTransactions] Processing source sheet: ${sheet.getName()}`);
-      const transactions = utils.getNewTransactions(sheet);
-      
-      // Filter out already processed transactions
-      const newTransactions = transactions.filter(t => 
-        !processedTransactions.some(pt => 
-          pt[0].getTime() === t.date.getTime() && 
-          pt[1] === t.description && 
-          pt[2] === t.amount
-        )
-      );
-      
+      const transactions = utils.getNewTransactions(sheet).map(t => ({ ...t, sourceSheet: sheet.getName() }));
+      // Filter out already processed transactions by ID
+      const newTransactions = transactions.filter(t => !existingIds.includes(t.id));
       console.log(`[processNewTransactions] Found ${newTransactions.length} new transactions in sheet: ${sheet.getName()}`);
-      
       if (newTransactions.length > 0) {
-        categorizeTransactions(newTransactions);
+        // Persist normalized transactions to output sheet
+        utils.writeNormalizedTransactions(newTransactions, outputSheet);
       }
     });
     console.log('[processNewTransactions] Transaction processing complete.');
@@ -134,14 +126,22 @@ function processNewTransactions() {
 
 /**
  * Categorize a batch of transactions using OpenAI
- * @param {Array} transactions - Array of transaction objects
+ * This function should be triggered separately and only process rows with Processing Status 'Normalized'.
  */
-function categorizeTransactions(transactions) {
-  console.log(`[categorizeTransactions] Called with ${transactions.length} transactions.`);
-  // Ensure config and utils are initialized
+function categorizeTransactions() {
+  console.log(`[categorizeTransactions] Scanning for uncategorized transactions.`);
   if (!config) config = new Config();
   if (!utils) utils = new Utils();
-  
-  // Implementation will be added in Phase 2
-  console.log('Categorization to be implemented');
+  const outputSheet = config.getOutputSheet();
+  const data = outputSheet.getDataRange().getValues();
+  const headers = data[0];
+  const statusCol = headers.indexOf(config.OUTPUT_COLUMNS.PROCESSING_STATUS);
+  const idCol = headers.indexOf(config.OUTPUT_COLUMNS.TRANSACTION_ID);
+  // Find all rows with status 'UNPROCESSED'
+  const toCategorize = data
+    .map((row, idx) => ({ row, idx }))
+    .filter(obj => obj.idx > 0 && obj.row[statusCol] === 'UNPROCESSED');
+  // TODO: Implement categorization logic for these rows
+  console.log(`[categorizeTransactions] Found ${toCategorize.length} transactions to categorize.`);
+  // ...categorization logic to be implemented...
 } 
