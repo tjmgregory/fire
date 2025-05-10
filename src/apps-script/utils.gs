@@ -137,9 +137,9 @@ class Utils {
 
     // Defensive: handle undefined/null
     if (!dateStr) {
-      const now = new Date();
-      console.log(`[parseDateTime] dateStr is undefined/null. Defaulting to now: ${now}`);
-      return { date: this.formatDate(now), time: now.toTimeString().split(' ')[0] };
+      const msg = `[parseDateTime] dateStr is undefined/null for sheet: ${sourceSheet}`;
+      this.logError('parseDateTime', msg);
+      throw new Error(msg);
     }
 
     // If dateStr is a Date object, convert to string
@@ -159,7 +159,9 @@ class Utils {
         console.log(`[parseDateTime] Monzo string. Parsed date: ${date}, time: ${time}`);
         return { date, time };
       } else {
-        console.log(`[parseDateTime] Monzo dateStr is not a string:`, dateStr);
+        const msg = `[parseDateTime] Monzo dateStr is not a string: ${dateStr}`;
+        this.logError('parseDateTime', msg);
+        throw new Error(msg);
       }
     } else if (sourceSheet.toLowerCase() === 'revolut' || 
                sourceSheet.toLowerCase() === 'yonder') {
@@ -171,13 +173,15 @@ class Utils {
         console.log(`[parseDateTime] ${sourceSheet} string. Parsed date: ${date}, time: ${time}`);
         return { date, time };
       } else {
-        console.log(`[parseDateTime] ${sourceSheet} dateStr is not a string:`, dateStr);
+        const msg = `[parseDateTime] ${sourceSheet} dateStr is not a string: ${dateStr}`;
+        this.logError('parseDateTime', msg);
+        throw new Error(msg);
       }
     }
-    // Default to current date/time if format unknown
-    const now = new Date();
-    console.log(`[parseDateTime] Unknown format for dateStr (${typeof dateStr}):`, dateStr, '. Defaulting to now.');
-    return { date: this.formatDate(now), time: now.toTimeString().split(' ')[0] };
+    // If we reach here, the format is unknown
+    const msg = `[parseDateTime] Unknown format for dateStr (${typeof dateStr}): ${dateStr} in sheet: ${sourceSheet}`;
+    this.logError('parseDateTime', msg);
+    throw new Error(msg);
   }
   
   /**
