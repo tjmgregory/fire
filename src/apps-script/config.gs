@@ -49,11 +49,11 @@ class Config {
   getSourceSheets() {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheets = ss.getSheets();
-    
-    // Filter out system sheets (output and logs)
-    return sheets.filter(sheet => 
-      !Object.values(this.SHEET_NAMES).includes(sheet.getName())
-    );
+    const expectedNames = ['monzo', 'revolut', 'yonder'];
+    return sheets.filter(sheet => {
+      const name = sheet.getName().toLowerCase();
+      return expectedNames.includes(name);
+    });
   }
   
   /**
