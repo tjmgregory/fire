@@ -2,6 +2,15 @@
 
 A Google Apps Script project that automatically categorizes financial transactions using OpenAI's GPT-4.
 
+## System Architecture
+
+The system processes transactions in three main stages:
+1. **Normalization**: Standardizes data from different source sheets
+2. **Categorization**: Uses AI to categorize transactions
+3. **Analysis**: Generates summaries and insights
+
+For a detailed architecture diagram and explanation, see [ADR 005: Normalization and Categorization Process Separation](../docs/adr/005-normalization-categorization-separation.md).
+
 ## Setup Instructions
 
 1. Create a new Google Apps Script project:
