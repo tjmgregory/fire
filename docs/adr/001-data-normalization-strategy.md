@@ -64,10 +64,18 @@ Each sheet has its own:
 
 #### Yonder Transaction Sheet
 - Format: Google Sheet
-- Columns: TBD
-- Date Format: TBD
-- Amount Format: TBD
-- Transaction ID: TBD
+- Columns:
+  - Date/Time of transaction: ISO 8601 format (YYYY-MM-DD HH:mm:ss)
+  - Description: Transaction description/merchant name
+  - Amount (GBP): Amount in GBP
+  - Amount (in Charged Currency): Original transaction amount
+  - Currency: 3-letter currency code
+  - Category: Transaction category
+  - Debit or Credit: Transaction type
+  - Country: 3-letter country code
+- Date Format: ISO 8601 (YYYY-MM-DD HH:mm:ss)
+- Amount Format: Decimal with 2 places (e.g., "20.45")
+- Transaction ID: Not provided in the format, will be generated using our ID generation system
 
 ## Decision
 
@@ -191,6 +199,38 @@ Example normalization for Revolut:
     fee: 0,
     state: "COMPLETED",
     balance: 255.47
+  }
+}
+```
+
+Example normalization for Yonder:
+```typescript
+// Input row:
+{
+  "Date/Time of transaction": "2025-01-31 18:21:10",
+  "Description": "Lodging H Gyraffe Host",
+  "Amount (GBP)": "20.45",
+  "Amount (in Charged Currency)": "254",
+  "Currency": "MAD",
+  "Category": "Holiday",
+  "Debit or Credit": "Debit",
+  "Country": "MAR"
+}
+
+// Normalized output:
+{
+  id: "yonder_2025-01-31_18:21:10_lodging_h_gyraffe_host_20.45", // Generated ID
+  date: "2025-01-31",
+  time: "18:21:10",
+  description: "Lodging H Gyraffe Host",
+  amount: -20.45, // Negative for debit
+  currency: "GBP", // Using GBP as primary currency
+  category: "Holiday",
+  type: "Debit",
+  metadata: {
+    originalAmount: 254,
+    originalCurrency: "MAD",
+    country: "MAR"
   }
 }
 ```
