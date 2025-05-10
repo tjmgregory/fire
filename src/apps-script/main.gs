@@ -42,6 +42,9 @@ function setupTriggers() {
  * Main function to process new transactions
  */
 function processNewTransactions() {
+  // Ensure config and utils are initialized
+  if (!config) config = new Config();
+  if (!utils) utils = new Utils();
   try {
     // Get source sheets
     const sourceSheets = config.getSourceSheets();
