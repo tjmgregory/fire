@@ -1,15 +1,14 @@
 # Transaction Categorization System
 
-A Google Apps Script project that automatically categorizes financial transactions using OpenAI's GPT-4.
+A Google Apps Script implementation for the FIRE project's transaction processing system. This component handles the normalization and categorization of financial transactions from various bank sources.
 
-## System Architecture
+## Implementation Details
 
-The system processes transactions in three main stages:
-1. **Normalization**: Standardizes data from different source sheets
-2. **Categorization**: Uses AI to categorize transactions
-3. **Analysis**: Generates summaries and insights
-
-For a detailed architecture diagram and explanation, see [ADR 005: Normalization and Categorization Process Separation](../docs/adr/005-normalization-categorization-separation.md).
+This component implements the architecture defined in [ADR 005](../docs/adr/005-normalization-categorization-separation.md), providing:
+- Data normalization from multiple bank sources
+- AI-powered transaction categorization
+- Automated processing and updates
+- Error handling and logging
 
 ## Setup Instructions
 
