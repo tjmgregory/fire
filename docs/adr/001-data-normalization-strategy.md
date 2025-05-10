@@ -47,10 +47,20 @@ Each sheet has its own:
 
 #### Revolut Transaction Sheet
 - Format: Google Sheet
-- Columns: TBD
-- Date Format: TBD
-- Amount Format: TBD
-- Transaction ID: TBD
+- Columns:
+  - Type: Transaction type (e.g., "TRANSFER", "TOPUP", "ATM", "CARD_PAYMENT")
+  - Product: Account type (e.g., "Current")
+  - Started Date: ISO 8601 format (YYYY-MM-DD HH:mm:ss)
+  - Completed Date: ISO 8601 format (YYYY-MM-DD HH:mm:ss)
+  - Description: Transaction description
+  - Amount: Transaction amount (negative for debits)
+  - Fee: Transaction fee
+  - Currency: 3-letter code
+  - State: Transaction state (e.g., "COMPLETED")
+  - Balance: Account balance after transaction
+- Date Format: ISO 8601 (YYYY-MM-DD HH:mm:ss)
+- Amount Format: Decimal with 2 places (e.g., "-0.01")
+- Transaction ID: Not provided in the format, will be generated using our ID generation system
 
 #### Yonder Transaction Sheet
 - Format: Google Sheet
@@ -145,6 +155,42 @@ Example normalization for Monzo:
     receipt: "",
     description: "MONZO",
     categorySplit: ""
+  }
+}
+```
+
+Example normalization for Revolut:
+```typescript
+// Input row:
+{
+  "Type": "TRANSFER",
+  "Product": "Current",
+  "Started Date": "2025-02-05 21:54:11",
+  "Completed Date": "2025-02-05 21:54:12",
+  "Description": "Transfer to Revolut user",
+  "Amount": "-0.01",
+  "Fee": "0",
+  "Currency": "EUR",
+  "State": "COMPLETED",
+  "Balance": "255.47"
+}
+
+// Normalized output:
+{
+  id: "revolut_2025-02-05_21:54:11_transfer_to_revolut_user_-0.01", // Generated ID
+  date: "2025-02-05",
+  time: "21:54:11",
+  description: "Transfer to Revolut user",
+  amount: -0.01,
+  currency: "EUR",
+  category: "Transfer", // Will be determined by categorization system
+  type: "TRANSFER",
+  metadata: {
+    product: "Current",
+    completedDate: "2025-02-05 21:54:12",
+    fee: 0,
+    state: "COMPLETED",
+    balance: 255.47
   }
 }
 ```
