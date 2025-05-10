@@ -32,7 +32,7 @@ class Config {
     };
     
     this.OUTPUT_COLUMNS = {
-      DATE: 'Date',
+      DATE: 'Date (UTC ISO)',
       DESCRIPTION: 'Description',
       AMOUNT: 'Amount',
       CATEGORY: 'Category',

@@ -126,14 +126,14 @@ class Utils {
   }
   
   /**
-   * Parse date and time from various formats
+   * Parse date and time from various formats and convert to UTC ISO string
    * @param {string|Date} dateStr - Date string or Date object
    * @param {string} timeStr - Time string
    * @param {string} sourceSheet - Name of the source sheet
-   * @returns {Object} Normalized date and time
+   * @returns {Object} Normalized date and time in UTC
    */
   parseDateTime(dateStr, timeStr, sourceSheet) {
-    let date, time;
+    let date, time, dateTime;
 
     // Defensive: handle undefined/null
     if (!dateStr) {
@@ -144,20 +144,12 @@ class Utils {
 
     // If dateStr is a Date object, convert to string
     if (dateStr instanceof Date) {
-      date = this.formatDate(dateStr); // 'yyyy-MM-dd'
-      time = dateStr.toTimeString().split(' ')[0];
-      console.log(`[parseDateTime] dateStr is Date object. Parsed date: ${date}, time: ${time}`);
-      return { date, time };
-    }
-
-    if (sourceSheet.toLowerCase() === 'monzo') {
+      dateTime = dateStr;
+    } else if (sourceSheet.toLowerCase() === 'monzo') {
       // Monzo format: DD/MM/YYYY and HH:mm:ss
       if (typeof dateStr === 'string') {
         const [day, month, year] = dateStr.split('/');
-        date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-        time = timeStr;
-        console.log(`[parseDateTime] Monzo string. Parsed date: ${date}, time: ${time}`);
-        return { date, time };
+        dateTime = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timeStr}`);
       } else {
         const msg = `[parseDateTime] Monzo dateStr is not a string: ${dateStr}`;
         this.logError('parseDateTime', msg);
@@ -167,21 +159,31 @@ class Utils {
                sourceSheet.toLowerCase() === 'yonder') {
       // ISO format: YYYY-MM-DD HH:mm:ss
       if (typeof dateStr === 'string') {
-        const [datePart, timePart] = dateStr.split(' ');
-        date = datePart;
-        time = timePart;
-        console.log(`[parseDateTime] ${sourceSheet} string. Parsed date: ${date}, time: ${time}`);
-        return { date, time };
+        dateTime = new Date(dateStr.replace(' ', 'T'));
       } else {
         const msg = `[parseDateTime] ${sourceSheet} dateStr is not a string: ${dateStr}`;
         this.logError('parseDateTime', msg);
         throw new Error(msg);
       }
+    } else {
+      const msg = `[parseDateTime] Unknown format for dateStr (${typeof dateStr}): ${dateStr} in sheet: ${sourceSheet}`;
+      this.logError('parseDateTime', msg);
+      throw new Error(msg);
     }
-    // If we reach here, the format is unknown
-    const msg = `[parseDateTime] Unknown format for dateStr (${typeof dateStr}): ${dateStr} in sheet: ${sourceSheet}`;
-    this.logError('parseDateTime', msg);
-    throw new Error(msg);
+
+    // Convert UK time to UTC
+    // Note: JavaScript Date objects handle DST automatically
+    const ukDate = new Date(dateTime.toLocaleString('en-GB', { timeZone: 'Europe/London' }));
+    const utcDate = new Date(ukDate.getTime() - (ukDate.getTimezoneOffset() * 60000));
+    
+    // Format as ISO string
+    const isoString = utcDate.toISOString();
+    console.log(`[parseDateTime] Converted ${dateStr} to UTC ISO: ${isoString}`);
+    
+    return {
+      date: isoString,
+      time: isoString.split('T')[1].split('.')[0] // HH:mm:ss
+    };
   }
   
   /**
@@ -300,12 +302,12 @@ class Utils {
   }
   
   /**
-   * Format a date for display
+   * Format a date for display (no longer needed as we store in ISO format)
    * @param {Date} date - The date to format
-   * @returns {string} Formatted date string
+   * @returns {string} ISO date string
    */
   formatDate(date) {
-    return Utilities.formatDate(date, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    return date.toISOString();
   }
   
   /**
