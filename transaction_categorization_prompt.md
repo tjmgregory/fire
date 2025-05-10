@@ -6,6 +6,9 @@ I need help creating a plan for building an automated transaction categorization
 - Multiple Google Sheets containing bank transaction data
   - Each sheet represents a different bank account
   - Sheets contain raw transaction data with dates, amounts, descriptions, etc.
+  - One sheet receives live transaction updates
+  - Two sheets require manual CSV imports
+  - Some sheets already have existing categories, but these should be treated as suggestions rather than definitive categorizations
 - A separate Google Sheet for tracking FIRE (Financial Independence, Retire Early) goals
 
 ## Requirements
@@ -13,22 +16,47 @@ I need help creating a plan for building an automated transaction categorization
 ### 1. Automated Transaction Processing
 - System should automatically fetch and process new transactions from all bank account sheets
 - Need to handle different transaction formats from various banks
-- Should update in real-time or on a scheduled basis
+- Should update in real-time for the live-updating sheet
+- Should process CSV imports for the other two sheets
+- Should update on a scheduled basis or when rows are added
 
 ### 2. Categorization System
-- Create a flexible categorization framework that can be customized
-- Categories should align with FIRE tracking needs (e.g., essential expenses, investments, savings)
+- Must use ChatGPT 4.1 nano for all transaction categorization
+- Must categorize transactions into the following predefined categories:
+  - Housing
+  - Subscriptions
+  - Phone
+  - Groceries
+  - Entertainment
+  - Eating Out
+  - Flights
+  - Insurance
+  - Clothing
+  - Self Care
+  - Gym
+  - Education
+  - Medical
+  - Rideshare
+  - Gifts
+  - Charity
+  - Fees
+  - Cash
+  - Misc (for transactions that cannot be confidently categorized)
 - Should learn from manual corrections to improve accuracy over time
+- Should consider existing categories in bank sheets as suggestions only, not definitive categorizations
 
 ### 3. Integration Requirements
 - Must work with Google Sheets API
 - Should maintain data consistency across all sheets
 - Need to handle multiple currencies if applicable
+- Preferred implementation in Google Apps Script for ease of deployment and maintenance
+- Alternative solutions should be simple to deploy and maintain if Apps Script is not suitable
 
 ### 4. Output Requirements
-- Categorized transactions should be easily viewable and filterable
-- Should provide summary statistics and trends
-- Need to generate reports that help track progress towards FIRE goals
+- Create a new sheet with the following structure:
+  - Columns: One for each category (Housing, Subscriptions, etc.)
+  - Rows: One for each month
+  - Each cell should contain the total amount for that category in that month
 
 ## Please Provide
 1. A high-level architecture for the system
