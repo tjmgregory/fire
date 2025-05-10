@@ -131,7 +131,7 @@ interface NormalizedTransaction {
   amount: number;          // Transaction amount in GBP (positive for credits, negative for debits)
   currency: string;        // Always "GBP" in normalized output
   category: string;        // Transaction category
-  type: string;           // Transaction type (e.g., "PAYMENT", "TRANSFER", "ATM")
+  transactionMethod: string; // Method of transaction (e.g., "PAYMENT", "TRANSFER", "ATM")
 }
 ```
 
@@ -167,7 +167,7 @@ Example normalization for Monzo:
   amount: 1000.00,
   currency: "GBP",
   category: "Income",
-  type: "TRANSFER"
+  transactionMethod: "TRANSFER"
 }
 ```
 
@@ -197,7 +197,7 @@ Example normalizations for Revolut:
   amount: -0.0085, // Converted from EUR to GBP using exchange rate
   currency: "GBP", // Always GBP in normalized output
   category: "Transfer",
-  type: "TRANSFER"
+  transactionMethod: "TRANSFER"
 }
 
 // Input row (GBP):
@@ -224,7 +224,7 @@ Example normalizations for Revolut:
   amount: 1307.00, // Already in GBP, no conversion needed
   currency: "GBP",
   category: "Transfer",
-  type: "TRANSFER" // TOPUP mapped to TRANSFER
+  transactionMethod: "TRANSFER" // TOPUP mapped to TRANSFER
 }
 ```
 
@@ -251,7 +251,7 @@ Example normalization for Yonder:
   amount: -20.45,
   currency: "GBP",
   category: "Holiday",
-  type: "PAYMENT"
+  transactionMethod: "PAYMENT"
 }
 ```
 
