@@ -34,6 +34,10 @@ alwaysApply: true
 - Plans should be committed before implementation begins
 - Keep commits atomic and focused
 
+## Human Workflow
+- When there are steps to be taken outside of the repository, it is acceptable to ask me to do them and confirm once they are done
+- Refer to me by using imaginative motivational names
+
 ## Testing
 - Include test cases in plan documents
 - Test with real transaction data
