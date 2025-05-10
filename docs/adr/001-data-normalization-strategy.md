@@ -107,10 +107,13 @@ We will implement a flexible data normalization system with the following compon
      - "TRANSFER" for bank transfers and top-ups
      - "ATM" for cash withdrawals
    - Currencies: 
-     - Use primary currency (GBP) if available
-     - Fall back to transaction currency if primary not available
+     - All normalized amounts must be in GBP
+     - Use GBP directly if available in source data
+     - Convert to GBP if source currency is different
      - Store original currency and amount in metadata
-     - Only convert amounts if primary currency not available
+     - Use exchange rates from the transaction date for conversion
+     - Note: This requires implementing a currency conversion service
+     - Note: Revolut transactions can be in any currency, check the Currency field
    - Categories:
      - Use provided categories if available
      - Generate categories for uncategorized transactions
@@ -126,10 +129,10 @@ interface NormalizedTransaction {
   date: string;            // ISO 8601 date format (YYYY-MM-DD)
   time: string;            // 24-hour time format (HH:mm:ss)
   description: string;     // Transaction description/merchant name
-  amount: number;          // Transaction amount (positive for credits, negative for debits)
-  currency: string;        // 3-letter currency code
+  amount: number;          // Transaction amount in GBP (positive for credits, negative for debits)
+  currency: string;        // Always "GBP" in normalized output
   category: string;        // Transaction category
-  type: string;           // Transaction type (e.g., "Card payment", "Faster payment")
+  type: string;           // Transaction type (e.g., "PAYMENT", "TRANSFER", "ATM")
   metadata: {             // Additional source-specific data
     [key: string]: any;
   };
@@ -181,9 +184,9 @@ Example normalization for Monzo:
 }
 ```
 
-Example normalization for Revolut:
+Example normalizations for Revolut:
 ```typescript
-// Input row:
+// Input row (EUR):
 {
   "Type": "TRANSFER",
   "Product": "Current",
@@ -197,14 +200,14 @@ Example normalization for Revolut:
   "Balance": "255.47"
 }
 
-// Normalized output:
+// Normalized output (EUR):
 {
   id: "revolut_2025-02-05_21:54:11_transfer_to_revolut_user_-0.01",
   date: "2025-02-05",
   time: "21:54:11",
   description: "Transfer to Revolut user",
-  amount: -0.01,
-  currency: "EUR",
+  amount: -0.0085, // Converted from EUR to GBP using exchange rate
+  currency: "GBP", // Always GBP in normalized output
   category: "Transfer",
   type: "TRANSFER",
   metadata: {
@@ -212,7 +215,45 @@ Example normalization for Revolut:
     completedDate: "2025-02-05 21:54:12",
     fee: 0,
     state: "COMPLETED",
-    balance: 255.47
+    balance: 255.47,
+    originalAmount: -0.01,
+    originalCurrency: "EUR",
+    exchangeRate: 0.85 // EUR to GBP rate on transaction date
+  }
+}
+
+// Input row (GBP):
+{
+  "Type": "TOPUP",
+  "Product": "Current",
+  "Started Date": "2025-02-12 07:56:48",
+  "Completed Date": "2025-02-12 07:56:48",
+  "Description": "Payment from Theodore Gregory",
+  "Amount": "1307",
+  "Fee": "0",
+  "Currency": "GBP",
+  "State": "COMPLETED",
+  "Balance": "2268.73"
+}
+
+// Normalized output (GBP):
+{
+  id: "revolut_2025-02-12_07:56:48_payment_from_theodore_gregory_1307",
+  date: "2025-02-12",
+  time: "07:56:48",
+  description: "Payment from Theodore Gregory",
+  amount: 1307.00, // Already in GBP, no conversion needed
+  currency: "GBP",
+  category: "Transfer",
+  type: "TRANSFER", // TOPUP mapped to TRANSFER
+  metadata: {
+    product: "Current",
+    completedDate: "2025-02-12 07:56:48",
+    fee: 0,
+    state: "COMPLETED",
+    balance: 2268.73,
+    originalAmount: 1307.00,
+    originalCurrency: "GBP"
   }
 }
 ```
