@@ -1,0 +1,43 @@
+# Cursor Rules for FIRE Project
+
+## File Organization
+- All planning documents should be stored in the `plans/` directory
+- Planning documents should follow the naming convention: `YYYY-MM-DD_HH:MM_description.md`
+- Implementation files should be stored in appropriate feature directories
+
+## Code Style
+- Use Google Apps Script style guide for JavaScript code
+- Include JSDoc comments for all functions
+- Keep functions focused and single-purpose
+- Use meaningful variable names that reflect financial context
+
+## Documentation
+- All major features should have a corresponding plan document
+- Plans should include:
+  - Architecture overview
+  - Technical components
+  - Implementation steps
+  - Timeline
+  - Security considerations
+  - Maintenance notes
+
+## Git Workflow
+- Commit messages should be clear and descriptive
+- Each feature should be developed in its own branch
+- Plans should be committed before implementation begins
+- Keep commits atomic and focused
+
+## Testing
+- Include test cases in plan documents
+- Test with real transaction data
+- Document edge cases and how they're handled
+
+## Security
+- Store API keys in Google Apps Script Properties Service
+- Document any security considerations in plan files
+- Include error handling for API calls
+
+## Maintenance
+- Document any manual steps required
+- Include setup instructions in plan documents
+- Note any dependencies or prerequisites 
