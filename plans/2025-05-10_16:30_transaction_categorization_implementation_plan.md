@@ -15,9 +15,46 @@
 
 1. **Google Apps Script** for the main implementation
 2. **OpenAI API Integration** for ChatGPT 4.1 nano categorization
+   - Implemented via UrlFetchApp.fetch() to make direct HTTP requests
+   - Example implementation:
+   ```javascript
+   function callOpenAI(transactionDescription) {
+     const apiKey = PropertiesService.getScriptProperties().getProperty('OPENAI_API_KEY');
+     const url = 'https://api.openai.com/v1/chat/completions';
+     
+     const payload = {
+       model: 'gpt-4-0125-preview', // or the ChatGPT 4.1 nano equivalent when available
+       messages: [
+         {
+           role: 'system',
+           content: 'You are a financial transaction categorizer. Categorize the transaction into one of these categories: Housing, Subscriptions, Phone, Groceries, Entertainment, Eating Out, Flights, Insurance, Clothing, Self Care, Gym, Education, Medical, Rideshare, Gifts, Charity, Fees, Cash, Misc'
+         },
+         {
+           role: 'user',
+           content: `Categorize this transaction: ${transactionDescription}`
+         }
+       ],
+       temperature: 0.3
+     };
+     
+     const options = {
+       method: 'post',
+       contentType: 'application/json',
+       headers: {
+         Authorization: `Bearer ${apiKey}`
+       },
+       payload: JSON.stringify(payload),
+       muteHttpExceptions: true
+     };
+     
+     const response = UrlFetchApp.fetch(url, options);
+     const responseData = JSON.parse(response.getContentText());
+     return responseData.choices[0].message.content.trim();
+   }
+   ```
 3. **Google Sheets API** for reading/writing data
 4. **Trigger System** for scheduling updates
-5. **Learning Database** to store manual corrections
+5. **Override Column System** to handle manual corrections
 
 ## 3. Implementation Steps
 
@@ -40,8 +77,9 @@
 4. **Categorization System**
    - Create functions to process transactions using ChatGPT
    - Implement confidence scoring for categorizations
-   - Build a feedback loop for manual corrections
-   - Store categorization rules and patterns
+   - Add columns for both AI-suggested categories and manual override columns
+   - Design system to prioritize manual overrides over AI suggestions
+   - Track categorization patterns to improve future suggestions
 
 5. **Output Sheet Generation**
    - Create monthly summary sheet
@@ -51,7 +89,6 @@
 ## 4. Security Considerations
 
 - Store API keys securely using Google Apps Script's Properties Service
-- Limit transaction data sent to OpenAI API (remove sensitive details)
 - Implement error handling for API failures
 - Set up logging for troubleshooting
 
@@ -61,6 +98,7 @@
 - **Accuracy Issues**: Create a manual override system and learning mechanism
 - **Data Consistency**: Add validation and error checking
 - **Multiple Currencies**: Store exchange rates and implement conversion
+- **OpenAI Integration**: Google Apps Script can make HTTP requests to the OpenAI API using the UrlFetchApp service. This allows direct integration without requiring middleware.
 
 ## 6. Recommended Tools
 
@@ -72,11 +110,29 @@
 
 ## 7. Development Timeline
 
-- **Phase 1 (2 weeks)**: Basic setup and data normalization
-- **Phase 2 (2 weeks)**: ChatGPT integration and categorization
-- **Phase 3 (1 week)**: Output sheet generation
-- **Phase 4 (1 week)**: Testing and refinement
-- **Total**: 6 weeks for initial implementation
+- **Phase 1 (2 hours)**: Basic setup and data normalization
+  - Set up Google Apps Script project
+  - Configure API access and permissions
+  - Create functions to read from bank sheets
+  - Normalize data formats
+
+- **Phase 2 (3 hours)**: ChatGPT integration and categorization
+  - Implement OpenAI API integration
+  - Create categorization functions
+  - Add AI-suggested and override columns
+  - Test with sample transactions
+
+- **Phase 3 (2 hours)**: Output sheet generation
+  - Create monthly summary sheet
+  - Implement automatic updates
+  - Set up triggers for sheet updates
+
+- **Phase 4 (1 hour)**: Testing and refinement
+  - Test end-to-end workflow
+  - Fix any issues
+  - Document the system
+
+- **Total**: 8 hours for complete implementation
 
 ## 8. Maintenance Considerations
 
