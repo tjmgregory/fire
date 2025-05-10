@@ -10,28 +10,238 @@ class Utils {
   /**
    * Get new transactions from a source sheet
    * @param {Sheet} sheet - The source sheet to process
-   * @returns {Array} Array of transaction objects
+   * @returns {Array} Array of normalized transaction objects
    */
   getNewTransactions(sheet) {
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
     
-    // Find column indices
-    const dateCol = headers.indexOf(this.config.COLUMNS.DATE);
-    const descCol = headers.indexOf(this.config.COLUMNS.DESCRIPTION);
-    const amountCol = headers.indexOf(this.config.COLUMNS.AMOUNT);
+    // Get column mappings based on sheet name
+    const columnMap = this.getColumnMap(sheet.getName());
     
-    if (dateCol === -1 || descCol === -1 || amountCol === -1) {
-      throw new Error('Required columns not found in sheet: ' + sheet.getName());
-    }
+    // Find column indices using the mapping
+    const indices = {};
+    Object.entries(columnMap).forEach(([key, possibleNames]) => {
+      indices[key] = this.findColumnIndex(headers, possibleNames);
+      if (indices[key] === -1) {
+        throw new Error(`Required column not found in sheet ${sheet.getName()}: ${possibleNames.join(', ')}`);
+      }
+    });
     
     // Process transactions (skip header row)
-    return data.slice(1).map(row => ({
-      date: row[dateCol],
-      description: row[descCol],
-      amount: row[amountCol],
-      sourceSheet: sheet.getName()
-    }));
+    return data.slice(1).map(row => this.normalizeTransaction(row, indices, sheet.getName()));
+  }
+  
+  /**
+   * Get column mapping for a specific sheet
+   * @param {string} sheetName - Name of the sheet
+   * @returns {Object} Column mapping object
+   */
+  getColumnMap(sheetName) {
+    const lowerName = sheetName.toLowerCase();
+    
+    if (lowerName.includes('monzo')) {
+      return {
+        date: ['Date'],
+        time: ['Time'],
+        description: ['Name', 'Description'],
+        amount: ['Amount'],
+        currency: ['Currency'],
+        category: ['Category'],
+        type: ['Type'],
+        originalId: ['Transaction ID']
+      };
+    } else if (lowerName.includes('revolut')) {
+      return {
+        date: ['Started Date', 'Completed Date'],
+        time: ['Started Date', 'Completed Date'],
+        description: ['Description'],
+        amount: ['Amount'],
+        currency: ['Currency'],
+        type: ['Type']
+      };
+    } else if (lowerName.includes('yonder')) {
+      return {
+        date: ['Date/Time of transaction'],
+        time: ['Date/Time of transaction'],
+        description: ['Description'],
+        amount: ['Amount (GBP)'],
+        currency: ['Currency'],
+        category: ['Category'],
+        type: ['Debit or Credit']
+      };
+    }
+    
+    // Default mapping for unknown sheets
+    return {
+      date: ['Date', 'Transaction Date'],
+      description: ['Description', 'Name', 'Merchant'],
+      amount: ['Amount', 'Transaction Amount']
+    };
+  }
+  
+  /**
+   * Find the index of a column using possible names
+   * @param {Array} headers - Array of header names
+   * @param {Array} possibleNames - Array of possible column names
+   * @returns {number} Column index or -1 if not found
+   */
+  findColumnIndex(headers, possibleNames) {
+    return headers.findIndex(header => 
+      possibleNames.some(name => 
+        header.toLowerCase() === name.toLowerCase()
+      )
+    );
+  }
+  
+  /**
+   * Normalize a transaction row
+   * @param {Array} row - The row data
+   * @param {Object} indices - Column indices
+   * @param {string} sourceSheet - Name of the source sheet
+   * @returns {Object} Normalized transaction
+   */
+  normalizeTransaction(row, indices, sourceSheet) {
+    const dateTime = this.parseDateTime(row[indices.date], row[indices.time], sourceSheet);
+    const amount = this.normalizeAmount(row[indices.amount], row[indices.currency], sourceSheet);
+    const description = this.normalizeDescription(row[indices.description]);
+    const originalReference = this.generateOriginalReference(dateTime, amount, row[indices.originalId]);
+    
+    return {
+      id: Utilities.getUuid(),
+      originalReference: originalReference,
+      date: dateTime.date,
+      time: dateTime.time,
+      description: description,
+      amount: amount.value,
+      currency: 'GBP',
+      category: row[indices.category] || 'Uncategorized',
+      transactionMethod: this.normalizeTransactionType(row[indices.type], sourceSheet)
+    };
+  }
+  
+  /**
+   * Parse date and time from various formats
+   * @param {string} dateStr - Date string
+   * @param {string} timeStr - Time string
+   * @param {string} sourceSheet - Name of the source sheet
+   * @returns {Object} Normalized date and time
+   */
+  parseDateTime(dateStr, timeStr, sourceSheet) {
+    let date, time;
+    
+    if (sourceSheet.toLowerCase().includes('monzo')) {
+      // Monzo format: DD/MM/YYYY and HH:mm:ss
+      const [day, month, year] = dateStr.split('/');
+      date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      time = timeStr;
+    } else if (sourceSheet.toLowerCase().includes('revolut') || 
+               sourceSheet.toLowerCase().includes('yonder')) {
+      // ISO format: YYYY-MM-DD HH:mm:ss
+      const [datePart, timePart] = dateStr.split(' ');
+      date = datePart;
+      time = timePart;
+    } else {
+      // Default to current date/time if format unknown
+      const now = new Date();
+      date = this.formatDate(now);
+      time = now.toTimeString().split(' ')[0];
+    }
+    
+    return { date, time };
+  }
+  
+  /**
+   * Normalize amount and handle currency conversion
+   * @param {string|number} amount - Transaction amount
+   * @param {string} currency - Currency code
+   * @param {string} sourceSheet - Name of the source sheet
+   * @returns {Object} Normalized amount and currency
+   */
+  normalizeAmount(amount, currency, sourceSheet) {
+    // Convert to number and handle negative amounts
+    let value = parseFloat(amount);
+    
+    // Handle Revolut's negative amounts for debits
+    if (sourceSheet.toLowerCase().includes('revolut')) {
+      // Amount is already negative for debits, no need to invert
+    } else {
+      // For other sources, ensure debits are negative
+      if (value > 0 && this.isDebit(amount, sourceSheet)) {
+        value = -value;
+      }
+    }
+    
+    // TODO: Implement currency conversion
+    // For now, assume all amounts are in GBP
+    return {
+      value: value,
+      currency: 'GBP'
+    };
+  }
+  
+  /**
+   * Check if a transaction is a debit
+   * @param {string|number} amount - Transaction amount
+   * @param {string} sourceSheet - Name of the source sheet
+   * @returns {boolean} True if debit
+   */
+  isDebit(amount, sourceSheet) {
+    if (sourceSheet.toLowerCase().includes('yonder')) {
+      return amount.toString().toLowerCase().includes('debit');
+    }
+    return parseFloat(amount) < 0;
+  }
+  
+  /**
+   * Normalize transaction description
+   * @param {string} description - Original description
+   * @returns {string} Normalized description
+   */
+  normalizeDescription(description) {
+    return description
+      .toString()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+      .replace(/\s+/g, ' ')        // Normalize spaces
+      .trim();
+  }
+  
+  /**
+   * Normalize transaction type
+   * @param {string} type - Original transaction type
+   * @param {string} sourceSheet - Name of the source sheet
+   * @returns {string} Normalized transaction type
+   */
+  normalizeTransactionType(type, sourceSheet) {
+    const lowerType = type.toString().toLowerCase();
+    
+    if (sourceSheet.toLowerCase().includes('monzo')) {
+      if (lowerType.includes('card payment')) return 'PAYMENT';
+      if (lowerType.includes('faster payment')) return 'TRANSFER';
+      if (lowerType.includes('atm')) return 'ATM';
+    } else if (sourceSheet.toLowerCase().includes('revolut')) {
+      if (lowerType === 'card_payment') return 'PAYMENT';
+      if (lowerType === 'transfer' || lowerType === 'topup') return 'TRANSFER';
+      if (lowerType === 'atm') return 'ATM';
+    } else if (sourceSheet.toLowerCase().includes('yonder')) {
+      // Yonder doesn't have transaction types, default to PAYMENT
+      return 'PAYMENT';
+    }
+    
+    return 'PAYMENT'; // Default type
+  }
+  
+  /**
+   * Generate original reference for transactions without IDs
+   * @param {Object} dateTime - Date and time object
+   * @param {Object} amount - Amount object
+   * @param {string} originalId - Original transaction ID if available
+   * @returns {string} Original reference
+   */
+  generateOriginalReference(dateTime, amount, originalId) {
+    if (originalId) return originalId;
+    return `${dateTime.date}T${dateTime.time.split(':')[0]}:${dateTime.time.split(':')[1]}_${amount.value.toFixed(2)}`;
   }
   
   /**
@@ -54,19 +264,6 @@ class Utils {
     
     // Also log to console for debugging
     console.error(`Error in ${functionName}:`, error);
-  }
-  
-  /**
-   * Normalize a transaction description
-   * @param {string} description - The original description
-   * @returns {string} Normalized description
-   */
-  normalizeDescription(description) {
-    return description
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, '') // Remove special characters
-      .replace(/\s+/g, ' ')        // Normalize spaces
-      .trim();
   }
   
   /**

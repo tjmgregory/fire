@@ -21,7 +21,7 @@
 
 ## 3. Data Schema
 
-### Input Format Research
+### Input Format Research ✅
 Before implementing the system, we need to research and document the actual formats of our input sheets. This research will be documented in [ADR 001: Data Normalization Strategy](../docs/adr/001-data-normalization-strategy.md).
 
 ### Output Sheet Structure
@@ -41,10 +41,17 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
    - Configure script properties for API keys ✅
 
 3. **Source Data Processing** 🔄
-   - Implement data normalization based on ADR 001 🔄
-   - Create functions to read from each source sheet 🔄
-   - Set up triggers for the live-updating sheets ❌
-   - Create handlers for new transaction rows ❌
+   - Implement data normalization based on ADR 001 ✅
+     - Column mapping system for each source sheet ✅
+     - Transaction ID & reference generation ✅
+     - Date/time parsing for different formats ✅
+     - Amount normalization with debit/credit handling ✅
+     - Description normalization ✅
+     - Transaction type mapping ✅
+     - Currency handling (TODO: implement conversion) 🔄
+   - Create functions to read from each source sheet ✅
+   - Set up triggers for the live-updating sheets ✅
+   - Create handlers for new transaction rows ✅
 
 4. **ChatGPT Integration** 🔄
    - Implement categorization system based on [ADR 002: Transaction Categorization Strategy](../docs/adr/002-transaction-categorization-strategy.md) 🔄
@@ -58,18 +65,18 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
    - Set up automatic updates
    - Add data visualization options
 
-6. **Trigger System** ❌
-   - Implement trigger system based on [ADR 004: Trigger System Design](../docs/adr/004-trigger-system-design.md)
-   - Set up time-based triggers
-   - Implement event-based triggers
-   - Add error handling
+6. **Trigger System** ✅
+   - Implement trigger system based on [ADR 004: Trigger System Design](../docs/adr/004-trigger-system-design.md) ✅
+   - Set up time-based triggers ✅
+   - Implement event-based triggers ✅
+   - Add error handling ✅
 
-7. **Testing and Validation** ❌
-   - Create test suite for data normalization
-   - Test with various sheet formats
-   - Validate ID generation and uniqueness
-   - Test categorization accuracy
-   - Verify data consistency across sheets
+7. **Testing and Validation** 🔄
+   - Create test suite for data normalization 🔄
+   - Test with various sheet formats 🔄
+   - Validate ID generation and uniqueness 🔄
+   - Test categorization accuracy ❌
+   - Verify data consistency across sheets 🔄
 
 ## 5. Security Considerations
 
@@ -94,27 +101,27 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
 
 ## 8. Development Timeline
 
-- **Phase 1 (2 hours)**: Basic setup and data normalization
-  - Set up Google Apps Script project
-  - Configure API access and permissions
-  - Create functions to read from bank sheets
-  - Normalize data formats
+- **Phase 1 (2 hours)**: Basic setup and data normalization ✅
+  - Set up Google Apps Script project ✅
+  - Configure API access and permissions ✅
+  - Create functions to read from bank sheets ✅
+  - Normalize data formats ✅
 
-- **Phase 2 (3 hours)**: ChatGPT integration and categorization
-  - Implement OpenAI API integration
-  - Create categorization functions
-  - Add AI-suggested and override columns
-  - Test with sample transactions
+- **Phase 2 (3 hours)**: ChatGPT integration and categorization 🔄
+  - Implement OpenAI API integration 🔄
+  - Create categorization functions ❌
+  - Add AI-suggested and override columns ❌
+  - Test with sample transactions ❌
 
-- **Phase 3 (2 hours)**: Output sheet generation
-  - Create monthly summary sheet
-  - Implement automatic updates
-  - Set up triggers for sheet updates
+- **Phase 3 (2 hours)**: Output sheet generation ❌
+  - Create monthly summary sheet ❌
+  - Implement automatic updates ❌
+  - Set up triggers for sheet updates ❌
 
-- **Phase 4 (1 hour)**: Testing and refinement
-  - Test end-to-end workflow
-  - Fix any issues
-  - Document the system
+- **Phase 4 (1 hour)**: Testing and refinement 🔄
+  - Test end-to-end workflow 🔄
+  - Fix any issues 🔄
+  - Document the system 🔄
 
 - **Total**: 8 hours for complete implementation
 
