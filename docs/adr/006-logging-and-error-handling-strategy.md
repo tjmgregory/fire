@@ -22,8 +22,8 @@ We will implement a centralized logging and error handling system with the follo
 
 1. **Consistent Logging Approach**
    - Use native console methods with appropriate severity levels (error, warn, info, debug)
+   - Add structured context to log messages (function name, operation)
    - Keep detailed logs in the console for debugging
-   - Only log execution summaries and errors to spreadsheets 
    - Ensure all errors include stack traces
 
 2. **Guard Clause Pattern**
@@ -152,25 +152,9 @@ function processNewTransactions() {
     });
     
     console.info(`[processNewTransactions] Transaction processing complete`);
-    
-    // Log summary to the execution log sheet (not detailed logs)
-    logExecutionSummary({
-      function: 'processNewTransactions',
-      status: 'SUCCESS',
-      timestamp: new Date(),
-      details: `Processed ${sourceSheets.length} sheets`
-    });
   } catch (err) {
     // Log the full error with stack trace to console
     console.error(`[processNewTransactions] Error: ${err.message}`, err.stack);
-    
-    // Log basic error info to the execution log sheet
-    logExecutionSummary({
-      function: 'processNewTransactions',
-      status: 'ERROR',
-      timestamp: new Date(),
-      details: err.message
-    });
     
     // Re-throw to the entry point
     throw err;
@@ -191,26 +175,6 @@ function onTrigger() {
     return false;
   }
 }
-
-// Log only execution summaries to sheets, not detailed logs
-function logExecutionSummary(summary) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const logSheet = ss.getSheetByName('ExecutionLog') || ss.insertSheet('ExecutionLog');
-  
-  // Ensure headers exist
-  if (logSheet.getLastRow() === 0) {
-    logSheet.appendRow(['Timestamp', 'Function', 'Status', 'Details']);
-    logSheet.setFrozenRows(1);
-  }
-  
-  // Log the summary
-  logSheet.appendRow([
-    summary.timestamp,
-    summary.function,
-    summary.status,
-    summary.details
-  ]);
-}
 ```
 
 ## Consequences
@@ -220,7 +184,6 @@ function logExecutionSummary(summary) {
 - Reduced likelihood of unexpected script termination
 - Cleaner code without unnecessary else clauses
 - Improved visibility into application flow with appropriate severity levels
-- Separation of concerns: console for detailed logs, sheets for execution summaries
 - Simpler logging implementation
 
 ### Negative
@@ -234,10 +197,9 @@ function logExecutionSummary(summary) {
 ## Implementation Notes
 
 1. Update code to use appropriate console methods (error, warn, info, debug)
-2. Create a simple execution log sheet for tracking runs
-3. Update error handling in top-level functions
-4. Implement guard clauses in validation logic
-5. Document logging and error handling best practices
+2. Update error handling in top-level functions
+3. Implement guard clauses in validation logic
+4. Document logging and error handling best practices
 
 ## Implementation Plan
-See corresponding implementation plan: `plans/2025-05-11_12:40_logging_and_error_handling_implementation.md` 
+See corresponding implementation plan: `plans/2025-05-11-12-40_logging_and_error_handling_implementation.md` 
