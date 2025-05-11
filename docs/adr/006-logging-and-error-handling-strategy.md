@@ -37,6 +37,7 @@ We will implement a centralized logging and error handling system with the follo
    - Allow errors to propagate naturally through the call stack
    - Never both log an error and then throw it in the same function (avoid duplicate logging)
    - Log errors only where they are caught and handled
+   - Use try/catch blocks only when necessary and keep them focused around specific operations
 
 ## Code Samples
 
@@ -101,28 +102,30 @@ function parseData(input) {
     throw new Error(`Input is not a string (type: ${typeof input})`);
   }
   
+  // Debug log for normal operation
+  console.debug(`[parseData] Parsing JSON string of length ${input.length}`);
+  
+  // Focused try/catch only around the operation that might throw a specific error
+  let parsed;
   try {
-    console.debug(`[parseData] Parsing JSON string of length ${input.length}`);
-    const parsed = JSON.parse(input);
-    
-    if (!parsed) {
-      throw new Error(`Parsed result is empty`);
-    }
-    
-    if (!parsed.data) {
-      throw new Error(`No data property found in: ${Object.keys(parsed).join(', ')}`);
-    }
-    
-    console.debug(`[parseData] Successfully parsed data object with keys: ${Object.keys(parsed.data).join(', ')}`);
-    return parsed.data;
+    parsed = JSON.parse(input);
   } catch (err) {
-    // Only catch JSON.parse errors, then create a more informative error and throw it
-    if (err.name === 'SyntaxError') {
-      throw new Error(`Invalid JSON format: ${err.message}`);
-    }
-    // Otherwise just let the error propagate (already handled guard clauses)
-    throw err;
+    // Only catch JSON.parse errors, then create a more informative error
+    throw new Error(`Invalid JSON format: ${err.message}`);
   }
+  
+  // Continue with normal validation flow outside the try/catch
+  if (!parsed) {
+    throw new Error(`Parsed result is empty`);
+  }
+  
+  if (!parsed.data) {
+    throw new Error(`No data property found in: ${Object.keys(parsed).join(', ')}`);
+  }
+  
+  // Debug log for successful operation
+  console.debug(`[parseData] Successfully parsed data object with keys: ${Object.keys(parsed.data).join(', ')}`);
+  return parsed.data;
 }
 
 // Intermediate function: throws errors without logging
@@ -203,6 +206,7 @@ function onTrigger() {
 - Improved visibility into application flow with appropriate severity levels
 - Simpler logging implementation
 - No duplicate logging of the same error
+- Focused, minimal try/catch blocks
 
 ### Negative
 - Need to refactor existing code to use the new pattern
@@ -219,6 +223,7 @@ function onTrigger() {
 3. Implement guard clauses in validation logic
 4. Document logging and error handling best practices
 5. Ensure errors are only logged where they are caught and handled
+6. Keep try/catch blocks focused only on operations that need special error handling
 
 ## Implementation Plan
 See corresponding implementation plan: `plans/2025-05-11-12-40_logging_and_error_handling_implementation.md` 

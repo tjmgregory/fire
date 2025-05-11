@@ -27,6 +27,7 @@ This plan implements the logging and error handling strategy defined in ADR 006.
    - Catch and handle errors only at top-level entry points
    - Never both log an error and throw it in the same function
    - Log errors only where they are caught and handled
+   - Keep try/catch blocks focused only on specific operations that need special error handling
 
 ## Implementation Steps
 
@@ -41,6 +42,7 @@ This plan implements the logging and error handling strategy defined in ADR 006.
    - [ ] Add top-level error handling in entry point functions
    - [ ] Ensure errors are only logged where they are caught
    - [ ] Use consistent function naming and structure
+   - [ ] Keep try/catch blocks minimal and focused
 
 3. [ ] Update utils.gs to use proper error handling
    - [ ] Replace logError method with proper error handling
@@ -48,12 +50,14 @@ This plan implements the logging and error handling strategy defined in ADR 006.
    - [ ] Refactor validation logic to use guard clauses
    - [ ] Remove any instances of logging and then throwing
    - [ ] Ensure error propagation to caller functions
+   - [ ] Minimize and focus the scope of try/catch blocks
 
 4. [ ] Create examples and documentation
    - [ ] Add examples for proper logging usage
    - [ ] Document error handling best practices
    - [ ] Create guidelines for error message content
    - [ ] Include log level usage guidelines
+   - [ ] Document when to use try/catch blocks and how to scope them
 
 ## Timeline
 - Implementation of core components: 0.5 day
@@ -91,6 +95,11 @@ This plan implements the logging and error handling strategy defined in ADR 006.
    - Check that debug messages include sufficient detail
    - Verify info messages track main program flow
    - Confirm error messages include stack traces
+
+5. Focused try/catch blocks
+   - Verify try/catch blocks only wrap specific error-prone operations
+   - Check that normal validation occurs outside the try/catch blocks
+   - Confirm that errors are converted to more meaningful ones when caught
 
 ## Edge Cases
 1. Very large stack traces in the console
