@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## File Organization
 - All new or active planning documents should be stored in the `docs/plans/active` directory
-- Planning documents should follow the naming convention: `YYYY-MM-DD-hh-mm_description.md`, calculating today's date and time when created
+- Planning documents should follow the naming convention: `YYYY-MM-DD-hh-mm_description.md`, calculating today's date and time when creating a new file `timestamp=$(date "+%Y-%m-%d-%H-%M")`
 - Implementation files should be stored in appropriate feature directories
 
 ## Code Style
