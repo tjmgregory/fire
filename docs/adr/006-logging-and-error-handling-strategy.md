@@ -41,157 +41,158 @@ We will implement a centralized logging and error handling system with the follo
 
 ## Code Samples
 
-### Before: Current Error Handling Pattern
+### Before: Current Error Handling Issues
 
 ```javascript
-/**
- * Parse date and time with inconsistent error handling
- */
-parseDateTime(dateStr, timeStr, sourceSheet) {
-  let date, time, dateTime;
+// Issue 1: Duplicate logging
+function processData(data) {
+  try {
+    // Process data
+  } catch (err) {
+    console.error("Error processing data:", err); // Console log
+    this.logError("processData", err);            // Spreadsheet log
+    throw err;  // Re-throws, terminating execution
+  }
+}
 
-  // No check for undefined/null
-  
-  if (sourceSheet.toLowerCase() === 'monzo') {
-    if (dateStr instanceof Date) {
-      dateTime = new Date(dateStr);
-      
-      if (timeStr) {
-        console.log(`[parseDateTime] Monzo timeStr type: ${typeof timeStr}, value: ${timeStr}`);
-        
-        if (typeof timeStr === 'string') {
-          // If timeStr is a string in format HH:mm:ss
-          const [hours, minutes, seconds] = timeStr.split(':');
-          dateTime.setHours(hours, minutes, seconds);
-        } else if (timeStr instanceof Date) {
-          // If timeStr is a Date object, extract time components from it
-          const hours = timeStr.getHours();
-          const minutes = timeStr.getMinutes();
-          const seconds = timeStr.getSeconds();
-          dateTime.setHours(hours, minutes, seconds);
+// Issue 2: Deep nesting and complex conditionals
+function parseData(input) {
+  if (input) {
+    if (typeof input === 'string') {
+      try {
+        const parsed = JSON.parse(input);
+        if (parsed) {
+          if (parsed.data) {
+            return parsed.data;
+          } else {
+            console.error("No data property found");
+            return null;
+          }
+        } else {
+          console.error("Parsed result is empty");
+          return null;
         }
+      } catch (err) {
+        console.error("Error parsing JSON:", err);
+        return null;
       }
     } else {
-      const msg = `[parseDateTime] Monzo dateStr is not a Date object: ${dateStr}`;
-      this.logError('parseDateTime', msg);
-      console.error(`[parseDateTime] ${msg}`); // Duplicate logging
-      throw new Error(msg); // Error propagation stops execution
+      console.error("Input is not a string");
+      return null;
     }
-  } else if (sourceSheet.toLowerCase() === 'revolut') {
-    // Different handling approach
-    // ...
+  } else {
+    console.error("Input is null or undefined");
+    return null;
   }
-  
-  // Deep nesting and multiple returns
-  return result;
 }
 ```
 
-### After: Improved Error Handling and Logging Pattern
+### After: Simplified and Consistent Approach
 
 ```javascript
-/**
- * Parse date and time with consistent error handling
- */
-parseDateTime(dateStr, timeStr, sourceSheet) {
-  // Guard clause for validation
-  if (!dateStr) {
-    // Single logging call with appropriate level, context captured
-    return logger.error('parseDateTime', 'dateStr is undefined/null', { sourceSheet });
-  }
-  
-  if (!sourceSheet) {
-    return logger.error('parseDateTime', 'sourceSheet is undefined/null');
-  }
-  
-  // Normalized sheet name to avoid repetition
-  const sheetName = sourceSheet.toLowerCase();
-  
-  // Early return pattern with appropriate logging
-  if (sheetName === 'monzo') {
-    // Log at INFO level for normal operation
-    logger.info('parseDateTime', 'Processing Monzo date format', { dateType: typeof dateStr });
-    
-    // Guard clause
-    if (!(dateStr instanceof Date)) {
-      return logger.error('parseDateTime', 'Monzo dateStr is not a Date object', { 
-        dateValue: String(dateStr),
-        dateType: typeof dateStr
-      });
-    }
-    
-    // Continue with normal operation
-    const dateTime = new Date(dateStr);
-    
-    // Process the time if available (no else needed)
-    if (timeStr) {
-      return processMonzoTime(dateTime, timeStr);
-    }
-    
-    return formatDateTime(dateTime);
-  }
-  
-  if (sheetName === 'revolut') {
-    // Similar pattern for Revolut
-    // ...
-  }
-  
-  // If we reach here, the sheet type is unknown
-  return logger.error('parseDateTime', 'Unknown sheet type', { sheetName });
+// Centralized logging with severity levels
+function logInfo(functionName, message) {
+  console.log(`[INFO] [${functionName}] ${message}`);
+  // Also log to spreadsheet with timestamp
+  logToSheet("INFO", functionName, message);
 }
 
-/**
- * Example of a function using safeExecute for protected execution
- */
-processNewTransactions() {
-  logger.info('processNewTransactions', 'Starting transaction processing');
+function logError(functionName, error, context = {}) {
+  // Ensure we have a proper Error object with stack trace
+  const errorObj = error instanceof Error ? error : new Error(error);
   
-  // Safe execution that won't terminate the program
-  return logger.safeExecute(
-    () => {
-      const sourceSheets = config.getSourceSheets();
-      const outputSheet = config.getOutputSheet();
-      
-      // Get existing transaction IDs
-      const existingIds = getExistingTransactionIds(outputSheet);
-      
-      // Process each source sheet
-      sourceSheets.forEach(sheet => {
-        logger.debug('processNewTransactions', `Processing sheet: ${sheet.getName()}`);
-        
-        try {
-          const transactions = utils.getNewTransactions(sheet)
-            .map(t => ({ ...t, sourceSheet: sheet.getName() }));
-          
-          // Filter out already processed transactions
-          const newTransactions = transactions.filter(t => !existingIds.includes(t.id));
-          
-          logger.info('processNewTransactions', `Found ${newTransactions.length} new transactions`, {
-            sheetName: sheet.getName()
-          });
-          
-          if (newTransactions.length > 0) {
-            utils.writeNormalizedTransactions(newTransactions, outputSheet);
-          }
-        } catch (err) {
-          // Log but continue processing other sheets
-          logger.error('processNewTransactions', `Error processing sheet: ${sheet.getName()}`, {
-            error: err
-          });
-          // Continue with the next sheet rather than terminating
-        }
-      });
-      
-      logger.info('processNewTransactions', 'Transaction processing complete');
-    },
-    'processNewTransactions',
-    [], // No arguments
-    {
-      rethrow: false,
-      onError: (err) => logger.warning('processNewTransactions', 'Process completed with errors'),
-      defaultValue: false
+  // Log to console with stack trace
+  console.error(`[ERROR] [${functionName}] ${errorObj.message}`, errorObj.stack);
+  
+  // Log to spreadsheet with context and stack trace
+  logToSheet("ERROR", functionName, errorObj.message, errorObj.stack, context);
+  
+  // Return the error for convenience
+  return errorObj;
+}
+
+// Simplified error handling with guard clauses
+function processData(data) {
+  try {
+    logInfo("processData", "Starting data processing");
+    
+    // Process data
+    // ...
+    
+    logInfo("processData", "Data processing complete");
+    return result;
+  } catch (err) {
+    // Single logging call that captures stack trace
+    logError("processData", err);
+    // Don't throw, allows script to continue
+    return null;
+  }
+}
+
+// Early returns instead of deep nesting
+function parseData(input) {
+  // Guard clauses for validation
+  if (!input) {
+    logError("parseData", "Input is null or undefined");
+    return null;
+  }
+  
+  if (typeof input !== 'string') {
+    logError("parseData", "Input is not a string");
+    return null;
+  }
+  
+  try {
+    const parsed = JSON.parse(input);
+    
+    if (!parsed) {
+      logError("parseData", "Parsed result is empty");
+      return null;
     }
-  );
+    
+    if (!parsed.data) {
+      logError("parseData", "No data property found");
+      return null;
+    }
+    
+    return parsed.data;
+  } catch (err) {
+    logError("parseData", `Error parsing JSON: ${err.message}`);
+    return null;
+  }
+}
+
+// Main function with try/catch for top-level error handling
+function processNewTransactions() {
+  logInfo("processNewTransactions", "Starting transaction processing");
+  
+  try {
+    const sourceSheets = config.getSourceSheets();
+    const outputSheet = config.getOutputSheet();
+    
+    // Process each source sheet
+    sourceSheets.forEach(sheet => {
+      try {
+        logInfo("processNewTransactions", `Processing sheet: ${sheet.getName()}`);
+        
+        const transactions = getNewTransactions(sheet);
+        
+        // Continue processing...
+        logInfo("processNewTransactions", `Found ${transactions.length} transactions`);
+      } catch (err) {
+        // Log errors but continue with other sheets
+        logError("processNewTransactions", 
+                `Error processing sheet ${sheet.getName()}: ${err.message}`);
+        // No throw, so loop continues
+      }
+    });
+    
+    logInfo("processNewTransactions", "Transaction processing complete");
+  } catch (err) {
+    // Catch and log any unexpected errors
+    logError("processNewTransactions", "Unexpected error in transaction processing", err);
+    // We could throw here if needed, but generally we want to avoid terminating
+  }
 }
 ```
 
