@@ -40,10 +40,39 @@ This plan addresses two key issues in our data normalization strategy:
   - Document the currency conversion priorities
   - Add code examples showing the implementation
 
-- [ ] **Step 5: Re-assess the plan and implementation**
-  - Review changes for completeness
-  - Verify that all currency-related edge cases are handled
-  - Check that no new issues have been introduced
+- [x] **Step 5: Re-assess the plan and implementation**
+  - Review changes for completeness:
+    - ✅ ADR-001 has been updated to reflect the improved reference generation strategy
+    - ✅ The `normalizeAmount` function now properly prioritizes native GBP amounts
+    - ✅ The `generateOriginalReference` function no longer includes amount values
+    - ✅ Bank-specific reference generation has been implemented
+    - ✅ Documentation has been updated with clear comments
+  - Verify that all currency-related edge cases are handled:
+    - ✅ Yonder's native GBP amount is used directly when available
+    - ✅ References no longer include amount values that could fluctuate
+    - ✅ Currency conversion is only applied when necessary
+    - ✅ Proper error handling is in place for missing/invalid currencies
+    - ✅ The implementation correctly handles all three banks (Monzo, Revolut, Yonder)
+  - Potential limitations and future work:
+    - ⚠️ If exchange rates change dramatically, normalized amounts will still be different for historical transactions
+    - ⚠️ The bank-specific detection relies on the sheet name containing the bank name
+    - ⚠️ Additional banks may need specific reference generation rules
+
+## Conclusion
+
+The implemented solution successfully addresses the two main issues identified:
+
+1. ✅ Unnecessary currency conversion for sheets with native GBP columns (Yonder)
+2. ✅ Including amount values in the original reference
+
+The changes ensure that:
+- References are stable across time, even when exchange rates change
+- Native GBP amounts are used when available, avoiding unnecessary conversion
+- Each bank has a tailored reference generation approach that maintains uniqueness
+
+These improvements will enhance deduplication reliability and ensure we use the most accurate available amounts for each transaction.
+
+All steps of the plan have been completed successfully. This plan can now be moved to the completed plans folder.
 
 ## Timeline
 Implementation can be completed within 1-2 days.
