@@ -56,16 +56,24 @@ class Config {
    * @returns {Array} Array of sheet objects
    */
   getSourceSheets() {
+    console.info('[getSourceSheets] Getting source sheets...');
+    
     const ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) {
+      throw new Error('No active spreadsheet found');
+    }
+    
     const sheets = ss.getSheets();
     const expectedNames = ['monzo', 'revolut', 'yonder'];
     const allNames = sheets.map(s => s.getName());
-    console.log(`[getSourceSheets] All sheet names: ${JSON.stringify(allNames)}`);
+    console.debug(`[getSourceSheets] All sheet names: ${JSON.stringify(allNames)}`);
+    
     const selected = sheets.filter(sheet => {
       const name = sheet.getName().toLowerCase();
       return expectedNames.includes(name);
     });
-    console.log(`[getSourceSheets] Selected source sheets: ${JSON.stringify(selected.map(s => s.getName()))}`);
+    
+    console.info(`[getSourceSheets] Found ${selected.length} source sheets: ${JSON.stringify(selected.map(s => s.getName()))}`);
     return selected;
   }
   
@@ -74,14 +82,20 @@ class Config {
    * @returns {Sheet} The output sheet
    */
   getOutputSheet() {
+    console.info('[getOutputSheet] Getting output sheet...');
+    
     const ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) {
+      throw new Error('No active spreadsheet found');
+    }
+    
     let sheet = ss.getSheetByName(this.SHEET_NAMES.OUTPUT);
     if (!sheet) {
-      console.log(`[getOutputSheet] Output sheet not found. Creating: ${this.SHEET_NAMES.OUTPUT}`);
+      console.info(`[getOutputSheet] Output sheet not found. Creating: ${this.SHEET_NAMES.OUTPUT}`);
       sheet = ss.insertSheet(this.SHEET_NAMES.OUTPUT);
       this.initializeOutputSheet(sheet);
     } else {
-      console.log(`[getOutputSheet] Output sheet found: ${this.SHEET_NAMES.OUTPUT}`);
+      console.debug(`[getOutputSheet] Output sheet found: ${this.SHEET_NAMES.OUTPUT}`);
     }
     return sheet;
   }
@@ -91,6 +105,11 @@ class Config {
    * @param {Sheet} sheet - The sheet to initialize
    */
   initializeOutputSheet(sheet) {
+    // Guard clause for required parameter
+    if (!sheet) {
+      throw new Error('Sheet parameter is required');
+    }
+    
     const headers = [
       this.OUTPUT_COLUMNS.DATE,
       this.OUTPUT_COLUMNS.DESCRIPTION,
@@ -109,8 +128,10 @@ class Config {
       this.OUTPUT_COLUMNS.CATEGORIZATION_TIMESTAMP,
       this.OUTPUT_COLUMNS.ERROR_DETAILS
     ];
-    console.log(`[initializeOutputSheet] Initializing output sheet with headers: ${JSON.stringify(headers)}`);
+    
+    console.debug(`[initializeOutputSheet] Initializing output sheet with headers: ${JSON.stringify(headers)}`);
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     sheet.setFrozenRows(1);
+    console.info('[initializeOutputSheet] Output sheet initialized successfully');
   }
 } 
