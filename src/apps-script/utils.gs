@@ -746,7 +746,7 @@ class Utils {
     
     // If we have an original ID from the source, use it (e.g., Monzo)
     if (originalId) {
-      console.log(`[generateOriginalReference] Using original ID from source: ${originalId}`);
+      // console.log(`[generateOriginalReference] Using original ID from source: ${originalId}`);
       return originalId;
     }
     
@@ -759,7 +759,7 @@ class Utils {
       // For Revolut: Use ${date}T${time}_${type}
       const typeValue = transactionType || 'UNKNOWN';
       const generatedRef = `${datePart}T${timePart}_${typeValue}`;
-      console.log(`[generateOriginalReference] Generated Revolut reference: ${generatedRef}`);
+      // console.log(`[generateOriginalReference] Generated Revolut reference: ${generatedRef}`);
       return generatedRef;
     } else if (sourceSheet.toLowerCase().includes('yonder')) {
       // For Yonder: Use ${date}T${time}_${truncatedDescription}
