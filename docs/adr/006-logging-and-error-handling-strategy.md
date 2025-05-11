@@ -20,13 +20,11 @@ These issues make the codebase harder to maintain and debug, while potentially c
 
 We will implement a centralized logging and error handling system with the following components:
 
-1. **Unified Logger Class**
-   - Handles both error and general application logging
-   - Logs all errors with stack traces
-   - Supports different severity levels (FATAL, ERROR, WARNING, INFO, DEBUG)
-   - Allows for controlled error propagation
-   - Provides context-aware reporting
-   - Standardizes log format and storage
+1. **Consistent Logging Approach**
+   - Use native console methods with appropriate severity levels (error, warn, info, debug)
+   - Keep detailed logs in the console for debugging
+   - Only log execution summaries and errors to spreadsheets 
+   - Ensure all errors include stack traces
 
 2. **Guard Clause Pattern**
    - Early returns from functions when validation fails
@@ -36,7 +34,6 @@ We will implement a centralized logging and error handling system with the follo
 3. **Consistent Error Handling**
    - Create informative errors with context directly where they occur
    - Catch errors only at top-level entry points
-   - Log all errors with stack traces
    - Allow errors to propagate naturally through the call stack
 
 ## Code Samples
@@ -90,50 +87,40 @@ function parseData(input) {
 ### After: Simplified and Consistent Approach
 
 ```javascript
-// Simple logging functions - separate from error handling
-function logInfo(functionName, message) {
-  console.log(`[INFO] [${functionName}] ${message}`);
-  // Also log to spreadsheet with timestamp
-  logToSheet("INFO", functionName, message);
-}
-
-function logError(functionName, error) {
-  // Get the actual Error object with stack trace (already created with proper context)
-  const errorObj = error instanceof Error ? error : new Error(error);
-  
-  // Log to console with stack trace
-  console.error(`[ERROR] [${functionName}] ${errorObj.message}`, errorObj.stack);
-  
-  // Log to spreadsheet with stack trace
-  logToSheet("ERROR", functionName, errorObj.message, errorObj.stack);
-}
-
-// Clean validation with guard clauses - throws informative errors directly
+// Use native console methods with appropriate severity levels
+// These add structure to logging without additional complexity
 function parseData(input) {
   // Guard clauses for validation
   if (!input) {
+    console.error(`[parseData] Input is null or undefined`);
     throw new Error(`Input is null or undefined`);
   }
   
   if (typeof input !== 'string') {
+    console.error(`[parseData] Input is not a string (type: ${typeof input})`);
     throw new Error(`Input is not a string (type: ${typeof input})`);
   }
   
   try {
+    console.debug(`[parseData] Parsing JSON string of length ${input.length}`);
     const parsed = JSON.parse(input);
     
     if (!parsed) {
+      console.error(`[parseData] Parsed result is empty`);
       throw new Error(`Parsed result is empty`);
     }
     
     if (!parsed.data) {
+      console.error(`[parseData] No data property found in: ${Object.keys(parsed).join(', ')}`);
       throw new Error(`No data property found in: ${Object.keys(parsed).join(', ')}`);
     }
     
+    console.debug(`[parseData] Successfully parsed data object with keys: ${Object.keys(parsed.data).join(', ')}`);
     return parsed.data;
   } catch (err) {
     // Only catch JSON.parse errors, then create a more informative error and throw it
     if (err.name === 'SyntaxError') {
+      console.error(`[parseData] Invalid JSON format: ${err.message}`);
       throw new Error(`Invalid JSON format: ${err.message}`);
     }
     // Otherwise just let the error propagate (already handled guard clauses)
@@ -144,28 +131,47 @@ function parseData(input) {
 // Top-level handler shows error flows
 function processNewTransactions() {
   try {
-    logInfo("processNewTransactions", "Starting transaction processing");
+    console.info(`[processNewTransactions] Starting transaction processing`);
     
     const sourceSheets = config.getSourceSheets();
+    console.debug(`[processNewTransactions] Found ${sourceSheets.length} source sheets to process`);
+    
     const outputSheet = config.getOutputSheet();
     
     // Process each source sheet - errors will naturally propagate
     sourceSheets.forEach(sheet => {
-      logInfo("processNewTransactions", `Processing sheet: ${sheet.getName()}`);
+      console.info(`[processNewTransactions] Processing sheet: ${sheet.getName()}`);
       
       // These function calls will throw errors if there are problems
       const transactions = getNewTransactions(sheet);
-      logInfo("processNewTransactions", `Found ${transactions.length} transactions`);
+      console.info(`[processNewTransactions] Found ${transactions.length} transactions in ${sheet.getName()}`);
       
       writeTransactions(transactions, outputSheet);
       
-      logInfo("processNewTransactions", `Processed sheet: ${sheet.getName()}`);
+      console.info(`[processNewTransactions] Processed sheet: ${sheet.getName()}`);
     });
     
-    logInfo("processNewTransactions", "Transaction processing complete");
+    console.info(`[processNewTransactions] Transaction processing complete`);
+    
+    // Log summary to the execution log sheet (not detailed logs)
+    logExecutionSummary({
+      function: 'processNewTransactions',
+      status: 'SUCCESS',
+      timestamp: new Date(),
+      details: `Processed ${sourceSheets.length} sheets`
+    });
   } catch (err) {
-    // Log the error at the top level
-    logError("processNewTransactions", err);
+    // Log the full error with stack trace to console
+    console.error(`[processNewTransactions] Error: ${err.message}`, err.stack);
+    
+    // Log basic error info to the execution log sheet
+    logExecutionSummary({
+      function: 'processNewTransactions',
+      status: 'ERROR',
+      timestamp: new Date(),
+      details: err.message
+    });
+    
     // Re-throw to the entry point
     throw err;
   }
@@ -174,14 +180,36 @@ function processNewTransactions() {
 // Entry point - only place we need to catch and swallow errors
 function onTrigger() {
   try {
+    console.info(`[onTrigger] Starting scheduled execution`);
     processNewTransactions();
-    return true; // Only return values that mean something
+    console.info(`[onTrigger] Execution completed successfully`);
+    return true;
   } catch (err) {
     // This is where we ensure the script doesn't crash
-    logError("onTrigger", err);
+    console.error(`[onTrigger] Execution failed: ${err.message}`, err.stack);
     // We could notify admin here if needed
-    return false; // Only return values that mean something
+    return false;
   }
+}
+
+// Log only execution summaries to sheets, not detailed logs
+function logExecutionSummary(summary) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const logSheet = ss.getSheetByName('ExecutionLog') || ss.insertSheet('ExecutionLog');
+  
+  // Ensure headers exist
+  if (logSheet.getLastRow() === 0) {
+    logSheet.appendRow(['Timestamp', 'Function', 'Status', 'Details']);
+    logSheet.setFrozenRows(1);
+  }
+  
+  // Log the summary
+  logSheet.appendRow([
+    summary.timestamp,
+    summary.function,
+    summary.status,
+    summary.details
+  ]);
 }
 ```
 
@@ -191,27 +219,24 @@ function onTrigger() {
 - Better error traceability with consistent stack traces
 - Reduced likelihood of unexpected script termination
 - Cleaner code without unnecessary else clauses
-- Centralized logging for easier debugging and application monitoring
-- Ability to categorize messages by severity
-- Improved context for faster issue resolution
-- Better visibility into application flow and state
+- Improved visibility into application flow with appropriate severity levels
+- Separation of concerns: console for detailed logs, sheets for execution summaries
+- Simpler logging implementation
 
 ### Negative
 - Need to refactor existing code to use the new pattern
 - Small learning curve for new logging approach
-- Slight increase in code complexity with additional class
 
 ### Neutral
-- Different logging approach than standard Google Apps Script practices
-- Added indirection through Logger class
-- Potential increase in log storage requirements
+- Some loss of log persistence compared to sheet-based logging
+- Potential need for additional monitoring in production environments
 
 ## Implementation Notes
 
-1. Create a dedicated Logger class with error handling capabilities
-2. Modify Utils class to use Logger
-3. Update existing code to use new logging pattern
-4. Add tests for logging and error handling scenarios
+1. Update code to use appropriate console methods (error, warn, info, debug)
+2. Create a simple execution log sheet for tracking runs
+3. Update error handling in top-level functions
+4. Implement guard clauses in validation logic
 5. Document logging and error handling best practices
 
 ## Implementation Plan
