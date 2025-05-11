@@ -162,20 +162,3 @@ function categorizeTransactions() {
   console.info(`[categorizeTransactions] Found ${toCategorize.length} transactions to categorize.`);
   // TODO: Implement categorization logic for these rows
 }
-
-/**
- * Entry point for trigger-based execution
- */
-function onTrigger() {
-  try {
-    console.info('[onTrigger] Starting scheduled execution');
-    processNewTransactions();
-    console.info('[onTrigger] Execution completed successfully');
-    return true;
-  } catch (error) {
-    // This is where we ensure the script doesn't crash
-    // Log the error ONLY at the place where it's caught and handled
-    console.error('[onTrigger] Execution failed:', error);
-    return false;
-  }
-} 
