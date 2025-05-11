@@ -675,8 +675,17 @@ class Utils {
       throw new Error('Amount object is required');
     }
     
-    if (originalId) return originalId;
-    return `${dateTime.date}T${dateTime.time.split(':')[0]}:${dateTime.time.split(':')[1]}_${amount.value.toFixed(2)}`;
+    // If we have an original ID from the source, use it
+    if (originalId) {
+      console.log(`[generateOriginalReference] Using original ID from source: ${originalId}`);
+      return originalId;
+    }
+    
+    // Otherwise, generate a deterministic reference as per ADR-001
+    const generatedRef = `${dateTime.date}T${dateTime.time.split(':')[0]}:${dateTime.time.split(':')[1]}_${amount.value.toFixed(2)}`;
+    console.log(`[generateOriginalReference] Generated reference: ${generatedRef} from date=${dateTime.date}, time=${dateTime.time}, amount=${amount.value}`);
+    
+    return generatedRef;
   }
   
   /**
@@ -717,5 +726,62 @@ class Utils {
     
     console.log(`[writeNormalizedTransactions] Writing ${rows.length} transactions to output sheet`);
     outputSheet.getRange(outputSheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+  }
+  
+  /**
+   * Check for potential duplicate transactions and log detailed information
+   * This helps detect edge cases and diagnose issues with duplicate detection
+   * @param {Array} newTransactions - Array of transactions to be added
+   * @param {Array} existingRefs - Array of existing references
+   * @param {string} sourceSheet - Name of the source sheet being processed
+   * @returns {Object} Statistics about potential duplicates found
+   */
+  checkForDuplicates(newTransactions, existingRefs, sourceSheet) {
+    // Guard clause for required parameters
+    if (!newTransactions || !Array.isArray(newTransactions)) {
+      throw new Error('New transactions must be an array');
+    }
+    if (!existingRefs || !Array.isArray(existingRefs)) {
+      throw new Error('Existing references must be an array');
+    }
+    if (!sourceSheet) {
+      throw new Error('Source sheet name is required');
+    }
+    
+    // Find potential duplicates
+    const duplicates = newTransactions.filter(t => existingRefs.includes(t.originalReference));
+    
+    // Create a result object with statistics
+    const result = {
+      total: newTransactions.length,
+      unique: newTransactions.length - duplicates.length,
+      duplicates: duplicates.length,
+      duplicateDetails: [] // Store details about each duplicate for diagnostics
+    };
+    
+    // Skip detailed logging if no duplicates found
+    if (duplicates.length === 0) {
+      console.log(`[checkForDuplicates] No duplicates found in ${sourceSheet}.`);
+      return result;
+    }
+    
+    // Log duplicate details for diagnosis
+    console.log(`[checkForDuplicates] Found ${duplicates.length} potential duplicates in ${sourceSheet}.`);
+    
+    duplicates.forEach(dup => {
+      const details = {
+        originalReference: dup.originalReference,
+        date: dup.date,
+        time: dup.time,
+        amount: dup.amount,
+        description: dup.description,
+        transactionMethod: dup.transactionMethod
+      };
+      
+      console.log(`[checkForDuplicates] Duplicate transaction: ${JSON.stringify(details)}`);
+      result.duplicateDetails.push(details);
+    });
+    
+    return result;
   }
 } 

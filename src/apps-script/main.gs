@@ -112,23 +112,66 @@ function processNewTransactions() {
   const sourceSheets = config.getSourceSheets();
   const outputSheet = config.getOutputSheet();
   
-  // Get all existing transaction IDs in the output sheet
+  // Get all existing originalReferences in the output sheet - key change for duplicate detection
   const lastRow = outputSheet.getLastRow();
-  const idCol = 9; // Transaction ID column (1-based)
-  const existingIds = lastRow > 1 ? outputSheet.getRange(2, idCol, lastRow - 1, 1).getValues().flat() : [];
+  const originalRefCol = 10; // Original Reference column (1-based)
+  const existingRefs = lastRow > 1 ? outputSheet.getRange(2, originalRefCol, lastRow - 1, 1).getValues().flat() : [];
+  
+  console.log(`[processNewTransactions] Found ${existingRefs.length} existing transaction references.`);
+
+  // Summary stats for logging and reporting
+  const processingStats = {
+    processed: 0,
+    added: 0,
+    duplicatesSkipped: 0,
+    sheetStats: {}
+  };
 
   // Process each source sheet
   sourceSheets.forEach(sheet => {
-    console.log(`[processNewTransactions] Processing source sheet: ${sheet.getName()}`);
-    const transactions = utils.getNewTransactions(sheet).map(t => ({ ...t, sourceSheet: sheet.getName() }));
-    // Filter out already processed transactions by ID
-    const newTransactions = transactions.filter(t => !existingIds.includes(t.id));
-    console.log(`[processNewTransactions] Found ${newTransactions.length} new transactions in sheet: ${sheet.getName()}`);
+    const sheetName = sheet.getName();
+    console.log(`[processNewTransactions] Processing source sheet: ${sheetName}`);
+    
+    // Normalize all transactions from the sheet
+    const transactions = utils.getNewTransactions(sheet).map(t => ({ ...t, sourceSheet: sheetName }));
+    
+    // Run duplicate check with detailed logging
+    const duplicateCheck = utils.checkForDuplicates(transactions, existingRefs, sheetName);
+    
+    // Filter out already processed transactions by originalReference
+    const newTransactions = transactions.filter(t => !existingRefs.includes(t.originalReference));
+    
+    // Update processing stats
+    processingStats.processed += transactions.length;
+    processingStats.duplicatesSkipped += duplicateCheck.duplicates;
+    processingStats.added += newTransactions.length;
+    processingStats.sheetStats[sheetName] = {
+      total: transactions.length,
+      duplicates: duplicateCheck.duplicates,
+      added: newTransactions.length
+    };
+    
+    console.log(`[processNewTransactions] Found ${newTransactions.length} new transactions in sheet: ${sheetName}`);
+    
     if (newTransactions.length > 0) {
       // Persist normalized transactions to output sheet
       utils.writeNormalizedTransactions(newTransactions, outputSheet);
+      console.log(`[processNewTransactions] Added ${newTransactions.length} new transactions from ${sheetName}`);
+    } else {
+      console.log(`[processNewTransactions] No new transactions to add from ${sheetName}`);
     }
   });
+  
+  // Log summary of processing
+  console.info('[processNewTransactions] Transaction processing summary:');
+  console.info(`- Total transactions processed: ${processingStats.processed}`);
+  console.info(`- Transactions added: ${processingStats.added}`);
+  console.info(`- Duplicates skipped: ${processingStats.duplicatesSkipped}`);
+  Object.keys(processingStats.sheetStats).forEach(sheet => {
+    const stats = processingStats.sheetStats[sheet];
+    console.info(`- ${sheet}: ${stats.total} processed, ${stats.added} added, ${stats.duplicates} duplicates`);
+  });
+  
   console.info('[processNewTransactions] Transaction processing complete.');
 }
 
