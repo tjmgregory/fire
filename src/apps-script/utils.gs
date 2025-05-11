@@ -166,6 +166,8 @@ class Utils {
     let dateTime;
 
     if (sourceSheet.toLowerCase() === 'monzo') {
+      console.log(`[parseDateTime] Monzo dateStr type: ${typeof dateStr}, value: ${dateStr}`);
+      
       // Monzo format: Date object and potentially Date object or HH:mm:ss string
       if (dateStr instanceof Date) {
         dateTime = new Date(dateStr);
@@ -176,13 +178,29 @@ class Utils {
           if (typeof timeStr === 'string') {
             // If timeStr is a string in format HH:mm:ss
             const [hours, minutes, seconds] = timeStr.split(':');
-            dateTime.setHours(hours, minutes, seconds);
+            dateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), parseInt(seconds, 10));
           } else if (timeStr instanceof Date) {
-            // If timeStr is a Date object, extract time components from it
-            const hours = timeStr.getHours();
-            const minutes = timeStr.getMinutes();
-            const seconds = timeStr.getSeconds();
-            dateTime.setHours(hours, minutes, seconds);
+            // Special handling for Google Sheets "zero date" (Dec 30, 1899) used for time-only values
+            const timeDate = new Date(timeStr);
+            
+            // Check if this is a time-only value from Google Sheets (year will be 1899 or 1900)
+            if (timeDate.getFullYear() <= 1900) {
+              console.log(`[parseDateTime] Detected Google Sheets time-only value: ${timeDate}`);
+              // Extract only time components, ignore the date part
+              const hours = timeDate.getHours();
+              const minutes = timeDate.getMinutes();
+              const seconds = timeDate.getSeconds();
+              
+              // Apply time to the main date
+              dateTime.setHours(hours, minutes, seconds);
+            } else {
+              // If it's a regular Date, extract time components
+              dateTime.setHours(
+                timeDate.getHours(),
+                timeDate.getMinutes(),
+                timeDate.getSeconds()
+              );
+            }
           }
         }
       } else {
@@ -193,11 +211,18 @@ class Utils {
       // ISO format: YYYY-MM-DD HH:mm:ss
       if (typeof dateStr === 'string') {
         dateTime = new Date(dateStr.replace(' ', 'T'));
+      } else if (dateStr instanceof Date) {
+        dateTime = new Date(dateStr);
       } else {
-        throw new Error(`${sourceSheet} dateStr is not a string: ${dateStr}`);
+        throw new Error(`${sourceSheet} dateStr has unexpected type (${typeof dateStr}): ${dateStr}`);
       }
     } else {
       throw new Error(`Unknown format for dateStr (${typeof dateStr}): ${dateStr} in sheet: ${sourceSheet}`);
+    }
+
+    // Validate we have a valid date before proceeding
+    if (!(dateTime instanceof Date) || isNaN(dateTime.getTime())) {
+      throw new Error(`Invalid date created from: dateStr=${dateStr}, timeStr=${timeStr}, sheet=${sourceSheet}`);
     }
 
     // Convert UK time to UTC
