@@ -46,7 +46,11 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
      - Transaction ID & reference generation ✅
      - Date/time parsing for different formats ✅
      - Amount normalization with debit/credit handling ✅
-     - Description normalization ✅
+     - Description normalization:
+       - ✅ Basic description extraction
+       - 🔄 Implement rich description combination strategy (as per ADR-001 table)
+       - 🔄 Update field mapping configurations for all bank sources
+       - 🔄 Add better error handling for description fields
      - Transaction type mapping ✅
      - Currency handling (TODO: implement conversion) 🔄
    - Create functions to read from each source sheet ✅
@@ -81,6 +85,11 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
    - Create test suite for data normalization 🔄
    - Test with various sheet formats 🔄
    - Validate ID generation and uniqueness 🔄
+   - Test rich description combination strategy 🔄
+     - Verify handling of empty fields
+     - Test with real Monzo, Revolut, and Yonder transactions
+     - Check edge cases (special characters, very long descriptions)
+     - Ensure consistent normalization across different banks
    - Test categorization accuracy ❌
    - Verify data consistency across sheets 🔄
    - Test separation of processes ❌
@@ -115,6 +124,10 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
   - Configure API access and permissions ✅
   - Create functions to read from bank sheets ✅
   - Normalize data formats ✅
+  - Implement rich description combination strategy 🔄
+    - Update code to follow ADR-001 description mapping table
+    - Test with various bank transactions
+    - Add comprehensive error handling
 
 - **Phase 2 (3 hours)**: ChatGPT integration and categorization 🔄
   - Implement OpenAI API integration 🔄
