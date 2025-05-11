@@ -66,7 +66,7 @@ class Config {
     const sheets = ss.getSheets();
     const expectedNames = ['monzo', 'revolut', 'yonder'];
     const allNames = sheets.map(s => s.getName());
-    console.debug(`[getSourceSheets] All sheet names: ${JSON.stringify(allNames)}`);
+    console.log(`[getSourceSheets] All sheet names: ${JSON.stringify(allNames)}`);
     
     const selected = sheets.filter(sheet => {
       const name = sheet.getName().toLowerCase();
@@ -95,7 +95,7 @@ class Config {
       sheet = ss.insertSheet(this.SHEET_NAMES.OUTPUT);
       this.initializeOutputSheet(sheet);
     } else {
-      console.debug(`[getOutputSheet] Output sheet found: ${this.SHEET_NAMES.OUTPUT}`);
+      console.log(`[getOutputSheet] Output sheet found: ${this.SHEET_NAMES.OUTPUT}`);
     }
     return sheet;
   }
@@ -129,7 +129,7 @@ class Config {
       this.OUTPUT_COLUMNS.ERROR_DETAILS
     ];
     
-    console.debug(`[initializeOutputSheet] Initializing output sheet with headers: ${JSON.stringify(headers)}`);
+    console.log(`[initializeOutputSheet] Initializing output sheet with headers: ${JSON.stringify(headers)}`);
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     sheet.setFrozenRows(1);
     console.info('[initializeOutputSheet] Output sheet initialized successfully');

@@ -22,7 +22,7 @@ class Utils {
     
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
-    console.debug(`[getNewTransactions] Header row: ${JSON.stringify(headers)}`);
+    console.log(`[getNewTransactions] Header row: ${JSON.stringify(headers)}`);
     
     // Get column mapping
     const columnMap = this.getColumnMap(sheet.getName());
@@ -37,7 +37,7 @@ class Utils {
     });
     
     // Process transactions (skip header row)
-    console.debug(`[getNewTransactions] Found ${data.length - 1} data rows in sheet: ${sheet.getName()}`);
+    console.log(`[getNewTransactions] Found ${data.length - 1} data rows in sheet: ${sheet.getName()}`);
     return data.slice(1).map(row => this.normalizeTransaction(row, indices, sheet.getName()));
   }
   
@@ -171,7 +171,7 @@ class Utils {
         dateTime = new Date(dateStr);
         
         if (timeStr) {
-          console.debug(`[parseDateTime] Monzo timeStr type: ${typeof timeStr}, value: ${timeStr}`);
+          console.log(`[parseDateTime] Monzo timeStr type: ${typeof timeStr}, value: ${timeStr}`);
           
           if (typeof timeStr === 'string') {
             // If timeStr is a string in format HH:mm:ss
@@ -207,7 +207,7 @@ class Utils {
     
     // Format as ISO string
     const isoString = utcDate.toISOString();
-    console.debug(`[parseDateTime] Converted ${dateStr} to UTC ISO: ${isoString}`);
+    console.log(`[parseDateTime] Converted ${dateStr} to UTC ISO: ${isoString}`);
     
     return {
       date: isoString,
@@ -381,7 +381,7 @@ class Utils {
       ''  // Error Details
     ]);
     
-    console.debug(`[writeNormalizedTransactions] Writing ${rows.length} transactions to output sheet`);
+    console.log(`[writeNormalizedTransactions] Writing ${rows.length} transactions to output sheet`);
     outputSheet.getRange(outputSheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
   }
 } 

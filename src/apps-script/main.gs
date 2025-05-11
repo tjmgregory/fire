@@ -35,7 +35,7 @@ function setupTriggers() {
   // Delete existing triggers
   const triggers = ScriptApp.getProjectTriggers();
   triggers.forEach(trigger => {
-    console.debug(`[setupTriggers] Deleting existing trigger for function: ${trigger.getHandlerFunction()}`);
+    console.log(`[setupTriggers] Deleting existing trigger for function: ${trigger.getHandlerFunction()}`);
     ScriptApp.deleteTrigger(trigger);
   });
   
@@ -60,7 +60,7 @@ function setupTriggers() {
       .forSpreadsheet(SpreadsheetApp.getActive())
       .onEdit()
       .create();
-    console.debug(`[setupTriggers] Created onEdit trigger for sheet: ${sheet.getName()}`);
+    console.log(`[setupTriggers] Created onEdit trigger for sheet: ${sheet.getName()}`);
   });
   console.info('[setupTriggers] Trigger setup complete.');
 }
@@ -83,11 +83,11 @@ function onSheetEdit(e) {
   const sheet = e.source.getActiveSheet();
   const range = e.range;
   
-  console.debug(`[onSheetEdit] Edit event on sheet: ${sheet.getName()}, range: ${range.getA1Notation()}`);
+  console.log(`[onSheetEdit] Edit event on sheet: ${sheet.getName()}, range: ${range.getA1Notation()}`);
   
   // Check if the edit was in a source sheet
   if (!config.getSourceSheets().includes(sheet)) {
-    console.debug(`[onSheetEdit] Sheet ${sheet.getName()} is not a source sheet. Skipping.`);
+    console.log(`[onSheetEdit] Sheet ${sheet.getName()} is not a source sheet. Skipping.`);
     return;
   }
   
@@ -119,7 +119,7 @@ function processNewTransactions() {
 
   // Process each source sheet
   sourceSheets.forEach(sheet => {
-    console.debug(`[processNewTransactions] Processing source sheet: ${sheet.getName()}`);
+    console.log(`[processNewTransactions] Processing source sheet: ${sheet.getName()}`);
     const transactions = utils.getNewTransactions(sheet).map(t => ({ ...t, sourceSheet: sheet.getName() }));
     // Filter out already processed transactions by ID
     const newTransactions = transactions.filter(t => !existingIds.includes(t.id));

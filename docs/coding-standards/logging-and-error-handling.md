@@ -3,7 +3,8 @@
 We will implement a centralized logging and error handling system with the following components:
 
 1. **Consistent Logging Approach**
-   - Use native console methods with appropriate severity levels (error, warn, info, debug)
+   - Use native console methods with appropriate severity levels (error, warn, info, log)
+   - Use console.log for debug-level logging (since console.log is not available in Google Apps Script)
    - Add structured context to log messages (function name, operation)
    - Keep detailed logs in the console for debugging
    - Ensure all errors include stack traces
@@ -85,7 +86,7 @@ function parseData(input) {
   }
   
   // Debug log for normal operation
-  console.debug(`[parseData] Parsing JSON string of length ${input.length}`);
+  console.log(`[parseData] Parsing JSON string of length ${input.length}`);
   
   // Focused try/catch only around the operation that might throw a specific error
   let parsed;
@@ -106,7 +107,7 @@ function parseData(input) {
   }
   
   // Debug log for successful operation
-  console.debug(`[parseData] Successfully parsed data object with keys: ${Object.keys(parsed.data).join(', ')}`);
+  console.log(`[parseData] Successfully parsed data object with keys: ${Object.keys(parsed.data).join(', ')}`);
   return parsed.data;
 }
 
@@ -127,7 +128,7 @@ function processNewTransactions() {
   console.info(`[processNewTransactions] Starting transaction processing`);
   
   const sourceSheets = config.getSourceSheets();
-  console.debug(`[processNewTransactions] Found ${sourceSheets.length} source sheets to process`);
+  console.log(`[processNewTransactions] Found ${sourceSheets.length} source sheets to process`);
   
   const outputSheet = config.getOutputSheet();
   

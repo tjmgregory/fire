@@ -18,7 +18,7 @@ This plan implements the logging and error handling strategy defined in the codi
      - `console.error()` - Report errors with stack traces
      - `console.warn()` - Flag potential issues
      - `console.info()` - Track main program flow
-     - `console.debug()` - Provide detailed execution information
+     - `console.log()` - Provide detailed execution information
 
 2. **Error Handling Improvements**:
    - Create detailed, contextual error messages
