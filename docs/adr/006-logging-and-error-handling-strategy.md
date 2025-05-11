@@ -30,20 +30,14 @@ We will implement a centralized logging and error handling system with the follo
 
 2. **Guard Clause Pattern**
    - Early returns from functions when validation fails
-   - Use assertion utilities that don't require else branches
-   - Validate inputs at function entry points
+   - Use direct validation at function entry points
+   - Avoid nested conditionals where possible
 
 3. **Consistent Error Handling**
    - Errors should be logged but not allowed to terminate program flow unless explicitly intended
    - All error logs must include stack traces
    - Error context should be captured when available
    - Standardized approach across the codebase
-
-4. **Validation Utilities**
-   - Type checking helpers
-   - Null/undefined checking
-   - Format validation for common data types
-   - Chain-able validation API
 
 ## Consequences
 
@@ -70,10 +64,9 @@ We will implement a centralized logging and error handling system with the follo
 
 1. Create a dedicated Logger class with error handling capabilities
 2. Modify Utils class to use Logger
-3. Create validation utilities
-4. Update existing code to use new logging pattern
-5. Add tests for logging and error handling scenarios
-6. Document logging and error handling best practices
+3. Update existing code to use new logging pattern
+4. Add tests for logging and error handling scenarios
+5. Document logging and error handling best practices
 
 ## Implementation Plan
 See corresponding implementation plan: `plans/2025-05-11_12:40_logging_and_error_handling_improvement.md` 

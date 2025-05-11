@@ -28,11 +28,10 @@ This plan implements the logging and error handling strategy defined in ADR 006.
    - Standardize log format
    - Enable filtering by log level
 
-3. **Validation Utilities**:
-   - Create utility functions for common validations
-   - Implement guard clause pattern for early returns
-   - Add type checking utilities
-   - Add null/undefined checking utilities
+3. **Guard Clause Implementation**:
+   - Use early returns for validation failures
+   - Simplify conditional logic
+   - Reduce nesting in code
 
 ## Implementation Steps
 
@@ -52,28 +51,21 @@ This plan implements the logging and error handling strategy defined in ADR 006.
    - [ ] Add assertion utilities
    - [ ] Add log filtering capabilities
 
-3. [ ] Create Validation class in validation.gs
-   - [ ] Implement type checking methods (isString, isNumber, isObject, etc.)
-   - [ ] Add null/undefined checking (isNullOrUndefined, hasValue)
-   - [ ] Create guard clause utilities (requireString, requireNumber, etc.)
-   - [ ] Add format validation for dates, currency, etc.
-   - [ ] Implement chainable validation API
-
-4. [ ] Update Utils class to use the new Logger
+3. [ ] Update Utils class to use the new Logger
    - [ ] Replace logError method with Logger.error
    - [ ] Remove duplicate console.error calls
    - [ ] Add appropriate INFO and DEBUG logging
    - [ ] Refactor try/catch blocks to use Logger.safeExecute
    - [ ] Update validation logic to use guard clauses
 
-5. [ ] Update main.gs to incorporate Logger
+4. [ ] Update main.gs to incorporate Logger
    - [ ] Add structured logging throughout the application flow
    - [ ] Add error handling to processNewTransactions
    - [ ] Add error handling to onSheetEdit
    - [ ] Add error handling to categorizeTransactions
    - [ ] Add INFO level logging for application state
 
-6. [ ] Create examples and tests
+5. [ ] Create examples and tests
    - [ ] Add example for general application logging
    - [ ] Add example for handling validation errors
    - [ ] Add example for handling API errors
@@ -85,7 +77,6 @@ This plan implements the logging and error handling strategy defined in ADR 006.
 
 ## Timeline
 - Design and implementation of Logger: 1 day
-- Implementation of Validation utilities: 0.5 day
 - Code refactoring of existing codebase: 1 day
 - Testing: 1 day
 - Documentation: 0.5 day
@@ -117,7 +108,7 @@ This plan implements the logging and error handling strategy defined in ADR 006.
 
 3. Validation fails with appropriate error message
    - Call a function with invalid parameters
-   - Verify the validation utilities reject the input
+   - Verify the validation is handled with guard clauses
    - Verify the error message is clear and helpful
 
 4. Multiple errors in sequence are all properly logged
