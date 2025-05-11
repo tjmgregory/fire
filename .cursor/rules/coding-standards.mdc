@@ -1,0 +1,6 @@
+---
+description: should be applied when writing code
+globs: 
+alwaysApply: false
+---
+You must adhere to our coding standards, as defined in docs/coding-standards
