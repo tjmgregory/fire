@@ -19,89 +19,78 @@
 4. **Trigger System** for scheduling updates
 5. **Override Column System** to handle manual corrections
 
-## 3. Data Schema
+## 3. Implementation Checklist
 
-### Input Format Research ✅
-Before implementing the system, we need to research and document the actual formats of our input sheets. This research will be documented in [ADR 001: Data Normalization Strategy](../docs/adr/001-data-normalization-strategy.md).
+### Research and Setup
+- ✅ Document the structure of each source sheet (Monzo, Revolut, Yonder)
+- ✅ Document findings in [ADR 001: Data Normalization Strategy](../docs/adr/001-data-normalization-strategy.md)
+- ✅ Document output structure in [ADR 003: Output Sheet Structure](../docs/adr/003-output-sheet-structure.md)
+- ✅ Review and approve ADR 001
+- ✅ Create test cases based on research
+- ✅ Create a new Apps Script project in Google Drive
+- ✅ Set up necessary permissions and API access
+- ✅ Configure script properties for API keys
 
-### Output Sheet Structure
-The output sheet structure is defined in [ADR 003: Output Sheet Structure](../docs/adr/003-output-sheet-structure.md).
+### Data Normalization
+- ✅ Implement column mapping system for each source sheet
+- ✅ Implement transaction ID & reference generation
+- ✅ Implement date/time parsing for different formats
+- ✅ Implement amount normalization with debit/credit handling
+- ✅ Implement basic description extraction
+- ✅ Implement rich description combination strategy (as per ADR-001 table)
+- ✅ Update field mapping configurations for all bank sources
+- ✅ Add better error handling for description fields
+- ✅ Implement transaction type mapping
+- ✅ Implement currency conversion
+- ✅ Create functions to read from each source sheet
+- ✅ Set up triggers for the live-updating sheets
+- ✅ Create handlers for new transaction rows
+- ✅ Implement immediate persistence of normalized data
+- ✅ Add status tracking for normalization phase
 
-## 4. Implementation Steps
+### Transaction Categorization
+- 🔄 Implement categorization system based on [ADR 002: Transaction Categorization Strategy](../docs/adr/002-transaction-categorization-strategy.md)
+- 🔄 Set up OpenAI API connection
+- ❌ Implement batch processing for API calls
+- ❌ Add learning mechanism for improving categorization
+- ❌ Create separate categorization triggers
+- ❌ Implement rate limiting and error handling
 
-1. **Research and Analysis** ✅
-   - Document the structure of each source sheet (Monzo, Revolut, Yonder) ✅
-   - Document findings in ADR 001 ✅
-   - Review and approve ADR 001 ✅
-   - Create test cases based on research ✅
+### Output Generation
+- ❌ Implement output structure based on ADR 003
+- ❌ Create monthly summary sheet
+- ❌ Set up automatic updates for output sheets
+- ❌ Add data visualization options
+- ❌ Implement status tracking columns
 
-2. **Setup Google Apps Script Project** ✅
-   - Create a new Apps Script project in Google Drive ✅
-   - Set up necessary permissions and API access ✅
-   - Configure script properties for API keys ✅
+### Trigger System
+- ✅ Implement trigger system based on [ADR 004: Trigger System Design](../docs/adr/004-trigger-system-design.md)
+- ✅ Set up time-based triggers
+- ✅ Implement event-based triggers
+- ✅ Add error handling for triggers
+- ❌ Update triggers for separated processes
 
-3. **Source Data Processing** ✅
-   - Implement data normalization based on ADR 001 ✅
-     - Column mapping system for each source sheet ✅
-     - Transaction ID & reference generation ✅
-     - Date/time parsing for different formats ✅
-     - Amount normalization with debit/credit handling ✅
-     - Description normalization:
-       - ✅ Basic description extraction
-       - ✅ Implement rich description combination strategy (as per ADR-001 table)
-       - ✅ Update field mapping configurations for all bank sources
-       - ✅ Add better error handling for description fields
-     - Transaction type mapping ✅
-     - Currency handling (implemented basic conversion) ✅
-   - Create functions to read from each source sheet ✅
-   - Set up triggers for the live-updating sheets ✅
-   - Create handlers for new transaction rows ✅
-   - Implement immediate persistence of normalized data ✅
-   - Add status tracking for normalization phase ✅
+### Testing and Validation
+- ✅ Create test suite for data normalization
+- ✅ Test with various sheet formats
+- ✅ Validate ID generation and uniqueness
+- ✅ Test rich description combination strategy
+- ✅ Verify handling of empty fields
+- ✅ Test with real Monzo, Revolut, and Yonder transactions
+- ✅ Check edge cases (special characters, very long descriptions)
+- ✅ Ensure consistent normalization across different banks
+- ❌ Test categorization accuracy
+- 🔄 Verify data consistency across sheets
+- ❌ Test separation of processes
 
-4. **ChatGPT Integration** 🔄
-   - Implement categorization system based on [ADR 002: Transaction Categorization Strategy](../docs/adr/002-transaction-categorization-strategy.md) 🔄
-   - Set up OpenAI API connection 🔄
-   - Implement batch processing ❌
-   - Add learning mechanism ❌
-   - Create separate categorization triggers ❌
-   - Implement rate limiting and error handling ❌
-
-5. **Output Generation** ❌
-   - Implement output structure based on ADR 003
-   - Create monthly summary sheet
-   - Set up automatic updates
-   - Add data visualization options
-   - Implement status tracking columns ❌
-
-6. **Trigger System** ✅
-   - Implement trigger system based on [ADR 004: Trigger System Design](../docs/adr/004-trigger-system-design.md) ✅
-   - Set up time-based triggers ✅
-   - Implement event-based triggers ✅
-   - Add error handling ✅
-   - Update triggers for separated processes ❌
-
-7. **Testing and Validation** 🔄
-   - Create test suite for data normalization ✅
-   - Test with various sheet formats ✅
-   - Validate ID generation and uniqueness ✅
-   - Test rich description combination strategy ✅
-     - Verify handling of empty fields ✅
-     - Test with real Monzo, Revolut, and Yonder transactions ✅
-     - Check edge cases (special characters, very long descriptions) ✅
-     - Ensure consistent normalization across different banks ✅
-   - Test categorization accuracy ❌
-   - Verify data consistency across sheets 🔄
-   - Test separation of processes ❌
-
-## 5. Security Considerations
+## 4. Security Considerations
 
 - Store API keys securely using Google Apps Script's Properties Service
 - Implement error handling for API failures
 - Set up logging for troubleshooting
 - Add monitoring for API usage and rate limits
 
-## 6. Potential Challenges and Solutions
+## 5. Potential Challenges and Solutions
 
 - **API Rate Limits**: Implement batch processing and queuing
 - **Accuracy Issues**: Create a manual override system and learning mechanism
@@ -109,7 +98,7 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
 - **Multiple Currencies**: Store exchange rates and implement conversion
 - **Process Separation**: Implement robust state tracking and error recovery
 
-## 7. Recommended Tools
+## 6. Recommended Tools
 
 - **Google Apps Script** for primary implementation
 - **OpenAI SDK** for JavaScript
@@ -117,40 +106,11 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
 - **LodashGS** library for data manipulation
 - **Moment.js** for date handling
 
-## 8. Development Timeline
+## 7. Estimated Timeline
 
-- **Phase 1 (2 hours)**: Basic setup and data normalization ✅
-  - Set up Google Apps Script project ✅
-  - Configure API access and permissions ✅
-  - Create functions to read from bank sheets ✅
-  - Normalize data formats ✅
-  - Implement rich description combination strategy ✅
-    - Update code to follow ADR-001 description mapping table ✅
-    - Test with various bank transactions ✅
-    - Add comprehensive error handling ✅
+Total implementation time: approximately 8 hours
 
-- **Phase 2 (3 hours)**: ChatGPT integration and categorization 🔄
-  - Implement OpenAI API integration 🔄
-  - Create categorization functions ❌
-  - Add AI-suggested and override columns ❌
-  - Test with sample transactions ❌
-  - Implement process separation ❌
-
-- **Phase 3 (2 hours)**: Output sheet generation ❌
-  - Create monthly summary sheet ❌
-  - Implement automatic updates ❌
-  - Set up triggers for sheet updates ❌
-  - Add status tracking ❌
-
-- **Phase 4 (1 hour)**: Testing and refinement 🔄
-  - Test end-to-end workflow 🔄
-  - Fix any issues 🔄
-  - Document the system 🔄
-  - Verify process separation ❌
-
-- **Total**: 8 hours for complete implementation
-
-## 9. Maintenance Considerations
+## 8. Maintenance Considerations
 
 - Set up email alerts for errors
 - Create a manual correction interface
@@ -158,7 +118,7 @@ The output sheet structure is defined in [ADR 003: Output Sheet Structure](../do
 - Plan for periodic review of categorization accuracy
 - Monitor process separation effectiveness
 
-## Additional FIRE Features
+## 9. Additional FIRE Features
 
 - Spending trend analysis by category
 - Budget vs. actual comparisons
