@@ -31,7 +31,11 @@ class Utils {
     const indices = {};
     Object.entries(columnMap).forEach(([key, possibleNames]) => {
       indices[key] = this.findColumnIndex(headers, possibleNames);
-      if (indices[key] === -1) {
+      
+      // Per ADR-005, category is optional during normalization
+      // Other fields may be optional for specific sheet types
+      const optionalFields = ['category'];
+      if (indices[key] === -1 && !optionalFields.includes(key)) {
         throw new Error(`Required column not found in sheet ${sheet.getName()}: ${possibleNames.join(', ')}`);
       }
     });
@@ -76,7 +80,8 @@ class Utils {
         description: ['Description'], // Basic fallback, full handling in getDescriptionFieldMapping
         amount: ['Amount'],
         currency: ['Currency'],
-        category: ['Category'],  // May not exist, but try to find it
+        // Category removed as per ADR-005 - categories are handled in a separate phase
+        // and Revolut sheets don't typically include a Category column
         type: ['Type'],
         originalId: ['ID'], // Revolut doesn't have explicit IDs
         // Add all fields needed for rich description
@@ -154,6 +159,11 @@ class Utils {
     const originalId = indices.originalId !== undefined ? row[indices.originalId] : undefined;
     const originalReference = this.generateOriginalReference(dateTime, amount, originalId);
     
+    // Per ADR-005, normalization and categorization are separate processes.
+    // Default all transactions to 'Uncategorized' during normalization.
+    // The category will be determined in the categorization phase.
+    const category = indices.category !== undefined && row[indices.category] ? row[indices.category] : 'Uncategorized';
+    
     return {
       id: Utilities.getUuid(),
       originalReference: originalReference,
@@ -162,7 +172,7 @@ class Utils {
       description: description,
       amount: amount.value,
       currency: 'GBP',
-      category: row[indices.category] || 'Uncategorized',
+      category: category,
       transactionMethod: this.normalizeTransactionType(row[indices.type], sourceSheet)
     };
   }
