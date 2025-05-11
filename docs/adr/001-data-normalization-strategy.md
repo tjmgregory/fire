@@ -97,7 +97,7 @@ We will implement a flexible data normalization system with the following compon
 
 3. **Data Normalization Rules**
    - Dates: Convert to YYYY-MM-DD
-   - Descriptions: Remove special chars, normalize whitespace
+   - Description: See [Description Normalisation](#description-normalisation)
    - Amounts: Standardize to negative for debits
    - Account Names: Map to consistent types
    - Transaction Types: Map to standard types:
@@ -255,6 +255,55 @@ Example normalization for Yonder:
 }
 ```
 
+### Description Normalisation
+
+The Description field is critical for transaction identification. To maximize the value from each bank's data format, we'll use a combination approach rather than simple fallbacks.
+
+#### Description Field Mapping Strategy
+
+| Bank | Available Fields | Combination Strategy |
+|------|-----------------|---------------------|
+| Monzo | Name, Description, Notes and #tags, Type | Combine Name and Description with priority on Name. Add Type information for context. Include Notes for additional details. |
+| Revolut | Description, Type, Product | Combine Description with Type. Add Product information for context. |
+| Yonder | Description, Country | Combine Description with Country context. |
+| Generic | Any available text fields | Prioritize merchant-identifying fields, combine with transaction context fields. |
+
+#### Implementation Approach
+
+1. **Field Combination**: 
+  - Rather than using simple fallbacks, combine available fields using a template
+  - For example: `${merchantName} - ${transactionType} ${additionalContext}`
+  - This provides richer transaction descriptions even when primary fields are present
+
+2. **Field Prioritization**:
+  - Each bank format has fields that provide the most useful identification information
+  - Ensure these fields are given proper prominence in the combined description
+  - Use empty string handling to avoid "undefined" or "null" text in descriptions
+
+3. **Field Normalization After Combination**:
+  - Convert to string
+  - Convert to lowercase for consistency
+  - Remove special characters (non-alphanumeric except spaces)
+  - Normalize whitespace (trim and replace multiple spaces with single spaces)
+
+4. **Error Handling**:
+  - If no valid description can be constructed after combination attempts, throw a descriptive error
+  - Error should identify the source bank and transaction details when possible
+  - Example: "Unable to construct description for Monzo transaction on 2023-04-15"
+
+5. **Configuration-based Implementation**:
+  - Define description field templates in configuration
+  - Easily add new bank sources by defining their template
+  - Example template for Monzo: `${row['Name'] || ''} ${row['Description'] ? '- ' + row['Description'] : ''} ${row['Notes and #tags'] ? '(' + row['Notes and #tags'] + ')' : ''}`
+
+#### Sample Output
+
+| Bank | Raw Data | Normalized Description |
+|------|----------|------------------------|
+| Monzo | Name: "Starbucks", Type: "Card payment" | "starbucks card payment" |
+| Revolut | Description: "Amazon.co.uk", Type: "CARD_PAYMENT" | "amazoncouk card payment" |
+| Yonder | Description: "Hotel Booking", Country: "ESP" | "hotel booking esp" |
+
 ## Consequences
 
 ### Positive
@@ -294,6 +343,7 @@ Example normalization for Yonder:
 10. Document normalization rules
 11. Add error logging
 12. Implement data cleaning utilities
+13. Create bank-specific description field mappers:
 
 ## Future Considerations
 1. Support for new data sources

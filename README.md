@@ -27,6 +27,7 @@ For a detailed architecture diagram and explanation, see [ADR 005: Normalization
   - See [Apps Script README](src/apps-script/README.md) for setup and usage
 - `docs/`: Project documentation
   - `adr/`: Architecture Decision Records
+  - `coding-standards/`: Coding patterns and best practices to adhere to
   - `plans/`: Implementation plans and timelines
 - `.cursor/`: Editor configuration and rules
 

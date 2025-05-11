@@ -6,8 +6,8 @@ alwaysApply: true
 # FIRE Project Development Standards
 
 ## File Organization
-- All planning documents should be stored in the `plans/` directory
-- Planning documents should follow the naming convention: `YYYY-MM-DD-hh-mm_description.md` using today's date and time when created
+- All new or active planning documents should be stored in the `docs/plans/active` directory
+- Planning documents should follow the naming convention: `YYYY-MM-DD-hh-mm_description.md`, calculating today's date and time when created
 - Implementation files should be stored in appropriate feature directories
 
 ## Code Style
