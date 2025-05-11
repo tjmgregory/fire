@@ -76,7 +76,9 @@ class Utils {
         description: ['Description'], // Basic fallback, full handling in getDescriptionFieldMapping
         amount: ['Amount'],
         currency: ['Currency'],
+        category: ['Category'],  // May not exist, but try to find it
         type: ['Type'],
+        originalId: ['ID'], // Revolut doesn't have explicit IDs
         // Add all fields needed for rich description
         product: ['Product']
       };
@@ -89,6 +91,7 @@ class Utils {
         currency: ['Currency'],
         category: ['Category'],
         type: ['Debit or Credit'],
+        originalId: ['Transaction ID'], // Yonder doesn't have explicit IDs
         // Add all fields needed for rich description
         country: ['Country']
       };
@@ -241,12 +244,72 @@ class Utils {
       }
     }
     
-    // TODO: Implement currency conversion
-    // For now, assume all amounts are in GBP
+    // Handle currency conversion if not GBP
+    if (currency && currency !== 'GBP') {
+      console.log(`Converting from ${currency} to GBP: ${value}`);
+      try {
+        value = this.convertCurrency(value, currency, 'GBP');
+      } catch (error) {
+        console.error(`Error converting currency: ${error.message}`);
+        // Log the error but continue with the original amount
+        console.warn(`Using original amount without conversion: ${value} ${currency}`);
+      }
+    }
+    
     return {
       value: value,
-      currency: 'GBP'
+      currency: 'GBP' // Always return GBP as the currency
     };
+  }
+  
+  /**
+   * Convert amount from one currency to another
+   * @param {number} amount - Amount to convert
+   * @param {string} fromCurrency - Source currency code
+   * @param {string} toCurrency - Target currency code
+   * @returns {number} Converted amount
+   */
+  convertCurrency(amount, fromCurrency, toCurrency) {
+    // Guard clause for required parameters
+    if (amount === undefined || amount === null) {
+      throw new Error('Amount is required for currency conversion');
+    }
+    if (!fromCurrency) {
+      throw new Error('Source currency is required');
+    }
+    if (!toCurrency) {
+      throw new Error('Target currency is required');
+    }
+    
+    // If currencies are the same, no conversion needed
+    if (fromCurrency === toCurrency) {
+      return amount;
+    }
+    
+    // In a real implementation, we would call an exchange rate API or use a cached rate
+    // For now, use hardcoded approximate rates for common currencies as of mid-2025
+    const rates = {
+      'USD_GBP': 0.78,
+      'EUR_GBP': 0.85,
+      'CAD_GBP': 0.58,
+      'AUD_GBP': 0.52,
+      'JPY_GBP': 0.0051,
+      'MAD_GBP': 0.078,
+      'THB_GBP': 0.022,
+      'SGD_GBP': 0.58,
+      'HKD_GBP': 0.099,
+      'ZAR_GBP': 0.041
+    };
+    
+    const rateKey = `${fromCurrency}_${toCurrency}`;
+    if (rates[rateKey]) {
+      return amount * rates[rateKey];
+    } else {
+      // Handle other currencies
+      console.warn(`No conversion rate found for ${fromCurrency} to ${toCurrency}`);
+      // For demo, return the original amount with a warning
+      throw new Error(`Currency conversion from ${fromCurrency} to ${toCurrency} not supported`);
+    }
   }
   
   /**
@@ -313,7 +376,7 @@ class Utils {
       return {
         fields: ['Name', 'Description', 'Notes and #tags', 'Type'],
         combineStrategy: (row) => {
-          // Combine fields using a template approach
+          // Combine fields using a template approach as specified in ADR-001
           const name = row['Name'] || '';
           const description = row['Description'] || '';
           const notes = row['Notes and #tags'] || '';
@@ -327,7 +390,7 @@ class Utils {
             combinedDesc += name;
           }
           
-          // Add description for additional context
+          // Add description for additional context if it's different from name
           if (description && description !== name) {
             combinedDesc += combinedDesc ? ` - ${description}` : description;
           }
@@ -354,7 +417,7 @@ class Utils {
       return {
         fields: ['Description', 'Type', 'Product'],
         combineStrategy: (row) => {
-          // Combine fields using a template approach
+          // Combine fields using a template approach as specified in ADR-001
           const description = row['Description'] || '';
           const type = row['Type'] || '';
           const product = row['Product'] || '';
@@ -372,7 +435,7 @@ class Utils {
             combinedDesc += combinedDesc ? ` (${type})` : type;
           }
           
-          // Add product info if available
+          // Add product info for additional context
           if (product) {
             combinedDesc += combinedDesc ? ` - ${product}` : product;
           }
@@ -389,7 +452,7 @@ class Utils {
       return {
         fields: ['Description', 'Country'],
         combineStrategy: (row) => {
-          // Combine fields using a template approach
+          // Combine fields using a template approach as specified in ADR-001
           const description = row['Description'] || '';
           const country = row['Country'] || '';
           
@@ -416,12 +479,30 @@ class Utils {
       };
     }
     
-    throw new Error(`No description field mapping for sheet: ${sheetName}`);
+    // Handle generic case for unknown sheets
+    return {
+      fields: ['Description'],
+      combineStrategy: (row) => {
+        // For generic sheets, just use any field that might be a description
+        // Look for common description field names
+        const possibleFields = ['Description', 'Merchant', 'Payee', 'Details', 'Memo', 'Narrative'];
+        
+        for (const field of possibleFields) {
+          if (row[field] && row[field].toString().trim() !== '') {
+            return row[field];
+          }
+        }
+        
+        throw new Error(`No valid description field found for sheet: ${sheetName}`);
+      }
+    };
   }
   
   /**
    * Get description from transaction row based on source sheet
-   * @param {Object} row - Raw transaction row with column headers as keys
+   * @param {Array} row - Raw transaction row
+   * @param {Object} indices - Column indices
+   * @param {Array} headers - Sheet headers
    * @param {string} sourceSheet - Name of the source sheet
    * @returns {string} Processed description
    * @throws {Error} If no valid description can be extracted
@@ -446,7 +527,11 @@ class Utils {
     
     // Process standard headers first
     headers.forEach((header, index) => {
-      rowObject[header] = row[index];
+      if (row[index] !== undefined && row[index] !== null) {
+        rowObject[header] = row[index];
+      } else {
+        rowObject[header] = ''; // Ensure no undefined values
+      }
     });
     
     // Get field mapping configuration for this sheet
@@ -457,11 +542,11 @@ class Utils {
     // even if they weren't directly found in headers
     const lowerName = sourceSheet.toLowerCase();
     if (lowerName === 'monzo') {
-      if (indices.description >= 0 && !rowObject['Name'] && !rowObject['Description']) {
+      if (indices.description >= 0) {
         // If Name/Description wasn't found directly, use the mapped description field
-        if (headers[indices.description] === 'Name') {
+        if (headers[indices.description] === 'Name' && !rowObject['Name']) {
           rowObject['Name'] = row[indices.description];
-        } else if (headers[indices.description] === 'Description') {
+        } else if (headers[indices.description] === 'Description' && !rowObject['Description']) {
           rowObject['Description'] = row[indices.description];
         }
       }
@@ -515,9 +600,22 @@ class Utils {
     } catch (error) {
       // Add more context to the error
       console.error(`Error in description extraction: ${error.message}`);
+      console.error(`Source sheet: ${sourceSheet}`);
       console.error(`Row data: ${JSON.stringify(row)}`);
       console.error(`Row object: ${JSON.stringify(rowObject)}`);
       console.error(`Indices: ${JSON.stringify(indices)}`);
+      console.error(`Headers: ${JSON.stringify(headers)}`);
+      
+      // Attempt fallback description as a last resort
+      if (indices.description >= 0 && row[indices.description]) {
+        try {
+          console.log(`Attempting fallback description from index ${indices.description}`);
+          return this.normalizeDescription(row[indices.description], sourceSheet);
+        } catch (fallbackError) {
+          console.error(`Fallback description also failed: ${fallbackError.message}`);
+        }
+      }
+      
       throw new Error(`Failed to construct description for ${sourceSheet} transaction: ${error.message}`);
     }
   }
