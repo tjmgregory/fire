@@ -13,31 +13,31 @@ class Utils {
    * @returns {Array} Array of normalized transaction objects
    */
   getNewTransactions(sheet) {
-    console.log(`[getNewTransactions] Processing sheet: ${sheet.getName()}`);
+    console.info(`[getNewTransactions] Processing sheet: ${sheet.getName()}`);
+    
+    // Guard clause for required parameter
+    if (!sheet) {
+      throw new Error('Sheet parameter is required');
+    }
+    
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
-    console.log(`[getNewTransactions] Header row: ${JSON.stringify(headers)}`);
-    let columnMap;
-    try {
-      columnMap = this.getColumnMap(sheet.getName());
-    } catch (err) {
-      this.logError('getNewTransactions', err);
-      console.log(`[getNewTransactions] Skipping unsupported sheet: ${sheet.getName()}`);
-      return [];
-    }
+    console.debug(`[getNewTransactions] Header row: ${JSON.stringify(headers)}`);
+    
+    // Get column mapping
+    const columnMap = this.getColumnMap(sheet.getName());
+    
     // Find column indices using the mapping
     const indices = {};
     Object.entries(columnMap).forEach(([key, possibleNames]) => {
       indices[key] = this.findColumnIndex(headers, possibleNames);
       if (indices[key] === -1) {
-        const msg = `Required column not found in sheet ${sheet.getName()}: ${possibleNames.join(', ')}`;
-        this.logError('getNewTransactions', msg);
-        console.log(`[getNewTransactions] ${msg}`);
-        throw new Error(msg);
+        throw new Error(`Required column not found in sheet ${sheet.getName()}: ${possibleNames.join(', ')}`);
       }
     });
+    
     // Process transactions (skip header row)
-    console.log(`[getNewTransactions] Found ${data.length - 1} data rows in sheet: ${sheet.getName()}`);
+    console.debug(`[getNewTransactions] Found ${data.length - 1} data rows in sheet: ${sheet.getName()}`);
     return data.slice(1).map(row => this.normalizeTransaction(row, indices, sheet.getName()));
   }
   
@@ -47,6 +47,11 @@ class Utils {
    * @returns {Object} Column mapping object
    */
   getColumnMap(sheetName) {
+    // Guard clause for required parameter
+    if (!sheetName) {
+      throw new Error('Sheet name is required');
+    }
+    
     const lowerName = sheetName.toLowerCase();
     if (lowerName === 'monzo') {
       return {
@@ -79,9 +84,7 @@ class Utils {
         type: ['Debit or Credit']
       };
     }
-    // If not recognized, log and throw
-    this.logError('getColumnMap', `Unsupported sheet name: ${sheetName}`);
-    console.log(`[getColumnMap] Unsupported sheet name: ${sheetName}`);
+    
     throw new Error(`Unsupported sheet name: ${sheetName}`);
   }
   
@@ -92,6 +95,14 @@ class Utils {
    * @returns {number} Column index or -1 if not found
    */
   findColumnIndex(headers, possibleNames) {
+    // Guard clause for required parameters
+    if (!headers || !Array.isArray(headers)) {
+      throw new Error('Headers must be an array');
+    }
+    if (!possibleNames || !Array.isArray(possibleNames)) {
+      throw new Error('Possible names must be an array');
+    }
+    
     return headers.findIndex(header => 
       possibleNames.some(name => 
         header.toLowerCase() === name.toLowerCase()
@@ -107,6 +118,17 @@ class Utils {
    * @returns {Object} Normalized transaction
    */
   normalizeTransaction(row, indices, sourceSheet) {
+    // Guard clause for required parameters
+    if (!row || !Array.isArray(row)) {
+      throw new Error('Row must be an array');
+    }
+    if (!indices || typeof indices !== 'object') {
+      throw new Error('Indices must be an object');
+    }
+    if (!sourceSheet) {
+      throw new Error('Source sheet name is required');
+    }
+    
     const dateTime = this.parseDateTime(row[indices.date], row[indices.time], sourceSheet);
     const amount = this.normalizeAmount(row[indices.amount], row[indices.currency], sourceSheet);
     const description = this.normalizeDescription(row[indices.description]);
@@ -133,14 +155,15 @@ class Utils {
    * @returns {Object} Normalized date and time in UTC
    */
   parseDateTime(dateStr, timeStr, sourceSheet) {
-    let date, time, dateTime;
-
-    // Defensive: handle undefined/null
+    // Guard clause for required parameters
     if (!dateStr) {
-      const msg = `[parseDateTime] dateStr is undefined/null for sheet: ${sourceSheet}`;
-      this.logError('parseDateTime', msg);
-      throw new Error(msg);
+      throw new Error(`Date string is required for sheet: ${sourceSheet}`);
     }
+    if (!sourceSheet) {
+      throw new Error('Source sheet name is required');
+    }
+    
+    let dateTime;
 
     if (sourceSheet.toLowerCase() === 'monzo') {
       // Monzo format: Date object and potentially Date object or HH:mm:ss string
@@ -148,7 +171,7 @@ class Utils {
         dateTime = new Date(dateStr);
         
         if (timeStr) {
-          console.log(`[parseDateTime] Monzo timeStr type: ${typeof timeStr}, value: ${timeStr}`);
+          console.debug(`[parseDateTime] Monzo timeStr type: ${typeof timeStr}, value: ${timeStr}`);
           
           if (typeof timeStr === 'string') {
             // If timeStr is a string in format HH:mm:ss
@@ -163,9 +186,7 @@ class Utils {
           }
         }
       } else {
-        const msg = `[parseDateTime] Monzo dateStr is not a Date object: ${dateStr}`;
-        this.logError('parseDateTime', msg);
-        throw new Error(msg);
+        throw new Error(`Monzo dateStr is not a Date object: ${dateStr}`);
       }
     } else if (sourceSheet.toLowerCase() === 'revolut' || 
                sourceSheet.toLowerCase() === 'yonder') {
@@ -173,14 +194,10 @@ class Utils {
       if (typeof dateStr === 'string') {
         dateTime = new Date(dateStr.replace(' ', 'T'));
       } else {
-        const msg = `[parseDateTime] ${sourceSheet} dateStr is not a string: ${dateStr}`;
-        this.logError('parseDateTime', msg);
-        throw new Error(msg);
+        throw new Error(`${sourceSheet} dateStr is not a string: ${dateStr}`);
       }
     } else {
-      const msg = `[parseDateTime] Unknown format for dateStr (${typeof dateStr}): ${dateStr} in sheet: ${sourceSheet}`;
-      this.logError('parseDateTime', msg);
-      throw new Error(msg);
+      throw new Error(`Unknown format for dateStr (${typeof dateStr}): ${dateStr} in sheet: ${sourceSheet}`);
     }
 
     // Convert UK time to UTC
@@ -190,7 +207,7 @@ class Utils {
     
     // Format as ISO string
     const isoString = utcDate.toISOString();
-    console.log(`[parseDateTime] Converted ${dateStr} to UTC ISO: ${isoString}`);
+    console.debug(`[parseDateTime] Converted ${dateStr} to UTC ISO: ${isoString}`);
     
     return {
       date: isoString,
@@ -206,6 +223,14 @@ class Utils {
    * @returns {Object} Normalized amount and currency
    */
   normalizeAmount(amount, currency, sourceSheet) {
+    // Guard clause for required parameters
+    if (amount === undefined || amount === null) {
+      throw new Error(`Amount is required for sheet: ${sourceSheet}`);
+    }
+    if (!sourceSheet) {
+      throw new Error('Source sheet name is required');
+    }
+    
     // Convert to number and handle negative amounts
     let value = parseFloat(amount);
     
@@ -234,6 +259,14 @@ class Utils {
    * @returns {boolean} True if debit
    */
   isDebit(amount, sourceSheet) {
+    // Guard clause for required parameters
+    if (amount === undefined || amount === null) {
+      throw new Error(`Amount is required for sheet: ${sourceSheet}`);
+    }
+    if (!sourceSheet) {
+      throw new Error('Source sheet name is required');
+    }
+    
     if (sourceSheet.toLowerCase().includes('yonder')) {
       return amount.toString().toLowerCase().includes('debit');
     }
@@ -246,6 +279,11 @@ class Utils {
    * @returns {string} Normalized description
    */
   normalizeDescription(description) {
+    // Guard clause for required parameter
+    if (!description) {
+      throw new Error('Description is required');
+    }
+    
     return description
       .toString()
       .toLowerCase()
@@ -261,6 +299,14 @@ class Utils {
    * @returns {string} Normalized transaction type
    */
   normalizeTransactionType(type, sourceSheet) {
+    // Guard clause for required parameters
+    if (!type) {
+      throw new Error(`Transaction type is required for sheet: ${sourceSheet}`);
+    }
+    if (!sourceSheet) {
+      throw new Error('Source sheet name is required');
+    }
+    
     const lowerType = type.toString().toLowerCase();
     
     if (sourceSheet.toLowerCase().includes('monzo')) {
@@ -287,39 +333,16 @@ class Utils {
    * @returns {string} Original reference
    */
   generateOriginalReference(dateTime, amount, originalId) {
-    if (originalId) return originalId;
-    return `${dateTime.date}T${dateTime.time.split(':')[0]}:${dateTime.time.split(':')[1]}_${amount.value.toFixed(2)}`;
-  }
-  
-  /**
-   * Log an error to the system logs
-   * @param {string} functionName - Name of the function where error occurred
-   * @param {Error} error - The error object
-   */
-  logError(functionName, error) {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let logSheet = ss.getSheetByName(this.config.SHEET_NAMES.LOGS);
-    
-    if (!logSheet) {
-      logSheet = ss.insertSheet(this.config.SHEET_NAMES.LOGS);
-      logSheet.getRange(1, 1, 1, 4).setValues([["Timestamp", "Function", "Error", "Stack Trace"]]);
-      logSheet.setFrozenRows(1);
+    // Guard clause for required parameters
+    if (!dateTime || !dateTime.date || !dateTime.time) {
+      throw new Error('Date and time object is required');
+    }
+    if (!amount || amount.value === undefined) {
+      throw new Error('Amount object is required');
     }
     
-    const timestamp = new Date();
-    logSheet.appendRow([timestamp, functionName, error.toString(), error.stack]);
-    
-    // Also log to console for debugging
-    console.error(`Error in ${functionName}:`, error, error.stack);
-  }
-  
-  /**
-   * Format a date for display (no longer needed as we store in ISO format)
-   * @param {Date} date - The date to format
-   * @returns {string} ISO date string
-   */
-  formatDate(date) {
-    return date.toISOString();
+    if (originalId) return originalId;
+    return `${dateTime.date}T${dateTime.time.split(':')[0]}:${dateTime.time.split(':')[1]}_${amount.value.toFixed(2)}`;
   }
   
   /**
@@ -328,7 +351,16 @@ class Utils {
    * @param {Sheet} outputSheet - The output sheet
    */
   writeNormalizedTransactions(transactions, outputSheet) {
+    // Guard clause for required parameters
+    if (!transactions || !Array.isArray(transactions)) {
+      throw new Error('Transactions must be an array');
+    }
+    if (!outputSheet) {
+      throw new Error('Output sheet is required');
+    }
+    
     if (!transactions.length) return;
+    
     const now = new Date();
     const rows = transactions.map(t => [
       t.date,
@@ -348,6 +380,8 @@ class Utils {
       '', // Categorization Timestamp
       ''  // Error Details
     ]);
+    
+    console.debug(`[writeNormalizedTransactions] Writing ${rows.length} transactions to output sheet`);
     outputSheet.getRange(outputSheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
   }
 } 
