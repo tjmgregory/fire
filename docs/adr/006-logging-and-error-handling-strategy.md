@@ -35,6 +35,8 @@ We will implement a centralized logging and error handling system with the follo
    - Create informative errors with context directly where they occur
    - Catch errors only at top-level entry points
    - Allow errors to propagate naturally through the call stack
+   - Never both log an error and then throw it in the same function (avoid duplicate logging)
+   - Log errors only where they are caught and handled
 
 ## Code Samples
 
@@ -87,17 +89,15 @@ function parseData(input) {
 ### After: Simplified and Consistent Approach
 
 ```javascript
-// Use native console methods with appropriate severity levels
-// These add structure to logging without additional complexity
+// Middle-tier functions: throw errors but don't log them
+// This avoids duplicate logging
 function parseData(input) {
   // Guard clauses for validation
   if (!input) {
-    console.error(`[parseData] Input is null or undefined`);
     throw new Error(`Input is null or undefined`);
   }
   
   if (typeof input !== 'string') {
-    console.error(`[parseData] Input is not a string (type: ${typeof input})`);
     throw new Error(`Input is not a string (type: ${typeof input})`);
   }
   
@@ -106,12 +106,10 @@ function parseData(input) {
     const parsed = JSON.parse(input);
     
     if (!parsed) {
-      console.error(`[parseData] Parsed result is empty`);
       throw new Error(`Parsed result is empty`);
     }
     
     if (!parsed.data) {
-      console.error(`[parseData] No data property found in: ${Object.keys(parsed).join(', ')}`);
       throw new Error(`No data property found in: ${Object.keys(parsed).join(', ')}`);
     }
     
@@ -120,7 +118,6 @@ function parseData(input) {
   } catch (err) {
     // Only catch JSON.parse errors, then create a more informative error and throw it
     if (err.name === 'SyntaxError') {
-      console.error(`[parseData] Invalid JSON format: ${err.message}`);
       throw new Error(`Invalid JSON format: ${err.message}`);
     }
     // Otherwise just let the error propagate (already handled guard clauses)
@@ -128,7 +125,19 @@ function parseData(input) {
   }
 }
 
-// Top-level handler shows error flows
+// Intermediate function: throws errors without logging
+function processData(data) {
+  console.info(`[processData] Processing data...`);
+  
+  // Call functions that might throw errors
+  const parsedData = parseData(data);
+  const result = transformData(parsedData);
+  
+  console.info(`[processData] Data processing complete`);
+  return result;
+}
+
+// Top-level handler: logs errors where they are caught
 function processNewTransactions() {
   try {
     console.info(`[processNewTransactions] Starting transaction processing`);
@@ -142,13 +151,20 @@ function processNewTransactions() {
     sourceSheets.forEach(sheet => {
       console.info(`[processNewTransactions] Processing sheet: ${sheet.getName()}`);
       
-      // These function calls will throw errors if there are problems
-      const transactions = getNewTransactions(sheet);
-      console.info(`[processNewTransactions] Found ${transactions.length} transactions in ${sheet.getName()}`);
-      
-      writeTransactions(transactions, outputSheet);
-      
-      console.info(`[processNewTransactions] Processed sheet: ${sheet.getName()}`);
+      try {
+        // These function calls will throw errors without logging them
+        const transactions = getNewTransactions(sheet);
+        console.info(`[processNewTransactions] Found ${transactions.length} transactions in ${sheet.getName()}`);
+        
+        writeTransactions(transactions, outputSheet);
+        
+        console.info(`[processNewTransactions] Processed sheet: ${sheet.getName()}`);
+      } catch (err) {
+        // Log the error where it's caught
+        console.error(`[processNewTransactions] Error processing sheet ${sheet.getName()}: ${err.message}`, err.stack);
+        // Re-throw to the entry point
+        throw err;
+      }
     });
     
     console.info(`[processNewTransactions] Transaction processing complete`);
@@ -170,6 +186,7 @@ function onTrigger() {
     return true;
   } catch (err) {
     // This is where we ensure the script doesn't crash
+    // Log the error ONLY at the place where it's caught and handled
     console.error(`[onTrigger] Execution failed: ${err.message}`, err.stack);
     // We could notify admin here if needed
     return false;
@@ -185,6 +202,7 @@ function onTrigger() {
 - Cleaner code without unnecessary else clauses
 - Improved visibility into application flow with appropriate severity levels
 - Simpler logging implementation
+- No duplicate logging of the same error
 
 ### Negative
 - Need to refactor existing code to use the new pattern
@@ -200,6 +218,7 @@ function onTrigger() {
 2. Update error handling in top-level functions
 3. Implement guard clauses in validation logic
 4. Document logging and error handling best practices
+5. Ensure errors are only logged where they are caught and handled
 
 ## Implementation Plan
 See corresponding implementation plan: `plans/2025-05-11-12-40_logging_and_error_handling_implementation.md` 

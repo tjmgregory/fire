@@ -25,6 +25,8 @@ This plan implements the logging and error handling strategy defined in ADR 006.
    - Implement guard clauses for early validation
    - Allow errors to propagate naturally to entry points
    - Catch and handle errors only at top-level entry points
+   - Never both log an error and throw it in the same function
+   - Log errors only where they are caught and handled
 
 ## Implementation Steps
 
@@ -34,15 +36,17 @@ This plan implements the logging and error handling strategy defined in ADR 006.
    - [x] Document consequences and implementation notes
 
 2. [ ] Update main.gs to use proper error handling
-   - [ ] Add appropriate console logging statements
-   - [ ] Implement guard clauses for validation
+   - [ ] Add appropriate console logging statements for normal flow
+   - [ ] Implement guard clauses for validation (throw without logging)
    - [ ] Add top-level error handling in entry point functions
+   - [ ] Ensure errors are only logged where they are caught
    - [ ] Use consistent function naming and structure
 
 3. [ ] Update utils.gs to use proper error handling
-   - [ ] Replace logError method with direct console.error calls
+   - [ ] Replace logError method with proper error handling
    - [ ] Add context to error messages
    - [ ] Refactor validation logic to use guard clauses
+   - [ ] Remove any instances of logging and then throwing
    - [ ] Ensure error propagation to caller functions
 
 4. [ ] Create examples and documentation
@@ -69,8 +73,9 @@ This plan implements the logging and error handling strategy defined in ADR 006.
 
 ## Test Cases
 1. Function throws error with stack trace
-   - Call a function that deliberately throws an error 
-   - Verify the error is logged with stack trace to console
+   - Call a function that throws an error without logging it
+   - Verify the error is logged only at the catch point
+   - Verify no duplicate logging occurs
 
 2. Function validation works with guard clauses
    - Call a function with invalid parameters
@@ -98,4 +103,5 @@ This plan implements the logging and error handling strategy defined in ADR 006.
 
 3. Multiple errors in sequence
    - Create a situation with multiple errors
-   - Verify all errors are logged appropriately 
+   - Verify all errors are logged appropriately
+   - Verify no duplicate logging occurs 
