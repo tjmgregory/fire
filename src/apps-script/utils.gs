@@ -91,7 +91,7 @@ class Utils {
         currency: ['Currency'],
         category: ['Category'],
         type: ['Debit or Credit'],
-        originalId: ['Transaction ID'], // Yonder doesn't have explicit IDs
+        // Remove originalId as Yonder doesn't have Transaction ID column
         // Add all fields needed for rich description
         country: ['Country']
       };
@@ -150,7 +150,9 @@ class Utils {
     
     // Use the enhanced description extraction
     const description = this.getTransactionDescription(row, indices, headers, sourceSheet);
-    const originalReference = this.generateOriginalReference(dateTime, amount, row[indices.originalId]);
+    // Handle case when indices.originalId doesn't exist (like with Yonder)
+    const originalId = indices.originalId !== undefined ? row[indices.originalId] : undefined;
+    const originalReference = this.generateOriginalReference(dateTime, amount, originalId);
     
     return {
       id: Utilities.getUuid(),
