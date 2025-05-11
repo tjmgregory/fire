@@ -216,16 +216,8 @@ class Utils {
     
     } else if (sourceSheet.toLowerCase() === 'revolut' || 
                sourceSheet.toLowerCase() === 'yonder') {
-      // ISO format: YYYY-MM-DD HH:mm:ss
-      if (typeof dateStr === 'string') {
-        console.log('dateStr is a string - delete the other code handler');
-        dateTime = new Date(dateStr.replace(' ', 'T'));
-      } else if (dateStr instanceof Date) {
-        console.log('dateStr is a Date - delete the other code handler');
-        dateTime = new Date(dateStr);
-      } else {
-        throw new Error(`${sourceSheet} dateStr has unexpected type (${typeof dateStr}): ${dateStr}`);
-      }
+      
+      dateTime = new Date(dateStr);
     } else {
       throw new Error(`Unknown source sheet: ${sourceSheet}`);
     }
@@ -276,7 +268,7 @@ class Utils {
     
     // If we have a GBP amount directly provided (like in Yonder), use it
     if (amount_gbp !== undefined && amount_gbp !== null) {
-      console.log(`Using provided GBP amount: ${amount_gbp}`);
+      // console.log(`Using provided GBP amount: ${amount_gbp}`);
       let value = parseFloat(amount_gbp);
       
       // Ensure debits are negative
@@ -312,7 +304,7 @@ class Utils {
     }
     
     // Handle currency conversion if not GBP
-    console.log(`Converting from ${currency} to GBP: ${value}`);
+    // console.log(`Converting from ${currency} to GBP: ${value}`);
     value = this.convertCurrency(value, currency, 'GBP');
     
     return {
@@ -768,6 +760,7 @@ class Utils {
         // Sanitize and truncate description to 20 chars
         descriptionValue = description.toString()
           .replace(/[^a-zA-Z0-9\s]/g, '') // Remove special characters
+          .replace(/\s+/g, '_')
           .trim()
           .substring(0, 20)
           .trim()
@@ -775,7 +768,7 @@ class Utils {
       }
       
       const generatedRef = `${datePart}T${timePart}_${descriptionValue}`;
-      console.log(`[generateOriginalReference] Generated Yonder reference: ${generatedRef}`);
+      // console.log(`[generateOriginalReference] Generated Yonder reference: ${generatedRef}`);
       return generatedRef;
     }
     
@@ -875,7 +868,7 @@ class Utils {
         transactionMethod: dup.transactionMethod
       };
       
-      console.log(`[checkForDuplicates] Duplicate transaction: ${JSON.stringify(details)}`);
+      // console.log(`[checkForDuplicates] Duplicate transaction: ${JSON.stringify(details)}`);
       result.duplicateDetails.push(details);
     });
     
