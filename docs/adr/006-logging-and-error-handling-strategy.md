@@ -34,10 +34,10 @@ We will implement a centralized logging and error handling system with the follo
    - Avoid nested conditionals where possible
 
 3. **Consistent Error Handling**
-   - Create informative errors with context
+   - Create informative errors with context directly where they occur
    - Catch errors only at top-level entry points
    - Log all errors with stack traces
-   - Allow errors to propagate through the call stack
+   - Allow errors to propagate naturally through the call stack
 
 ## Code Samples
 
@@ -90,7 +90,7 @@ function parseData(input) {
 ### After: Simplified and Consistent Approach
 
 ```javascript
-// Simple logging functions
+// Simple logging functions - separate from error handling
 function logInfo(functionName, message) {
   console.log(`[INFO] [${functionName}] ${message}`);
   // Also log to spreadsheet with timestamp
@@ -98,7 +98,7 @@ function logInfo(functionName, message) {
 }
 
 function logError(functionName, error) {
-  // Get the actual Error object with stack trace
+  // Get the actual Error object with stack trace (already created with proper context)
   const errorObj = error instanceof Error ? error : new Error(error);
   
   // Log to console with stack trace
@@ -108,49 +108,40 @@ function logError(functionName, error) {
   logToSheet("ERROR", functionName, errorObj.message, errorObj.stack);
 }
 
-// Create descriptive errors
-function createError(functionName, message, details = {}) {
-  // Create error with context in the message
-  const detailsStr = Object.keys(details).length > 0 ? 
-    ` (${JSON.stringify(details)})` : '';
-  
-  return new Error(`[${functionName}] ${message}${detailsStr}`);
-}
-
-// Clean validation with guard clauses - throws informative errors
+// Clean validation with guard clauses - throws informative errors directly
 function parseData(input) {
   // Guard clauses for validation
   if (!input) {
-    throw createError("parseData", "Input is null or undefined");
+    throw new Error(`Input is null or undefined`);
   }
   
   if (typeof input !== 'string') {
-    throw createError("parseData", "Input is not a string", { type: typeof input });
+    throw new Error(`Input is not a string (type: ${typeof input})`);
   }
   
   try {
     const parsed = JSON.parse(input);
     
     if (!parsed) {
-      throw createError("parseData", "Parsed result is empty");
+      throw new Error(`Parsed result is empty`);
     }
     
     if (!parsed.data) {
-      throw createError("parseData", "No data property found", { keys: Object.keys(parsed) });
+      throw new Error(`No data property found in: ${Object.keys(parsed).join(', ')}`);
     }
     
     return parsed.data;
   } catch (err) {
     // Only catch JSON.parse errors, then create a more informative error and throw it
     if (err.name === 'SyntaxError') {
-      throw createError("parseData", `Invalid JSON format: ${err.message}`);
+      throw new Error(`Invalid JSON format: ${err.message}`);
     }
     // Otherwise just let the error propagate (already handled guard clauses)
     throw err;
   }
 }
 
-// Top-level error handling at entry points
+// Top-level handler shows error flows
 function processNewTransactions() {
   try {
     logInfo("processNewTransactions", "Starting transaction processing");
@@ -158,41 +149,38 @@ function processNewTransactions() {
     const sourceSheets = config.getSourceSheets();
     const outputSheet = config.getOutputSheet();
     
-    // Process each source sheet
+    // Process each source sheet - errors will naturally propagate
     sourceSheets.forEach(sheet => {
       logInfo("processNewTransactions", `Processing sheet: ${sheet.getName()}`);
       
-      try {
-        const transactions = getNewTransactions(sheet);
-        logInfo("processNewTransactions", `Found ${transactions.length} transactions`);
-        
-        // Further processing...
-      } catch (err) {
-        // Log and re-throw with more context
-        logError("processNewTransactions", err);
-        throw createError("processNewTransactions", 
-                          `Failed to process sheet ${sheet.getName()}`, 
-                          { originalError: err.message });
-      }
+      // These function calls will throw errors if there are problems
+      const transactions = getNewTransactions(sheet);
+      logInfo("processNewTransactions", `Found ${transactions.length} transactions`);
+      
+      writeTransactions(transactions, outputSheet);
+      
+      logInfo("processNewTransactions", `Processed sheet: ${sheet.getName()}`);
     });
     
     logInfo("processNewTransactions", "Transaction processing complete");
-    return true;
   } catch (err) {
-    // Top-level catch logs the error and gracefully exits
+    // Log the error at the top level
     logError("processNewTransactions", err);
-    return false;
+    // Re-throw to the entry point
+    throw err;
   }
 }
 
-// Entry point - only place we need to catch errors
+// Entry point - only place we need to catch and swallow errors
 function onTrigger() {
   try {
     processNewTransactions();
+    return true; // Only return values that mean something
   } catch (err) {
     // This is where we ensure the script doesn't crash
     logError("onTrigger", err);
     // We could notify admin here if needed
+    return false; // Only return values that mean something
   }
 }
 ```
