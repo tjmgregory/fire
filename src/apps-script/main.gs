@@ -10,7 +10,7 @@ let utils;
  * Initialize the script and set up necessary configurations
  */
 function initialize() {
-  console.info('[initialize] Starting initialization...');
+  console.log('[initialize] Starting initialization...');
   
   // Guard clause for required objects
   if (!config) config = new Config();
@@ -18,14 +18,14 @@ function initialize() {
   
   // Set up triggers if they don't exist
   setupTriggers();
-  console.info('[initialize] Initialization complete.');
+  console.log('[initialize] Initialization complete.');
 }
 
 /**
  * Set up time-based triggers for the script
  */
 function setupTriggers() {
-  console.info('[setupTriggers] Setting up triggers...');
+  console.log('[setupTriggers] Setting up triggers...');
   
   // Guard clause for required objects
   if (!config || !utils) {
@@ -44,14 +44,14 @@ function setupTriggers() {
     .timeBased()
     .at(new Date())
     .create();
-  console.info('[setupTriggers] Created one-time immediate trigger for processNewTransactions');
+  console.log('[setupTriggers] Created one-time immediate trigger for processNewTransactions');
 
   // Create a recurring trigger to run every hour
   ScriptApp.newTrigger('processNewTransactions')
     .timeBased()
     .everyHours(1)
     .create();
-  console.info('[setupTriggers] Created hourly recurring trigger for processNewTransactions');
+  console.log('[setupTriggers] Created hourly recurring trigger for processNewTransactions');
     
   // Create an edit trigger for each source sheet
   const sourceSheets = config.getSourceSheets();
@@ -62,7 +62,7 @@ function setupTriggers() {
       .create();
     console.log(`[setupTriggers] Created onEdit trigger for sheet: ${sheet.getName()}`);
   });
-  console.info('[setupTriggers] Trigger setup complete.');
+  console.log('[setupTriggers] Trigger setup complete.');
 }
 
 /**

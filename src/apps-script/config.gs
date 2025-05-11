@@ -56,7 +56,7 @@ class Config {
    * @returns {Array} Array of sheet objects
    */
   getSourceSheets() {
-    console.info('[getSourceSheets] Getting source sheets...');
+    console.log('[getSourceSheets] Getting source sheets...');
     
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     if (!ss) {
@@ -82,7 +82,7 @@ class Config {
    * @returns {Sheet} The output sheet
    */
   getOutputSheet() {
-    console.info('[getOutputSheet] Getting output sheet...');
+    console.log('[getOutputSheet] Getting output sheet...');
     
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     if (!ss) {

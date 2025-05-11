@@ -13,7 +13,7 @@ class Utils {
    * @returns {Array} Array of normalized transaction objects
    */
   getNewTransactions(sheet) {
-    console.info(`[getNewTransactions] Processing sheet: ${sheet.getName()}`);
+    console.log(`[getNewTransactions] Processing sheet: ${sheet.getName()}`);
     
     // Guard clause for required parameter
     if (!sheet) {
@@ -381,7 +381,7 @@ class Utils {
       ''  // Error Details
     ]);
     
-    console.log(`[writeNormalizedTransactions] Writing ${rows.length} transactions to output sheet`);
+    console.info(`[writeNormalizedTransactions] Writing ${rows.length} transactions to output sheet`);
     outputSheet.getRange(outputSheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
   }
 } 

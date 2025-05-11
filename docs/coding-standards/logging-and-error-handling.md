@@ -3,8 +3,11 @@
 We will implement a centralized logging and error handling system with the following components:
 
 1. **Consistent Logging Approach**
-   - Use native console methods with appropriate severity levels (error, warn, info, log)
-   - Use console.log for debug-level logging (since console.log is not available in Google Apps Script)
+   - Use native console methods with appropriate severity levels:
+     - `console.error()`: For actual errors that prevent normal operation or require immediate attention. Always include stack traces.
+     - `console.warn()`: For potential issues that don't prevent operation but should be investigated (e.g., deprecated features, unexpected but handled conditions).
+     - `console.info()`: For important business-level events that mark significant state changes (e.g., process started/completed, major operations).
+     - `console.log()`: For detailed debugging information (e.g., variable values, function entry/exit, data transformations).
    - Add structured context to log messages (function name, operation)
    - Keep detailed logs in the console for debugging
    - Ensure all errors include stack traces
