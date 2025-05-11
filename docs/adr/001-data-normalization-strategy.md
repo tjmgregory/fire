@@ -87,13 +87,13 @@ We will implement a flexible data normalization system with the following compon
    - Support for custom mappings
 
 2. **Transaction ID & Reference Generation**
-   - For transactions with existing IDs:
+   - For all accounts, generate an ID field using `Utilities.getUuid()`
+   - For accounts that have IDs on their transactions:
      - Store original ID in `originalReference` field
-   - For transactions without IDs:
+   - For accounts that do not have IDs on their transactions:
      - Generate `originalReference` using:
-       - Transaction date (YYYY-MM-DDThh:mm)
+       - Transaction date (YYYY-MM-DD-hh-mm)
        - Amount (with 2 decimal places)
-  - Then, for both, create the ID field using `Utilities.getUuid()`
 
 3. **Data Normalization Rules**
    - Dates: Convert to YYYY-MM-DD
