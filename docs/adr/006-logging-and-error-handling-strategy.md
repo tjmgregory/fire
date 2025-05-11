@@ -33,10 +33,10 @@ We will implement a centralized logging and error handling system with the follo
 
 3. **Consistent Error Handling**
    - Create informative errors with context directly where they occur
-   - Catch errors only at top-level entry points
+   - Only catch errors when they can be meaningfully handled
+   - Never catch an error just to log and rethrow it
    - Allow errors to propagate naturally through the call stack
-   - Never both log an error and then throw it in the same function (avoid duplicate logging)
-   - Log errors only where they are caught and handled
+   - Log errors only at the point where they are handled
    - Use try/catch blocks only when necessary and keep them focused around specific operations
 
 ## Code Samples
@@ -140,47 +140,32 @@ function processData(data) {
   return result;
 }
 
-// Top-level handler: logs errors where they are caught
+// Top-level handler: only catch errors when we can handle them
 function processNewTransactions() {
-  try {
-    console.info(`[processNewTransactions] Starting transaction processing`);
+  console.info(`[processNewTransactions] Starting transaction processing`);
+  
+  const sourceSheets = config.getSourceSheets();
+  console.debug(`[processNewTransactions] Found ${sourceSheets.length} source sheets to process`);
+  
+  const outputSheet = config.getOutputSheet();
+  
+  // Process each source sheet - errors will naturally propagate
+  sourceSheets.forEach(sheet => {
+    console.info(`[processNewTransactions] Processing sheet: ${sheet.getName()}`);
     
-    const sourceSheets = config.getSourceSheets();
-    console.debug(`[processNewTransactions] Found ${sourceSheets.length} source sheets to process`);
+    // These function calls will throw errors without logging them
+    const transactions = getNewTransactions(sheet);
+    console.info(`[processNewTransactions] Found ${transactions.length} transactions in ${sheet.getName()}`);
     
-    const outputSheet = config.getOutputSheet();
+    writeTransactions(transactions, outputSheet);
     
-    // Process each source sheet - errors will naturally propagate
-    sourceSheets.forEach(sheet => {
-      console.info(`[processNewTransactions] Processing sheet: ${sheet.getName()}`);
-      
-      try {
-        // These function calls will throw errors without logging them
-        const transactions = getNewTransactions(sheet);
-        console.info(`[processNewTransactions] Found ${transactions.length} transactions in ${sheet.getName()}`);
-        
-        writeTransactions(transactions, outputSheet);
-        
-        console.info(`[processNewTransactions] Processed sheet: ${sheet.getName()}`);
-      } catch (err) {
-        // Log the error where it's caught
-        console.error(`[processNewTransactions] Error processing sheet ${sheet.getName()}: ${err.message}`, err.stack);
-        // Re-throw to the entry point
-        throw err;
-      }
-    });
-    
-    console.info(`[processNewTransactions] Transaction processing complete`);
-  } catch (err) {
-    // Log the full error with stack trace to console
-    console.error(`[processNewTransactions] Error: ${err.message}`, err.stack);
-    
-    // Re-throw to the entry point
-    throw err;
-  }
+    console.info(`[processNewTransactions] Processed sheet: ${sheet.getName()}`);
+  });
+  
+  console.info(`[processNewTransactions] Transaction processing complete`);
 }
 
-// Entry point - only place we need to catch and swallow errors
+// Entry point - only place we need to catch and handle errors
 function onTrigger() {
   try {
     console.info(`[onTrigger] Starting scheduled execution`);
