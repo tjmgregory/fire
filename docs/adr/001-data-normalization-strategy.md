@@ -93,7 +93,11 @@ We will implement a flexible data normalization system with the following compon
    - For accounts that do not have IDs on their transactions:
      - Generate `originalReference` using:
        - Transaction date (YYYY-MM-DD-hh-mm)
-       - Amount (with 2 decimal places)
+       - Use only stable identifiers to avoid reference changes when exchange rates fluctuate
+     - Bank-specific reference generation:
+       - For Revolut: Use `${date}T${time}_${type}`
+       - For Yonder: Use `${date}T${time}_${sanitizeDescription(description, 20)}`
+   - **Note:** Amount values are no longer included in reference generation to create more stable identifiers
 
 3. **Data Normalization Rules**
    - Dates: Convert to YYYY-MM-DD
@@ -107,6 +111,10 @@ We will implement a flexible data normalization system with the following compon
    - Currencies: 
      - All normalized amounts must be in GBP
      - Use GBP directly if available in source data
+       - Priority for amount selection:
+         1. Use "Amount (GBP)" column if available (e.g., Yonder)
+         2. Use amount directly if currency is already GBP
+         3. Apply currency conversion only if neither condition is met
      - Convert to GBP if source currency is different
      - Store original currency and amount in metadata
      - Use exchange rates from the transaction date for conversion
