@@ -298,7 +298,10 @@ class Utils {
       'THB_GBP': 0.022,
       'SGD_GBP': 0.58,
       'HKD_GBP': 0.099,
-      'ZAR_GBP': 0.041
+      'ZAR_GBP': 0.041,
+      'NOK_GBP': 0.074,
+      'CNY_GBP': 0.11,
+      'SEK_GBP': 0.075
     };
     
     const rateKey = `${fromCurrency}_${toCurrency}`;
