@@ -24,9 +24,9 @@ This plan implements the logging and error handling strategy defined in ADR 006.
    - Create detailed, contextual error messages
    - Implement guard clauses for early validation
    - Allow errors to propagate naturally to entry points
-   - Catch and handle errors only at top-level entry points
-   - Never both log an error and throw it in the same function
-   - Log errors only where they are caught and handled
+   - Only catch errors when they can be meaningfully handled
+   - Never catch an error just to log and rethrow it
+   - Log errors only at the point where they are handled
    - Keep try/catch blocks focused only on specific operations that need special error handling
 
 ## Implementation Steps
@@ -78,28 +78,33 @@ This plan implements the logging and error handling strategy defined in ADR 006.
 ## Test Cases
 1. Function throws error with stack trace
    - Call a function that throws an error without logging it
-   - Verify the error is logged only at the catch point
-   - Verify no duplicate logging occurs
+   - Verify the error propagates naturally through the call stack
+   - Verify the error is logged only at the point where it's handled
+   - Verify no intermediate catch-and-rethrow occurs
 
 2. Function validation works with guard clauses
    - Call a function with invalid parameters
    - Verify the error explains the validation issue
    - Verify the error contains useful context
+   - Verify errors propagate without intermediate catching
 
 3. Top-level error handling prevents termination
    - Cause an error in a deeply nested function call
-   - Verify the error propagates to the entry point
+   - Verify the error propagates naturally to the entry point
+   - Verify the error is logged only at the entry point
    - Verify the script continues to run after error handling
 
 4. Console logging provides appropriate detail levels
    - Check that debug messages include sufficient detail
    - Verify info messages track main program flow
    - Confirm error messages include stack traces
+   - Verify no duplicate logging occurs
 
 5. Focused try/catch blocks
    - Verify try/catch blocks only wrap specific error-prone operations
    - Check that normal validation occurs outside the try/catch blocks
    - Confirm that errors are converted to more meaningful ones when caught
+   - Verify no catch-and-rethrow patterns exist
 
 ## Edge Cases
 1. Very large stack traces in the console
