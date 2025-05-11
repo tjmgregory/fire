@@ -1,7 +1,7 @@
 # Logging and Error Handling Implementation Plan
 
 ## Architecture Overview
-This plan implements the logging and error handling strategy defined in ADR 006. The current implementation has several issues:
+This plan implements the logging and error handling strategy defined in the coding standards document. The current implementation has several issues:
 
 1. Duplicate logging - Both `console.error` and `utils.logError` are often called together
 2. Error propagation - Errors are thrown after logging, potentially causing script termination
@@ -31,7 +31,7 @@ This plan implements the logging and error handling strategy defined in ADR 006.
 
 ## Implementation Steps
 
-1. [x] Document logging and error handling approach in ADR 006
+1. [x] Document logging and error handling approach in coding standards
    - [x] Define logging and error handling requirements
    - [x] Outline technical components
    - [x] Document consequences and implementation notes
@@ -59,13 +59,6 @@ This plan implements the logging and error handling strategy defined in ADR 006.
    - [x] Let errors propagate naturally
    - [x] Remove duplicate logging
    - [x] Add validation for spreadsheet access
-
-5. [ ] Create examples and documentation
-   - [ ] Add examples for proper logging usage
-   - [ ] Document error handling best practices
-   - [ ] Create guidelines for error message content
-   - [ ] Include log level usage guidelines
-   - [ ] Document when to use try/catch blocks and how to scope them
 
 ## Timeline
 - Implementation of core components: 0.5 day
