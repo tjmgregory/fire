@@ -128,7 +128,7 @@ class Utils {
   /**
    * Parse date and time from various formats and convert to UTC ISO string
    * @param {string|Date} dateStr - Date string or Date object
-   * @param {string} timeStr - Time string
+   * @param {string|Date} timeStr - Time string or Date object
    * @param {string} sourceSheet - Name of the source sheet
    * @returns {Object} Normalized date and time in UTC
    */
@@ -142,16 +142,28 @@ class Utils {
       throw new Error(msg);
     }
 
-    // If dateStr is a Date object, convert to string
-    if (dateStr instanceof Date) {
-      dateTime = dateStr;
-    } else if (sourceSheet.toLowerCase() === 'monzo') {
-      // Monzo format: DD/MM/YYYY and HH:mm:ss
-      if (typeof dateStr === 'string') {
-        const [day, month, year] = dateStr.split('/');
-        dateTime = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timeStr}`);
+    if (sourceSheet.toLowerCase() === 'monzo') {
+      // Monzo format: Date object and potentially Date object or HH:mm:ss string
+      if (dateStr instanceof Date) {
+        dateTime = new Date(dateStr);
+        
+        if (timeStr) {
+          console.log(`[parseDateTime] Monzo timeStr type: ${typeof timeStr}, value: ${timeStr}`);
+          
+          if (typeof timeStr === 'string') {
+            // If timeStr is a string in format HH:mm:ss
+            const [hours, minutes, seconds] = timeStr.split(':');
+            dateTime.setHours(hours, minutes, seconds);
+          } else if (timeStr instanceof Date) {
+            // If timeStr is a Date object, extract time components from it
+            const hours = timeStr.getHours();
+            const minutes = timeStr.getMinutes();
+            const seconds = timeStr.getSeconds();
+            dateTime.setHours(hours, minutes, seconds);
+          }
+        }
       } else {
-        const msg = `[parseDateTime] Monzo dateStr is not a string: ${dateStr}`;
+        const msg = `[parseDateTime] Monzo dateStr is not a Date object: ${dateStr}`;
         this.logError('parseDateTime', msg);
         throw new Error(msg);
       }
