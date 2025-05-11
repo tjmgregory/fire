@@ -62,6 +62,7 @@
 - ❌ Set up automatic updates for output sheets
 - ❌ Add data visualization options
 - ❌ Implement status tracking columns
+- ❌ Set up Category (final) as a calculated column using Sheet functions to use AI Category unless Manual Override is present
 
 ### Trigger System
 - ✅ Implement trigger system based on [ADR 004: Trigger System Design](../docs/adr/004-trigger-system-design.md)

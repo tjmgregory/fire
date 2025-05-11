@@ -34,6 +34,8 @@ We will separate the transaction processing into two distinct phases:
    - Run more frequently (e.g., every 15 minutes)
    - Focus on data integrity and consistency
    - Handle currency conversion and standardization
+   - Do NOT handle any categorization - categories are strictly handled in the categorization phase
+   - Ignore any category information from source sheets during normalization
 
 2. **Categorization Phase**
    - Process uncategorized transactions in batches

@@ -159,11 +159,6 @@ class Utils {
     const originalId = indices.originalId !== undefined ? row[indices.originalId] : undefined;
     const originalReference = this.generateOriginalReference(dateTime, amount, originalId);
     
-    // Per ADR-005, normalization and categorization are separate processes.
-    // Default all transactions to 'Uncategorized' during normalization.
-    // The category will be determined in the categorization phase.
-    const category = indices.category !== undefined && row[indices.category] ? row[indices.category] : 'Uncategorized';
-    
     return {
       id: Utilities.getUuid(),
       originalReference: originalReference,
@@ -172,7 +167,6 @@ class Utils {
       description: description,
       amount: amount.value,
       currency: 'GBP',
-      category: category,
       transactionMethod: this.normalizeTransactionType(row[indices.type], sourceSheet)
     };
   }

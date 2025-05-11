@@ -23,7 +23,7 @@ We will implement a multi-sheet output structure with the following components:
    - Date (YYYY-MM-DD)
    - Description (original)
    - Amount (standardized)
-   - Category (final)
+   - Category (final) - Calculated column using Sheet functions: uses AI Category unless Manual Override is present
    - AI Category (suggested)
    - Manual Override
    - Confidence
