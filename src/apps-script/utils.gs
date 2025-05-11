@@ -381,7 +381,7 @@ class Utils {
       ''  // Error Details
     ]);
     
-    console.info(`[writeNormalizedTransactions] Writing ${rows.length} transactions to output sheet`);
+    console.log(`[writeNormalizedTransactions] Writing ${rows.length} transactions to output sheet`);
     outputSheet.getRange(outputSheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
   }
 } 

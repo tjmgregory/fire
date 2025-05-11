@@ -123,7 +123,7 @@ function processNewTransactions() {
     const transactions = utils.getNewTransactions(sheet).map(t => ({ ...t, sourceSheet: sheet.getName() }));
     // Filter out already processed transactions by ID
     const newTransactions = transactions.filter(t => !existingIds.includes(t.id));
-    console.info(`[processNewTransactions] Found ${newTransactions.length} new transactions in sheet: ${sheet.getName()}`);
+    console.log(`[processNewTransactions] Found ${newTransactions.length} new transactions in sheet: ${sheet.getName()}`);
     if (newTransactions.length > 0) {
       // Persist normalized transactions to output sheet
       utils.writeNormalizedTransactions(newTransactions, outputSheet);
@@ -159,6 +159,6 @@ function categorizeTransactions() {
     .map((row, idx) => ({ row, idx }))
     .filter(obj => obj.idx > 0 && obj.row[statusCol] === 'UNPROCESSED');
   
-  console.info(`[categorizeTransactions] Found ${toCategorize.length} transactions to categorize.`);
+  console.log(`[categorizeTransactions] Found ${toCategorize.length} transactions to categorize.`);
   // TODO: Implement categorization logic for these rows
 }

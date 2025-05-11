@@ -73,7 +73,7 @@ class Config {
       return expectedNames.includes(name);
     });
     
-    console.info(`[getSourceSheets] Found ${selected.length} source sheets: ${JSON.stringify(selected.map(s => s.getName()))}`);
+    console.log(`[getSourceSheets] Found ${selected.length} source sheets: ${JSON.stringify(selected.map(s => s.getName()))}`);
     return selected;
   }
   
@@ -91,7 +91,7 @@ class Config {
     
     let sheet = ss.getSheetByName(this.SHEET_NAMES.OUTPUT);
     if (!sheet) {
-      console.info(`[getOutputSheet] Output sheet not found. Creating: ${this.SHEET_NAMES.OUTPUT}`);
+      console.log(`[getOutputSheet] Output sheet not found. Creating: ${this.SHEET_NAMES.OUTPUT}`);
       sheet = ss.insertSheet(this.SHEET_NAMES.OUTPUT);
       this.initializeOutputSheet(sheet);
     } else {
@@ -132,6 +132,6 @@ class Config {
     console.log(`[initializeOutputSheet] Initializing output sheet with headers: ${JSON.stringify(headers)}`);
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     sheet.setFrozenRows(1);
-    console.info('[initializeOutputSheet] Output sheet initialized successfully');
+    console.log('[initializeOutputSheet] Output sheet initialized successfully');
   }
 } 
