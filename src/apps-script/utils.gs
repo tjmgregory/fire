@@ -253,13 +253,7 @@ class Utils {
     // Handle currency conversion if not GBP
     if (currency && currency !== 'GBP') {
       console.log(`Converting from ${currency} to GBP: ${value}`);
-      try {
-        value = this.convertCurrency(value, currency, 'GBP');
-      } catch (error) {
-        console.error(`Error converting currency: ${error.message}`);
-        // Log the error but continue with the original amount
-        console.warn(`Using original amount without conversion: ${value} ${currency}`);
-      }
+      value = this.convertCurrency(value, currency, 'GBP');
     }
     
     return {
