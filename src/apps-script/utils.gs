@@ -151,13 +151,36 @@ class Utils {
     }
     
     const dateTime = this.parseDateTime(row[indices.date], row[indices.time], sourceSheet);
-    const amount = this.normalizeAmount(row[indices.amount], row[indices.currency], sourceSheet);
+    
+    // Check for GBP amount column for Yonder
+    const amountGbp = sourceSheet.toLowerCase().includes('yonder') && indices.amount >= 0 ? 
+      row[indices.amount] : undefined;
+    
+    const amount = this.normalizeAmount(
+      row[indices.amount], 
+      amountGbp,
+      row[indices.currency], 
+      sourceSheet
+    );
     
     // Use the enhanced description extraction
     const description = this.getTransactionDescription(row, indices, headers, sourceSheet);
+    
     // Handle case when indices.originalId doesn't exist (like with Yonder)
     const originalId = indices.originalId !== undefined ? row[indices.originalId] : undefined;
-    const originalReference = this.generateOriginalReference(dateTime, amount, originalId);
+    
+    // Get transaction type for reference generation
+    const transactionType = indices.type !== undefined ? row[indices.type] : undefined;
+    
+    // Generate reference without amount, using bank-specific logic
+    const originalReference = this.generateOriginalReference(
+      dateTime, 
+      amount, 
+      originalId, 
+      sourceSheet,
+      transactionType,
+      description
+    );
     
     return {
       id: Utilities.getUuid(),
@@ -224,17 +247,47 @@ class Utils {
   /**
    * Normalize amount and handle currency conversion
    * @param {string|number} amount - Transaction amount
+   * @param {string|number} amount_gbp - Native GBP amount if available (e.g., from Yonder)
    * @param {string} currency - Currency code
    * @param {string} sourceSheet - Name of the source sheet
    * @returns {Object} Normalized amount and currency
+   * 
+   * This function implements a priority-based approach to amount selection:
+   * 1. Use "Amount (GBP)" if directly available (for sheets like Yonder that provide this)
+   * 2. Use amount directly if currency is already GBP
+   * 3. Apply currency conversion only if neither condition is met
+   * 
+   * This approach minimizes unnecessary currency conversion and ensures we use the
+   * most accurate GBP amount when available directly from the source.
    */
-  normalizeAmount(amount, currency, sourceSheet) {
+  normalizeAmount(amount, amount_gbp, currency, sourceSheet) {
     // Guard clause for required parameters
     if (amount === undefined || amount === null) {
       throw new Error(`Amount is required for sheet: ${sourceSheet}`);
     }
     if (!sourceSheet) {
       throw new Error('Source sheet name is required');
+    }
+    
+    // Priority order for amount selection:
+    // 1. Use "Amount (GBP)" if available (e.g., Yonder)
+    // 2. Use amount directly if currency is already GBP
+    // 3. Apply currency conversion only if neither condition is met
+    
+    // If we have a GBP amount directly provided (like in Yonder), use it
+    if (amount_gbp !== undefined && amount_gbp !== null) {
+      console.log(`Using provided GBP amount: ${amount_gbp}`);
+      let value = parseFloat(amount_gbp);
+      
+      // Ensure debits are negative
+      if (value > 0 && this.isDebit(amount, sourceSheet)) {
+        value = -value;
+      }
+      
+      return {
+        value: value,
+        currency: 'GBP'
+      };
     }
     
     // Convert to number and handle negative amounts
@@ -250,11 +303,17 @@ class Utils {
       }
     }
     
-    // Handle currency conversion if not GBP
-    if (currency && currency !== 'GBP') {
-      console.log(`Converting from ${currency} to GBP: ${value}`);
-      value = this.convertCurrency(value, currency, 'GBP');
+    // If already in GBP, no conversion needed
+    if (currency === 'GBP') {
+      return {
+        value: value,
+        currency: 'GBP'
+      };
     }
+    
+    // Handle currency conversion if not GBP
+    console.log(`Converting from ${currency} to GBP: ${value}`);
+    value = this.convertCurrency(value, currency, 'GBP');
     
     return {
       value: value,
@@ -659,29 +718,70 @@ class Utils {
   /**
    * Generate original reference for transactions without IDs
    * @param {Object} dateTime - Date and time object
-   * @param {Object} amount - Amount object
+   * @param {Object} amount - Amount object (not used for reference generation anymore)
    * @param {string} originalId - Original transaction ID if available
+   * @param {string} sourceSheet - Name of the source sheet
+   * @param {string} [transactionType] - Transaction type (for Revolut)
+   * @param {string} [description] - Transaction description (for Yonder)
    * @returns {string} Original reference
+   * 
+   * This function generates stable transaction references that don't depend on
+   * amount values, which could change with exchange rates over time. Instead:
+   * 
+   * 1. For accounts with native IDs (like Monzo): Use the original ID
+   * 2. For Revolut (without native IDs): Use `${date}T${time}_${type}`
+   * 3. For Yonder (without native IDs): Use `${date}T${time}_${truncatedDescription}`
+   * 
+   * By avoiding amount values in references, we ensure they remain stable
+   * even when currency conversion rates change, which improves deduplication reliability.
    */
-  generateOriginalReference(dateTime, amount, originalId) {
+  generateOriginalReference(dateTime, amount, originalId, sourceSheet, transactionType, description) {
     // Guard clause for required parameters
     if (!dateTime || !dateTime.date || !dateTime.time) {
       throw new Error('Date and time object is required');
     }
-    if (!amount || amount.value === undefined) {
-      throw new Error('Amount object is required');
+    if (!sourceSheet) {
+      throw new Error('Source sheet name is required');
     }
     
-    // If we have an original ID from the source, use it
+    // If we have an original ID from the source, use it (e.g., Monzo)
     if (originalId) {
       console.log(`[generateOriginalReference] Using original ID from source: ${originalId}`);
       return originalId;
     }
     
-    // Otherwise, generate a deterministic reference as per ADR-001
-    const generatedRef = `${dateTime.date}T${dateTime.time.split(':')[0]}:${dateTime.time.split(':')[1]}_${amount.value.toFixed(2)}`;
-    console.log(`[generateOriginalReference] Generated reference: ${generatedRef} from date=${dateTime.date}, time=${dateTime.time}, amount=${amount.value}`);
+    // Extract date and time components for the reference
+    const datePart = dateTime.date.split('T')[0]; // YYYY-MM-DD
+    const timePart = `${dateTime.time.split(':')[0]}:${dateTime.time.split(':')[1]}`; // HH:MM
     
+    // Bank-specific reference generation without amount
+    if (sourceSheet.toLowerCase().includes('revolut')) {
+      // For Revolut: Use ${date}T${time}_${type}
+      const typeValue = transactionType || 'UNKNOWN';
+      const generatedRef = `${datePart}T${timePart}_${typeValue}`;
+      console.log(`[generateOriginalReference] Generated Revolut reference: ${generatedRef}`);
+      return generatedRef;
+    } else if (sourceSheet.toLowerCase().includes('yonder')) {
+      // For Yonder: Use ${date}T${time}_${truncatedDescription}
+      let descriptionValue = '';
+      if (description) {
+        // Sanitize and truncate description to 20 chars
+        descriptionValue = description.toString()
+          .replace(/[^a-zA-Z0-9\s]/g, '') // Remove special characters
+          .trim()
+          .substring(0, 20)
+          .trim()
+          .toUpperCase();
+      }
+      
+      const generatedRef = `${datePart}T${timePart}_${descriptionValue}`;
+      console.log(`[generateOriginalReference] Generated Yonder reference: ${generatedRef}`);
+      return generatedRef;
+    }
+    
+    // Fallback for other sources - date+time only, no amount
+    const generatedRef = `${datePart}T${timePart}`;
+    console.log(`[generateOriginalReference] Generated generic reference: ${generatedRef}`);
     return generatedRef;
   }
   

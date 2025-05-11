@@ -168,11 +168,11 @@ Example normalization for Monzo:
 // Normalized output:
 {
   id: "550e8400-e29b-41d4-a716-446655440000",
-  originalReference: "tx_00009OTxGTgBsccfxgpscD",
+  originalReference: "tx_00009OTxGTgBsccfxgpscD", // Native transaction ID used directly
   date: "2017-09-13",
   time: "18:13:37",
   description: "GREGORY T J M",
-  amount: 1000.00,
+  amount: 1000.00, // Already in GBP, used directly
   currency: "GBP",
   category: "Income",
   transactionMethod: "TRANSFER"
@@ -195,10 +195,10 @@ Example normalizations for Revolut:
   "Balance": "255.47"
 }
 
-// Normalized output (EUR):
+// Normalized output:
 {
   id: "7c9e6679-7425-40de-944b-e07fc1f90ae7",
-  originalReference: "2025-02-05T21:54_-0.01",
+  originalReference: "2025-02-05T21:54_TRANSFER", // Stable reference without amount
   date: "2025-02-05",
   time: "21:54:11",
   description: "Transfer to Revolut user",
@@ -222,10 +222,10 @@ Example normalizations for Revolut:
   "Balance": "2268.73"
 }
 
-// Normalized output (GBP):
+// Normalized output:
 {
   id: "9c9e6679-7425-40de-944b-e07fc1f90ae8",
-  originalReference: "2025-02-12T07:56_1307.00",
+  originalReference: "2025-02-12T07:56_TOPUP", // Stable reference without amount
   date: "2025-02-12",
   time: "07:56:48",
   description: "Payment from Theodore Gregory",
@@ -242,7 +242,7 @@ Example normalization for Yonder:
 {
   "Date/Time of transaction": "2025-01-31 18:21:10",
   "Description": "Lodging H Gyraffe Host",
-  "Amount (GBP)": "20.45",
+  "Amount (GBP)": "20.45", // Native GBP amount
   "Amount (in Charged Currency)": "254",
   "Currency": "MAD",
   "Category": "Holiday",
@@ -252,11 +252,12 @@ Example normalization for Yonder:
 
 // Normalized output:
 {
-  id: "yonder_2025-01-31_18:21:10_lodging_h_gyraffe_host_20.45",
+  id: "yonder_2025-01-31_18:21:10_lodging_h_gyraffe_host",
+  originalReference: "2025-01-31T18:21_LODGING H GYRAFFE H", // Truncated description, no amount
   date: "2025-01-31",
   time: "18:21:10",
   description: "Lodging H Gyraffe Host",
-  amount: -20.45,
+  amount: -20.45, // Used "Amount (GBP)" directly, no conversion needed
   currency: "GBP",
   category: "Holiday",
   transactionMethod: "PAYMENT"

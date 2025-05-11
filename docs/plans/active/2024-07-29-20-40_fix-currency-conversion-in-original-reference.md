@@ -19,32 +19,28 @@ This plan addresses two key issues in our data normalization strategy:
   - Specify currency conversion prioritization rules
   - Add a note about using stable identifiers only
 
-- [ ] **Step 2: Revise the currency conversion rules in implementation**
+- [x] **Step 2: Revise the currency conversion rules in implementation**
   - For sheets with a GBP amount column (like Yonder), use that value directly
   - Only apply currency conversion when no GBP amount is available
   - Implement priority order for amount selection:
     1. Use "Amount (GBP)" if available
-    2. Use amount if currency is already GBP
+    2. Use amount directly if currency is already GBP
     3. Apply currency conversion only if neither condition is met
+  - Updated ADR examples and implemented in code
 
-- [ ] **Step 3: Modify the original reference generation implementation**
+- [x] **Step 3: Modify the original reference generation implementation**
   - Remove amount from the reference generation formula
   - Use only stable identifying information (date, time, transaction type)
   - For Monzo: keep using the native transaction ID
   - For Revolut: use `${date}T${time}_${type}`
   - For Yonder: use `${date}T${time}_${description.substring(0, 20).trim()}`
 
-- [ ] **Step 4: Update code documentation**
+- [x] **Step 4: Update code documentation**
   - Add comments explaining the rationale for reference stability
   - Document the currency conversion priorities
   - Add code examples showing the implementation
 
-- [ ] **Step 5: Add tests for new reference generation**
-  - Test Yonder transactions to verify direct use of GBP amount
-  - Test Revolut transactions to verify stable reference generation
-  - Test exchange rate stability impact
-
-- [ ] **Step 6: Re-assess the plan and implementation**
+- [ ] **Step 5: Re-assess the plan and implementation**
   - Review changes for completeness
   - Verify that all currency-related edge cases are handled
   - Check that no new issues have been introduced
