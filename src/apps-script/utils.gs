@@ -171,8 +171,10 @@ class Utils {
                sourceSheet.toLowerCase() === 'yonder') {
       // ISO format: YYYY-MM-DD HH:mm:ss
       if (typeof dateStr === 'string') {
+        console.log('dateStr is a string - delete the other code handler');
         dateTime = new Date(dateStr.replace(' ', 'T'));
       } else if (dateStr instanceof Date) {
+        console.log('dateStr is a Date - delete the other code handler');
         dateTime = new Date(dateStr);
       } else {
         throw new Error(`${sourceSheet} dateStr has unexpected type (${typeof dateStr}): ${dateStr}`);
