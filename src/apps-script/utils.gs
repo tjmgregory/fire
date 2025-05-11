@@ -155,47 +155,18 @@ class Utils {
    * @returns {Object} Normalized date and time in UTC
    */
   parseDateTime(dateStr, timeStr, sourceSheet) {
-    // Guard clause for required parameters
-    if (!dateStr) {
-      throw new Error(`Date string is required for sheet: ${sourceSheet}`);
-    }
-    if (!sourceSheet) {
-      throw new Error('Source sheet name is required');
-    }
-    
     let dateTime;
 
     if (sourceSheet.toLowerCase() === 'monzo') {
-      // Monzo format: Date object and potentially Date object or HH:mm:ss string
-      if (!(dateStr instanceof Date)) {
-        throw new Error(`Monzo dateStr is not a Date object: ${dateStr}`);
-      }
-      
+      // Monzo format: Both dateStr and timeStr are Date objects.
       dateTime = new Date(dateStr);
+
+      // Special handling for Google Sheets "zero date" (Dec 30, 1899) used for time-only values
+      const timeDate = new Date(timeStr);
       
-      if (timeStr) {
-        if (typeof timeStr === 'string') {
-          // String time format (HH:mm:ss)
-          const [hours, minutes, seconds] = timeStr.split(':').map(num => parseInt(num, 10));
-          dateTime.setHours(hours, minutes, seconds);
-        } else if (timeStr instanceof Date) {
-          // Special handling for Google Sheets "zero date" (Dec 30, 1899) used for time-only values
-          const timeDate = new Date(timeStr);
-          console.log(`[parseDateTime] Monzo timeStr type: object, value: ${timeDate}`);
-          
-          // Extract time components regardless of year (handles zero dates correctly)
-          const hours = timeDate.getHours();
-          const minutes = timeDate.getMinutes();
-          const seconds = timeDate.getSeconds();
-          
-          if (timeDate.getFullYear() <= 1900) {
-            console.log(`[parseDateTime] Detected Google Sheets time-only value: ${timeDate}`);
-          }
-          
-          // Apply time to the main date
-          dateTime.setHours(hours, minutes, seconds);
-        }
-      }
+      // Apply time to the main date
+      dateTime.setHours(timeDate.getHours(), timeDate.getMinutes(), timeDate.getSeconds());
+    
     } else if (sourceSheet.toLowerCase() === 'revolut' || 
                sourceSheet.toLowerCase() === 'yonder') {
       // ISO format: YYYY-MM-DD HH:mm:ss
@@ -214,10 +185,6 @@ class Utils {
     if (!(dateTime instanceof Date) || isNaN(dateTime.getTime())) {
       throw new Error(`Invalid date created from: dateStr=${dateStr}, timeStr=${timeStr}, sheet=${sourceSheet}`);
     }
-
-    // Log date components for debugging - always log for now
-    console.log(`[parseDateTime] Date components: year=${dateTime.getFullYear()}, month=${dateTime.getMonth() + 1}, day=${dateTime.getDate()}, hours=${dateTime.getHours()}, minutes=${dateTime.getMinutes()}, seconds=${dateTime.getSeconds()}`);
-    
     // Transaction source dates are assumed to be in UK time
     // Convert directly to ISO string (UTC) for standardization
     const isoString = dateTime.toISOString();
