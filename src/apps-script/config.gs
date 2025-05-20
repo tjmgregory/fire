@@ -5,24 +5,43 @@
 class Config {
   constructor() {
     this.CATEGORIES = [
+      // Essential Living Expenses
       'Housing',
-      'Subscriptions',
-      'Phone',
       'Groceries',
+      'Medical',
+      'Insurance',
+      
+      // Technology & Subscriptions
+      'Phone',
+      'Electronics',
+      'Subscriptions',
+      
+      // Lifestyle & Entertainment
       'Entertainment',
       'Eating Out',
-      'Flights',
-      'Insurance',
       'Clothing',
       'Self Care',
-      'Gym',
-      'Education',
-      'Medical',
+      'Fitness',
+      
+      // Travel & Transport
+      'Flights',
       'Rideshare',
-      'Gifts',
-      'Charity',
+      
+      // Personal Development
+      'Education',
+      
+      // Financial Management
       'Fees',
       'Cash',
+      'Investments',
+      'Savings',
+      'Debt Payments',
+      
+      // Gifts & Giving
+      'Gifts',
+      'Charity',
+      
+      // Other
       'Misc'
     ];
     
