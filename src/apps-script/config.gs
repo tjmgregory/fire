@@ -6,7 +6,7 @@ class Config {
   constructor() {
     this.CATEGORIES = [
       // Essential Living Expenses
-      'Housing',      // Rent, mortgage, utilities, maintenance
+      'Housing',      // Rent, mortgage, utilities, maintenance, furniture, home decor
       'Groceries',    // Food, household items, cleaning supplies
       'Medical',      // Doctor visits, prescriptions, health products
       'Insurance',    // Health, home, car, life insurance
@@ -17,14 +17,15 @@ class Config {
       'Subscriptions', // Netflix, Spotify, software subscriptions
       
       // Lifestyle & Entertainment
-      'Entertainment', // Movies, games, events, hobbies
-      'Eating Out',   // Restaurants, cafes, takeout
+      'Entertainment', // Movies, video games, events, hobbies
+      'Dining & Drinks', // Restaurants, cafes, bars, pubs, takeout
       'Clothing',     // Clothes, shoes, accessories
       'Self Care',    // Gym, beauty, wellness, personal care
       
       // Travel & Transport
       'Flights',      // Air travel, airport fees
       'Rideshare',    // Uber, Lyft, taxis
+      'Public Transport', // Tube, bus, train, trams
       'Vehicle Rental', // Car, motorbike, scooter rentals
       
       // Personal Development
@@ -34,7 +35,7 @@ class Config {
       'Fees',         // Bank fees, transaction fees
       'Cash',         // ATM withdrawals, cash expenses
       'Investments',  // Stocks, crypto, investment contributions
-      'Savings',      // Emergency fund, goal savings
+      'Savings',      // Emergency fund, goal savings, pot transfers
       'Debt Payments', // Loans, credit card payments
       
       // Gifts & Giving
