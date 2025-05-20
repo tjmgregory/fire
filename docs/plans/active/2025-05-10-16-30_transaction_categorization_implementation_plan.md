@@ -23,8 +23,8 @@
 
 ### Research and Setup
 - ✅ Document the structure of each source sheet (Monzo, Revolut, Yonder)
-- ✅ Document findings in [ADR 001: Data Normalization Strategy](../docs/adr/001-data-normalization-strategy.md)
-- ✅ Document output structure in [ADR 003: Output Sheet Structure](../docs/adr/003-output-sheet-structure.md)
+- ✅ Document findings in [ADR 001: Data Normalization Strategy](/docs/adr/001-data-normalization-strategy.md)
+- ✅ Document output structure in [ADR 003: Output Sheet Structure](/docs/adr/003-output-sheet-structure.md)
 - ✅ Review and approve ADR 001
 - ✅ Create test cases based on research
 - ✅ Create a new Apps Script project in Google Drive
@@ -49,7 +49,7 @@
 - ✅ Add status tracking for normalization phase
 
 ### Transaction Categorization
-- 🔄 Implement categorization system based on [ADR 002: Transaction Categorization Strategy](../docs/adr/002-transaction-categorization-strategy.md)
+- 🔄 Implement categorization system based on [ADR 002: Transaction Categorization Strategy](/docs/adr/002-transaction-categorization-strategy.md)
 - 🔄 Set up OpenAI API connection
 - ❌ Implement batch processing for API calls
 - ❌ Add learning mechanism for improving categorization
@@ -65,7 +65,7 @@
 - ❌ Set up Category (final) as a calculated column using Sheet functions to use AI Category unless Manual Override is present
 
 ### Trigger System
-- ✅ Implement trigger system based on [ADR 004: Trigger System Design](../docs/adr/004-trigger-system-design.md)
+- ✅ Implement trigger system based on [ADR 004: Trigger System Design](/docs/adr/004-trigger-system-design.md)
 - ✅ Set up time-based triggers
 - ✅ Implement event-based triggers
 - ✅ Add error handling for triggers
