@@ -155,4 +155,5 @@ Test Cases:
 - ✅ **Data Consistency**: Add validation and error checking
 - ✅ **Multiple Currencies**: Store exchange rates and implement conversion
 - ✅ **Process Separation**: Implement robust state tracking and error recovery
-- ✅ **Known Bug - Duplicate Transactions**: The normalization process currently re-adds every row from input sheets on each run due to broken logic for checking existing transactions. Reference ADR-001 for deterministic transaction reference implementation details.
+
+> **Note:** For a complete list of known bugs and issues, please refer to the [Bug Tracker](/docs/issues/bug-tracker.md).
