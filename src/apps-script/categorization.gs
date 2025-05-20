@@ -47,13 +47,13 @@ class CategorizationService {
     // Build the system message
     const systemMessage = {
       role: 'system',
-      content: `You are a financial transaction categorizer. Categorize each transaction into one of these categories: ${categories}. Consider the transaction description, amount, and any patterns from similar transactions. Respond in JSON format with an array of objects, each containing 'category' and 'confidence' fields.`
+      content: `You are a financial transaction categorizer. Categorize each transaction into one of these categories: ${categories}. Consider the transaction description, amount, and any patterns from similar transactions. Respond in JSON format as an object with a property 'categorizations', which is an array of objects, each with 'category' and 'confidence' fields.`
     };
 
     // Build the user message with transaction details
     const userMessage = {
       role: 'user',
-      content: `Please categorize these transactions and respond in JSON format:\n\n` + 
+      content: `Please categorize these transactions and respond in JSON format as an object with a property 'categorizations', which is an array of objects, each with 'category' and 'confidence' fields.\n\n` + 
         transactions.map(t => 
           `Transaction: ${t.description}\nAmount: ${t.amount} ${t.currency}\nDate: ${t.date}\n`
         ).join('\n')
@@ -127,13 +127,15 @@ class CategorizationService {
     }
 
     const content = response.choices[0].message.content;
+    console.log('[parseCategorizationResponse] Raw response content:', content);
     let categorizations;
     
     try {
-      categorizations = JSON.parse(content);
-      if (!Array.isArray(categorizations)) {
-        throw new Error('Response is not an array');
+      const parsed = JSON.parse(content);
+      if (!parsed.categorizations || !Array.isArray(parsed.categorizations)) {
+        throw new Error("Response does not contain a 'categorizations' array property");
       }
+      categorizations = parsed.categorizations;
     } catch (error) {
       console.error('[parseCategorizationResponse] Failed to parse JSON response:', error);
       throw new Error('Invalid JSON response from OpenAI');
