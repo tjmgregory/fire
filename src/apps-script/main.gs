@@ -39,19 +39,26 @@ function setupTriggers() {
     ScriptApp.deleteTrigger(trigger);
   });
   
-  // Create a one-time trigger to run immediately
-  ScriptApp.newTrigger('processNewTransactions')
-    .timeBased()
-    .at(new Date())
-    .create();
-  console.log('[setupTriggers] Created one-time immediate trigger for processNewTransactions');
+  // // Create a one-time trigger to run normalization immediately
+  // ScriptApp.newTrigger('processNewTransactions')
+  //   .timeBased()
+  //   .at(new Date())
+  //   .create();
+  // console.log('[setupTriggers] Created one-time immediate trigger for processNewTransactions');
 
-  // Create a recurring trigger to run every hour
-  ScriptApp.newTrigger('processNewTransactions')
-    .timeBased()
-    .everyHours(1)
-    .create();
-  console.log('[setupTriggers] Created hourly recurring trigger for processNewTransactions');
+  // // Create a recurring trigger to run normalization every 15 minutes
+  // ScriptApp.newTrigger('processNewTransactions')
+  //   .timeBased()
+  //   .everyMinutes(15)
+  //   .create();
+  // console.log('[setupTriggers] Created 15-minute recurring trigger for processNewTransactions');
+  
+  // // Create a recurring trigger to run categorization every hour
+  // ScriptApp.newTrigger('categorizeTransactions')
+  //   .timeBased()
+  //   .everyHours(1)
+  //   .create();
+  // console.log('[setupTriggers] Created hourly recurring trigger for categorizeTransactions');
     
   // Create an edit trigger for each source sheet
   const sourceSheets = config.getSourceSheets();
@@ -187,21 +194,14 @@ function categorizeTransactions() {
   if (!utils) utils = new Utils();
   
   const outputSheet = config.getOutputSheet();
-  const data = outputSheet.getDataRange().getValues();
-  const headers = data[0];
-  const statusCol = headers.indexOf(config.OUTPUT_COLUMNS.PROCESSING_STATUS);
-  const idCol = headers.indexOf(config.OUTPUT_COLUMNS.TRANSACTION_ID);
+  const categorizationService = new CategorizationService();
   
-  // Guard clause for required columns
-  if (statusCol === -1 || idCol === -1) {
-    throw new Error('Required columns not found in output sheet');
+  try {
+    // Process all uncategorized transactions
+    categorizationService.processUncategorizedTransactions(outputSheet);
+    console.info('[categorizeTransactions] Transaction categorization complete.');
+  } catch (error) {
+    console.error('[categorizeTransactions] Error during categorization:', error);
+    throw error;
   }
-  
-  // Find all rows with status 'UNPROCESSED'
-  const toCategorize = data
-    .map((row, idx) => ({ row, idx }))
-    .filter(obj => obj.idx > 0 && obj.row[statusCol] === 'UNPROCESSED');
-  
-  console.log(`[categorizeTransactions] Found ${toCategorize.length} transactions to categorize.`);
-  // TODO: Implement categorization logic for these rows
 }
