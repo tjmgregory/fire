@@ -6,43 +6,43 @@ class Config {
   constructor() {
     this.CATEGORIES = [
       // Essential Living Expenses
-      'Housing',
-      'Groceries',
-      'Medical',
-      'Insurance',
+      'Housing',      // Rent, mortgage, utilities, maintenance
+      'Groceries',    // Food, household items, cleaning supplies
+      'Medical',      // Doctor visits, prescriptions, health products
+      'Insurance',    // Health, home, car, life insurance
       
       // Technology & Subscriptions
-      'Phone',
-      'Electronics',
-      'Subscriptions',
+      'Phone',        // Phone bill, phone accessories
+      'Electronics',  // Computers, gadgets, tech accessories
+      'Subscriptions', // Netflix, Spotify, software subscriptions
       
       // Lifestyle & Entertainment
-      'Entertainment',
-      'Eating Out',
-      'Clothing',
-      'Self Care',
-      'Fitness',
+      'Entertainment', // Movies, games, events, hobbies
+      'Eating Out',   // Restaurants, cafes, takeout
+      'Clothing',     // Clothes, shoes, accessories
+      'Self Care',    // Gym, beauty, wellness, personal care
       
       // Travel & Transport
-      'Flights',
-      'Rideshare',
+      'Flights',      // Air travel, airport fees
+      'Rideshare',    // Uber, Lyft, taxis
+      'Vehicle Rental', // Car, motorbike, scooter rentals
       
       // Personal Development
-      'Education',
+      'Education',    // Courses, books, workshops, certifications
       
       // Financial Management
-      'Fees',
-      'Cash',
-      'Investments',
-      'Savings',
-      'Debt Payments',
+      'Fees',         // Bank fees, transaction fees
+      'Cash',         // ATM withdrawals, cash expenses
+      'Investments',  // Stocks, crypto, investment contributions
+      'Savings',      // Emergency fund, goal savings
+      'Debt Payments', // Loans, credit card payments
       
       // Gifts & Giving
-      'Gifts',
-      'Charity',
+      'Gifts',        // Birthday gifts, wedding gifts
+      'Charity',      // Donations, charitable giving
       
       // Other
-      'Misc'
+      'Misc'          // One-off expenses, uncategorized
     ];
     
     this.SHEET_NAMES = {
