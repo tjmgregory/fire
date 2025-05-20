@@ -21,6 +21,7 @@ class Config {
       'Dining & Drinks', // Restaurants, cafes, bars, pubs, takeout
       'Clothing',     // Clothes, shoes, accessories
       'Self Care',    // Gym, beauty, wellness, personal care
+      'Vices',        // Cigarettes, vaping, other personal habits
       
       // Travel & Transport
       'Flights',      // Air travel, airport fees
