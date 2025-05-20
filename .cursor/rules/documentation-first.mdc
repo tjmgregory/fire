@@ -1,0 +1,56 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## 1. Documentation-First Principle
+
+- **Always consult existing documentation** (ADRs, plans, coding standards, READMEs, etc.) before making changes.
+- **If you need to diverge from any documented decision, update the relevant document _first_**. Documentation must always reflect the current thinking _before_ any code or process changes are made.
+- **Persistent documentation** is a core value: build docs that can be referred to repeatedly, reducing the need to repeat context or decisions.
+
+## 2. The @docs Directory Structure
+
+- **Golden Docs**: Define the ideal, canonical state of the system. Examples:
+  - Coding standards (`docs/coding-standards/`)
+  - Architectural Decision Records (ADRs) (`docs/adr/`)
+  - Reference guides and best practices
+- **Journey Docs**: Plot the path to achieve specific goals. Examples:
+  - Implementation plans (`docs/plans/active/`)
+  - Completed plans (`docs/plans/completed/`)
+  - Step-by-step checklists and progress tracking
+- **SpecStory Artifacts**: Conversation and context history is stored in `.specstory/` for reference and learning. See `.specstory/what-is-this.md` for details.
+
+## 3. Planning & Code Previews
+
+- **When making a plan, always ask the AI for code samples** for each step. This provides a preview of the changes, allowing for early feedback and corrections before implementation begins.
+- **Plans should be actionable checklists** with clear steps, and should reference Golden Docs where relevant.
+- **Mark steps as completed** as you progress, and regularly reassess the plan to ensure all gaps are addressed.
+
+## 4. Workflow Summary
+
+1. **Start with Documentation**: Review relevant docs in `@docs`.
+2. **Propose Changes in Docs First**: If a change is needed, _before_ making code changes update the doc and ask the user if it looks correct. If they respond positively, then make the changes.
+3. **Plan with Previews**: When planning, request code samples from the AI for each step.
+4. **Implement in Steps**: Follow the plan, marking steps as completed.
+5. **Review & Reassess**: After each plan, review for gaps and update docs as needed.
+6. **Refer Back to Docs**: Use persistent docs to avoid repeating context.
+
+## 5. Tips for Effective Collaboration
+
+- **Be explicit**: Clearly state your goals and reference specific docs.
+- **Leverage Golden Docs**: Use them as the source of truth for standards and architecture.
+- **Use Journey Docs for progress**: Track your work and decisions in plans.
+- **Keep documentation current**: Outdated docs lead to confusion—update them as soon as decisions change.
+- **Utilize SpecStory**: For context, revisit `.specstory/what-is-this.md` and previous conversations.
+
+## 6. Docs Directory Layout
+
+```
+docs/
+  adr/                # Architectural Decision Records
+  coding-standards/   # Coding guidelines and best practices
+  plans/
+    active/           # In-progress plans (journey docs)
+    completed/        # Finished plans
+```
