@@ -1,0 +1,4 @@
+- Use Google Apps Script style guide for JavaScript code
+- Include JSDoc comments for all functions
+- Keep functions focused and single-purpose
+- Use meaningful variable names that reflect financial context. Prefer longer, more exact names over brevity.

@@ -1,0 +1,22 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+When I ask you to make a plan, only make the plan. Do not execute the plan until I tell you to.
+
+All new or active planning documents should be stored in the `docs/plans/active` directory
+
+Planning documents should follow the naming convention: `YYYY-MM-DD-hh-mm_description.md`, calculating today's date and time when creating a new file `timestamp=$(date "+%Y-%m-%d-%H-%M")`
+
+Plans should have a single set of checklist items that can be ticked. They can be grouped into related items.
+
+Plans should have the following sections: Problem Statement, Related ADRs (typically only 1 to 2 refrenced), Implementation Steps (Checklist), Test Cases, Lessons Learned
+
+Lessons Learned section should begin empty, and as we work together you should update it whenever we struggle on something for a while and find a solution
+
+If you choose to diverge from any documented decisions (e.g., documentation, ADRs, plans, READMEs, etc.), you must first update the relevant documents to reflect this change. This ensures the documentation always represents the most current thinking before any action is taken.
+
+Every plan should have a final step to review the plan and re-assess the codebase to understand whether everything has actuall now been completed. If not, gaps should be added to the plan.
+
+Once a reassessment finishes and there are no outstnading changes, you should ask whether we are complete. If we are, then you should move the plan to `docs/plans/completed/`

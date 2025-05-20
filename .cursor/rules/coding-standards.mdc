@@ -1,6 +1,6 @@
 ---
-description: should be applied when writing code
+description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
-You must adhere to our coding standards, as defined in docs/coding-standards
+You must adhere to our coding standards, as defined in docs/coding-standards/*

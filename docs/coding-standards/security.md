@@ -1,0 +1,3 @@
+- Store API keys in Google Apps Script Properties Service
+- Document any security considerations in plan files
+- Include error handling for API calls
