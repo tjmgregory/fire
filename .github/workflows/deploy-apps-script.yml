@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - fix-main-deploy-debug  # Temporary for validation
     paths:
       - 'src/apps-script/**'
       - '.github/workflows/deploy-apps-script.yml'
@@ -55,8 +54,6 @@ jobs:
           
           # Clean up temp file
           rm -f ~/.clasprc.json.tmp
-        env:
-          CLASP_CREDS: ${{ secrets.CLASP_CREDENTIALS }}
           
       - name: Setup .clasp.json
         run: |
