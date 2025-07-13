@@ -5,6 +5,7 @@
 // Global variables
 let config;
 let utils;
+let logger;
 
 /**
  * Initialize the script and set up necessary configurations
@@ -15,6 +16,7 @@ function initialize() {
   // Guard clause for required objects
   if (!config) config = new Config();
   if (!utils) utils = new Utils();
+  if (!logger) logger = getLogger();
   
   // Set up triggers if they don't exist
   setupTriggers();
@@ -39,26 +41,28 @@ function setupTriggers() {
     ScriptApp.deleteTrigger(trigger);
   });
   
-  // // Create a one-time trigger to run normalization immediately
-  // ScriptApp.newTrigger('processNewTransactions')
-  //   .timeBased()
-  //   .at(new Date())
-  //   .create();
-  // console.log('[setupTriggers] Created one-time immediate trigger for processNewTransactions');
-
-  // // Create a recurring trigger to run normalization every 15 minutes
-  // ScriptApp.newTrigger('processNewTransactions')
-  //   .timeBased()
-  //   .everyMinutes(15)
-  //   .create();
-  // console.log('[setupTriggers] Created 15-minute recurring trigger for processNewTransactions');
+  // Create a recurring trigger to run normalization every 15 minutes
+  ScriptApp.newTrigger('processNewTransactions')
+    .timeBased()
+    .everyMinutes(15)
+    .create();
+  console.log('[setupTriggers] Created 15-minute recurring trigger for processNewTransactions');
   
-  // // Create a recurring trigger to run categorization every hour
-  // ScriptApp.newTrigger('categorizeTransactions')
-  //   .timeBased()
-  //   .everyHours(1)
-  //   .create();
-  // console.log('[setupTriggers] Created hourly recurring trigger for categorizeTransactions');
+  // Create a recurring trigger to run categorization every hour
+  ScriptApp.newTrigger('categorizeTransactions')
+    .timeBased()
+    .everyHours(1)
+    .create();
+  console.log('[setupTriggers] Created hourly recurring trigger for categorizeTransactions');
+  
+  // Create a weekly trigger to clean up old logs
+  ScriptApp.newTrigger('cleanupLogs')
+    .timeBased()
+    .everyWeeks(1)
+    .onWeekDay(ScriptApp.WeekDay.SUNDAY)
+    .atHour(2)
+    .create();
+  console.log('[setupTriggers] Created weekly trigger for log cleanup');
     
   // Create an edit trigger for each source sheet
   const sourceSheets = config.getSourceSheets();
@@ -107,13 +111,16 @@ function onSheetEdit(e) {
 
 /**
  * Main function to process new transactions
+ * Called by time-based trigger every 15 minutes
  */
 function processNewTransactions() {
   console.info('[processNewTransactions] Starting transaction processing...');
   
-  // Guard clause for required objects
-  if (!config) config = new Config();
-  if (!utils) utils = new Utils();
+  try {
+    // Guard clause for required objects
+    if (!config) config = new Config();
+    if (!utils) utils = new Utils();
+    if (!logger) logger = getLogger();
   
   // Get source sheets
   const sourceSheets = config.getSourceSheets();
@@ -122,9 +129,13 @@ function processNewTransactions() {
   // Get all existing originalReferences in the output sheet - key change for duplicate detection
   const lastRow = outputSheet.getLastRow();
   const originalRefCol = 10; // Original Reference column (1-based)
-  const existingRefs = lastRow > 1 ? outputSheet.getRange(2, originalRefCol, lastRow - 1, 1).getValues().flat() : [];
+  const existingRefs = lastRow > 1 ? outputSheet.getRange(2, originalRefCol, lastRow - 1, 1).getValues().flat().filter(ref => ref && ref.toString().trim() !== '') : [];
   
   console.log(`[processNewTransactions] Found ${existingRefs.length} existing transaction references.`);
+  console.log(`[processNewTransactions] Sample existing references: ${existingRefs.slice(0, 5).join(', ')}`);
+  
+  // Create a Set for faster lookup with normalized references
+  const existingRefsSet = new Set(existingRefs.map(ref => ref.toString().trim()));
 
   // Summary stats for logging and reporting
   const processingStats = {
@@ -141,12 +152,20 @@ function processNewTransactions() {
     
     // Normalize all transactions from the sheet
     const transactions = utils.getNewTransactions(sheet).map(t => ({ ...t, sourceSheet: sheetName }));
+    console.log(`[processNewTransactions] Normalized ${transactions.length} transactions from ${sheetName}`);
     
-    // Run duplicate check with detailed logging
+    // Filter out already processed transactions by originalReference BEFORE logging stats
+    const newTransactions = transactions.filter(t => {
+      const normalizedRef = t.originalReference ? t.originalReference.toString().trim() : '';
+      const isDuplicate = existingRefsSet.has(normalizedRef);
+      if (isDuplicate) {
+        console.log(`[processNewTransactions] Skipping duplicate: ${normalizedRef}`);
+      }
+      return !isDuplicate && normalizedRef !== '';
+    });
+    
+    // Run duplicate check for logging purposes
     const duplicateCheck = utils.checkForDuplicates(transactions, existingRefs, sheetName);
-    
-    // Filter out already processed transactions by originalReference
-    const newTransactions = transactions.filter(t => !existingRefs.includes(t.originalReference));
     
     // Update processing stats
     processingStats.processed += transactions.length;
@@ -164,6 +183,14 @@ function processNewTransactions() {
       // Persist normalized transactions to output sheet
       utils.writeNormalizedTransactions(newTransactions, outputSheet);
       console.log(`[processNewTransactions] Added ${newTransactions.length} new transactions from ${sheetName}`);
+      
+      // Add new references to existingRefsSet to prevent duplicates within the same run
+      newTransactions.forEach(t => {
+        const normalizedRef = t.originalReference ? t.originalReference.toString().trim() : '';
+        if (normalizedRef) {
+          existingRefsSet.add(normalizedRef);
+        }
+      });
     } else {
       console.log(`[processNewTransactions] No new transactions to add from ${sheetName}`);
     }
@@ -180,28 +207,63 @@ function processNewTransactions() {
   });
   
   console.info('[processNewTransactions] Transaction processing complete.');
+  
+  // Log processing statistics to System Logs sheet
+  logger.logStats('processNewTransactions', 'Transaction processing completed', processingStats);
+  
+  } catch (error) {
+    console.error('[processNewTransactions] Error during transaction processing:', error);
+    console.error('[processNewTransactions] Stack trace:', error.stack);
+    
+    // Log error to System Logs sheet
+    logger.error('processNewTransactions', 'Transaction processing failed', error, {
+      processed: processingStats.processed,
+      added: processingStats.added
+    });
+    
+    // Re-throw to ensure the trigger system knows about the failure
+    throw error;
+  }
+}
+
+/**
+ * Clean up old log entries
+ * Called by weekly trigger
+ */
+function cleanupLogs() {
+  try {
+    if (!logger) logger = getLogger();
+    logger.cleanupOldLogs();
+  } catch (error) {
+    console.error('[cleanupLogs] Error during log cleanup:', error);
+    // Don't re-throw as this is not critical
+  }
 }
 
 /**
  * Categorize a batch of transactions using OpenAI
- * This function should be triggered separately and only process rows with Processing Status 'Normalized'.
+ * This function should be triggered separately and only process rows with Processing Status 'UNPROCESSED'.
+ * Called by time-based trigger every hour
  */
 function categorizeTransactions() {
   console.info('[categorizeTransactions] Starting transaction categorization...');
   
-  // Guard clause for required objects
-  if (!config) config = new Config();
-  if (!utils) utils = new Utils();
-  
-  const outputSheet = config.getOutputSheet();
-  const categorizationService = new CategorizationService();
-  
   try {
+    // Guard clause for required objects
+    if (!config) config = new Config();
+    if (!utils) utils = new Utils();
+    if (!logger) logger = getLogger();
+    
+    const outputSheet = config.getOutputSheet();
+    const categorizationService = new CategorizationService();
+    
     // Process all uncategorized transactions
     categorizationService.processUncategorizedTransactions(outputSheet);
     console.info('[categorizeTransactions] Transaction categorization complete.');
   } catch (error) {
     console.error('[categorizeTransactions] Error during categorization:', error);
+    console.error('[categorizeTransactions] Stack trace:', error.stack);
+    // Re-throw to ensure the trigger system knows about the failure
     throw error;
   }
 }
