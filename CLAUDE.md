@@ -19,6 +19,12 @@ This is the FIRE (Financial Independence, Retire Early) project - a Google Apps 
 - Commit regularly and silently after each file update
 - Use clear, descriptive commit messages
 - Keep commits atomic and focused
+- Follow [Conventional Commits](https://www.conventionalcommits.org/) specification
+  - Format: `<type>(<scope>): <subject>`
+  - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+  - Example: `feat(categorization): add support for Amex transactions`
+  - Example: `fix(normalization): handle edge case in date parsing`
+  - Example: `docs(adr): update ADR-001 with new bank format`
 
 ### 3. Planning Requirements
 - Create implementation plans in `docs/plans/active/` using format: `YYYY-MM-DD-HH-MM_description.md`
