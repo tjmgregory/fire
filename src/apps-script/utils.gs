@@ -160,7 +160,8 @@ class Utils {
       row[indices.amount], 
       amountGbp,
       row[indices.currency], 
-      sourceSheet
+      sourceSheet,
+      transactionType
     );
     
     // Use the enhanced description extraction
@@ -242,6 +243,7 @@ class Utils {
    * @param {string|number} amount_gbp - Native GBP amount if available (e.g., from Yonder)
    * @param {string} currency - Currency code
    * @param {string} sourceSheet - Name of the source sheet
+   * @param {string} transactionType - Transaction type (e.g., 'Debit', 'Credit', 'CARD_PAYMENT')
    * @returns {Object} Normalized amount and currency
    * 
    * This function implements a priority-based approach to amount selection:
@@ -252,7 +254,7 @@ class Utils {
    * This approach minimizes unnecessary currency conversion and ensures we use the
    * most accurate GBP amount when available directly from the source.
    */
-  normalizeAmount(amount, amount_gbp, currency, sourceSheet) {
+  normalizeAmount(amount, amount_gbp, currency, sourceSheet, transactionType) {
     // Guard clause for required parameters
     if (amount === undefined || amount === null) {
       throw new Error(`Amount is required for sheet: ${sourceSheet}`);
@@ -271,9 +273,14 @@ class Utils {
       // console.log(`Using provided GBP amount: ${amount_gbp}`);
       let value = parseFloat(amount_gbp);
       
-      // Ensure debits are negative
-      if (value > 0 && this.isDebit(amount, sourceSheet)) {
-        value = -value;
+      // Ensure correct sign based on transaction type
+      // Per ADR-001: positive for credits, negative for debits
+      if (this.isDebit(transactionType, sourceSheet)) {
+        // Make sure debits are negative
+        value = Math.abs(value) * -1;
+      } else {
+        // Make sure credits are positive
+        value = Math.abs(value);
       }
       
       return {
@@ -285,13 +292,27 @@ class Utils {
     // Convert to number and handle negative amounts
     let value = parseFloat(amount);
     
-    // Handle Revolut's negative amounts for debits
+    // Handle bank-specific amount sign conventions
     if (sourceSheet.toLowerCase().includes('revolut')) {
-      // Amount is already negative for debits, no need to invert
+      // Revolut already provides negative amounts for debits and positive for credits
+      // No sign adjustment needed
+    } else if (sourceSheet.toLowerCase().includes('monzo')) {
+      // Monzo provides positive amounts, need to check transaction type
+      if (this.isDebit(transactionType, sourceSheet)) {
+        // Make sure debits are negative
+        value = Math.abs(value) * -1;
+      } else {
+        // Make sure credits are positive
+        value = Math.abs(value);
+      }
     } else {
-      // For other sources, ensure debits are negative
-      if (value > 0 && this.isDebit(amount, sourceSheet)) {
-        value = -value;
+      // For other sources, apply standard logic
+      if (this.isDebit(transactionType, sourceSheet)) {
+        // Make sure debits are negative
+        value = Math.abs(value) * -1;
+      } else {
+        // Make sure credits are positive
+        value = Math.abs(value);
       }
     }
     
@@ -368,23 +389,39 @@ class Utils {
   
   /**
    * Check if a transaction is a debit
-   * @param {string|number} amount - Transaction amount
+   * @param {string} transactionType - Transaction type
    * @param {string} sourceSheet - Name of the source sheet
    * @returns {boolean} True if debit
    */
-  isDebit(amount, sourceSheet) {
+  isDebit(transactionType, sourceSheet) {
     // Guard clause for required parameters
-    if (amount === undefined || amount === null) {
-      throw new Error(`Amount is required for sheet: ${sourceSheet}`);
-    }
     if (!sourceSheet) {
       throw new Error('Source sheet name is required');
     }
     
-    if (sourceSheet.toLowerCase().includes('yonder')) {
-      return amount.toString().toLowerCase().includes('debit');
+    // If no transaction type provided, assume debit (conservative approach)
+    if (!transactionType) {
+      console.warn(`[isDebit] No transaction type provided for ${sourceSheet}, assuming debit`);
+      return true;
     }
-    return parseFloat(amount) < 0;
+    
+    const lowerType = transactionType.toString().toLowerCase();
+    
+    if (sourceSheet.toLowerCase().includes('yonder')) {
+      // Yonder uses "Debit" or "Credit" in the "Debit or Credit" column
+      return lowerType.includes('debit');
+    } else if (sourceSheet.toLowerCase().includes('monzo')) {
+      // Monzo transactions are typically debits unless it's an incoming transfer or refund
+      // Check for credit indicators
+      return !lowerType.includes('credit') && !lowerType.includes('refund') && !lowerType.includes('incoming');
+    } else if (sourceSheet.toLowerCase().includes('revolut')) {
+      // Revolut uses transaction types like CARD_PAYMENT, TRANSFER, TOPUP
+      // TOPUP and incoming transfers are credits
+      return !lowerType.includes('topup') && !lowerType.includes('credit');
+    }
+    
+    // Default: assume debit unless explicitly marked as credit
+    return !lowerType.includes('credit');
   }
   
   /**
