@@ -42,6 +42,15 @@ jobs:
             "rootDir": "./src/apps-script"
           }' > .clasp.json
       
+      - name: Debug - Check .clasp.json
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Contents of .clasp.json:"
+          cat .clasp.json
+          echo "Environment variables:"
+          echo "SCRIPT_ID=${{ env.SCRIPT_ID }}"
+          echo "DEPLOYMENT_ID=${{ env.DEPLOYMENT_ID }}"
+      
       - name: Push to Google Apps Script
         run: npm run clasp:push
       
