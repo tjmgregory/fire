@@ -31,6 +31,16 @@ jobs:
       - name: Install dependencies
         run: npm install
       
+      - name: Debug - Check if CLASP_CREDENTIALS secret exists
+        run: |
+          if [ -z "${{ secrets.CLASP_CREDENTIALS }}" ]; then
+            echo "::error::CLASP_CREDENTIALS secret is empty or not set"
+          else
+            echo "CLASP_CREDENTIALS secret is set (length: ${#CLASP_CREDENTIALS_LENGTH})"
+          fi
+        env:
+          CLASP_CREDENTIALS_LENGTH: ${{ secrets.CLASP_CREDENTIALS }}
+      
       - name: Setup clasp authentication
         run: |
           # Try both possible locations for clasp credentials
@@ -41,6 +51,29 @@ jobs:
           mkdir -p ~/.config/clasp
           echo "${{ secrets.CLASP_CREDENTIALS }}" > ~/.config/clasp/.clasprc.json
           chmod 600 ~/.config/clasp/.clasprc.json
+          
+      - name: Debug - Verify clasp credentials files
+        run: |
+          echo "Checking ~/.clasprc.json:"
+          if [ -f ~/.clasprc.json ]; then
+            echo "File exists"
+            echo "File size: $(stat -c%s ~/.clasprc.json 2>/dev/null || stat -f%z ~/.clasprc.json) bytes"
+            echo "File permissions: $(ls -la ~/.clasprc.json)"
+            echo "First 50 chars (masked): $(head -c 50 ~/.clasprc.json | sed 's/[^{},:]/*/g')"
+          else
+            echo "::error::~/.clasprc.json file not found"
+          fi
+          
+          echo ""
+          echo "Checking ~/.config/clasp/.clasprc.json:"
+          if [ -f ~/.config/clasp/.clasprc.json ]; then
+            echo "File exists"
+            echo "File size: $(stat -c%s ~/.config/clasp/.clasprc.json 2>/dev/null || stat -f%z ~/.config/clasp/.clasprc.json) bytes"
+            echo "File permissions: $(ls -la ~/.config/clasp/.clasprc.json)"
+            echo "First 50 chars (masked): $(head -c 50 ~/.config/clasp/.clasprc.json | sed 's/[^{},:]/*/g')"
+          else
+            echo "::error::~/.config/clasp/.clasprc.json file not found"
+          fi
       
       - name: Setup .clasp.json
         run: |
@@ -48,6 +81,23 @@ jobs:
             "scriptId": "${{ env.SCRIPT_ID }}",
             "rootDir": "./src/apps-script"
           }' > .clasp.json
+          
+      - name: Debug - Verify .clasp.json
+        run: |
+          echo "Contents of .clasp.json:"
+          cat .clasp.json
+          echo ""
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+      
+      - name: Debug - Check clasp installation
+        run: |
+          echo "Clasp version:"
+          npx clasp --version
+          echo ""
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
       
       - name: Debug - Check configuration
         run: |
