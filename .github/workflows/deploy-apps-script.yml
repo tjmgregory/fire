@@ -47,7 +47,7 @@ jobs:
       
       - name: Deploy (if deployment ID is set)
         if: env.DEPLOYMENT_ID != ''
-        run: npm run clasp:deploy
+        run: npx clasp deploy --deploymentId ${{ env.DEPLOYMENT_ID }}
       
       - name: Cleanup credentials
         if: always()
