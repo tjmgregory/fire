@@ -70,7 +70,11 @@ jobs:
       
       - name: Deploy (if deployment ID is set)
         if: env.DEPLOYMENT_ID != ''
-        run: npx clasp deploy --deploymentId ${{ env.DEPLOYMENT_ID }}
+        run: |
+          echo "Note: The deployment ${{ env.DEPLOYMENT_ID }} appears to be read-only."
+          echo "This typically means it's a HEAD deployment or was created manually."
+          echo "Creating a new versioned deployment instead..."
+          npx clasp deploy --description "GitHub Actions deployment $(date +'%Y-%m-%d %H:%M:%S')"
       
       - name: Cleanup credentials
         if: always()
