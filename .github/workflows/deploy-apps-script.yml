@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - fix-main-deploy-debug  # Temporarily added for debugging
     paths:
       - 'src/apps-script/**'
       - '.github/workflows/deploy-apps-script.yml'
@@ -31,23 +30,9 @@ jobs:
       - name: Install dependencies
         run: npm install
       
-      - name: Debug - Check if CLASP_CREDENTIALS secret exists
-        run: |
-          if [ -z "${{ secrets.CLASP_CREDENTIALS }}" ]; then
-            echo "::error::CLASP_CREDENTIALS secret is empty or not set"
-          else
-            echo "CLASP_CREDENTIALS secret is set (length: ${#CLASP_CREDENTIALS_LENGTH})"
-          fi
-        env:
-          CLASP_CREDENTIALS_LENGTH: ${{ secrets.CLASP_CREDENTIALS }}
-      
       - name: Setup clasp authentication
         run: |
-          # Debug: Check the raw secret format
-          echo "Debug: First 10 chars of secret (base64): $(echo '${{ secrets.CLASP_CREDENTIALS }}' | base64 | head -c 10)"
-          echo "Debug: Length of secret: ${#CLASP_CREDS}"
-          
-          # Try to fix potential JSON issues
+          # Parse and validate JSON credentials
           # Remove potential BOM, trim whitespace, and ensure proper JSON
           echo '${{ secrets.CLASP_CREDENTIALS }}' | sed 's/^\xEF\xBB\xBF//' | tr -d '\r' > ~/.clasprc.json.tmp
           
@@ -72,36 +57,6 @@ jobs:
         env:
           CLASP_CREDS: ${{ secrets.CLASP_CREDENTIALS }}
           
-      - name: Debug - Verify clasp credentials files
-        run: |
-          echo "Checking ~/.clasprc.json:"
-          if [ -f ~/.clasprc.json ]; then
-            echo "File exists"
-            echo "File size: $(stat -c%s ~/.clasprc.json 2>/dev/null || stat -f%z ~/.clasprc.json) bytes"
-            echo "File permissions: $(ls -la ~/.clasprc.json)"
-            echo "First 50 chars (masked): $(head -c 50 ~/.clasprc.json | sed 's/[^{},:]/*/g')"
-            echo "JSON structure check:"
-            if jq empty ~/.clasprc.json 2>/dev/null; then
-              echo "Valid JSON"
-              echo "Top-level keys: $(jq -r 'keys[]' ~/.clasprc.json 2>/dev/null | tr '\n' ' ')"
-            else
-              echo "::error::Invalid JSON in ~/.clasprc.json"
-            fi
-          else
-            echo "::error::~/.clasprc.json file not found"
-          fi
-          
-          echo ""
-          echo "Checking ~/.config/clasp/.clasprc.json:"
-          if [ -f ~/.config/clasp/.clasprc.json ]; then
-            echo "File exists"
-            echo "File size: $(stat -c%s ~/.config/clasp/.clasprc.json 2>/dev/null || stat -f%z ~/.config/clasp/.clasprc.json) bytes"
-            echo "File permissions: $(ls -la ~/.config/clasp/.clasprc.json)"
-            echo "First 50 chars (masked): $(head -c 50 ~/.config/clasp/.clasprc.json | sed 's/[^{},:]/*/g')"
-          else
-            echo "::error::~/.config/clasp/.clasprc.json file not found"
-          fi
-      
       - name: Setup .clasp.json
         run: |
           echo '{
@@ -109,53 +64,8 @@ jobs:
             "rootDir": "./src/apps-script"
           }' > .clasp.json
           
-      - name: Debug - Verify .clasp.json
-        run: |
-          echo "Contents of .clasp.json:"
-          cat .clasp.json
-          echo ""
-          echo "Current directory: $(pwd)"
-          echo "Directory contents:"
-          ls -la
-      
-      - name: Debug - Check clasp installation
-        run: |
-          echo "Clasp version:"
-          npx clasp --version
-          echo ""
-          echo "Node version: $(node --version)"
-          echo "NPM version: $(npm --version)"
-      
-      - name: Debug - Check configuration
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Contents of .clasp.json:"
-          cat .clasp.json
-          echo "Checking for .clasprc.json:"
-          ls -la ~/.clasprc.json || echo "~/.clasprc.json not found"
-          echo "Checking clasp config directory:"
-          ls -la ~/.config/clasp/ || echo "~/.config/clasp/ not found"
-          echo "Environment variables:"
-          echo "SCRIPT_ID=${{ env.SCRIPT_ID }}"
-          echo "DEPLOYMENT_ID=${{ env.DEPLOYMENT_ID }}"
-          echo "HOME=$HOME"
-      
-      - name: Debug - Test clasp authentication
-        run: |
-          echo "Testing clasp status command:"
-          npx clasp status || echo "clasp status failed"
-          
-          echo ""
-          echo "Trying to list projects:"
-          npx clasp list || echo "clasp list failed"
-          
-          echo ""
-          echo "Check if we need to set CLASP_CREDENTIALS env var:"
-          export CLASP_CREDENTIALS='${{ secrets.CLASP_CREDENTIALS }}'
-          npx clasp status || echo "clasp status with env var failed"
-      
       - name: Push to Google Apps Script
-        run: npm run clasp:push
+        run: npx clasp push --force
       
       - name: Deploy (if deployment ID is set)
         if: env.DEPLOYMENT_ID != ''
