@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - fix-main-deploy-debug  # Temporarily added for debugging
     paths:
       - 'src/apps-script/**'
       - '.github/workflows/deploy-apps-script.yml'
