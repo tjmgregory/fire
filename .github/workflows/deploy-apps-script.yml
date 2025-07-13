@@ -60,6 +60,13 @@ jobs:
             echo "File size: $(stat -c%s ~/.clasprc.json 2>/dev/null || stat -f%z ~/.clasprc.json) bytes"
             echo "File permissions: $(ls -la ~/.clasprc.json)"
             echo "First 50 chars (masked): $(head -c 50 ~/.clasprc.json | sed 's/[^{},:]/*/g')"
+            echo "JSON structure check:"
+            if jq empty ~/.clasprc.json 2>/dev/null; then
+              echo "Valid JSON"
+              echo "Top-level keys: $(jq -r 'keys[]' ~/.clasprc.json 2>/dev/null | tr '\n' ' ')"
+            else
+              echo "::error::Invalid JSON in ~/.clasprc.json"
+            fi
           else
             echo "::error::~/.clasprc.json file not found"
           fi
@@ -112,6 +119,20 @@ jobs:
           echo "SCRIPT_ID=${{ env.SCRIPT_ID }}"
           echo "DEPLOYMENT_ID=${{ env.DEPLOYMENT_ID }}"
           echo "HOME=$HOME"
+      
+      - name: Debug - Test clasp authentication
+        run: |
+          echo "Testing clasp status command:"
+          npx clasp status || echo "clasp status failed"
+          
+          echo ""
+          echo "Trying to list projects:"
+          npx clasp list || echo "clasp list failed"
+          
+          echo ""
+          echo "Check if we need to set CLASP_CREDENTIALS env var:"
+          export CLASP_CREDENTIALS='${{ secrets.CLASP_CREDENTIALS }}'
+          npx clasp status || echo "clasp status with env var failed"
       
       - name: Push to Google Apps Script
         run: npm run clasp:push
