@@ -9,6 +9,10 @@ on:
       - '.github/workflows/deploy-apps-script.yml'
   workflow_dispatch:
 
+env:
+  SCRIPT_ID: '1ih6hahfWWHXXaRdZ7gq3VTYSFS8-88mqKJTRJoBm1l363TosDH_y2tWj'
+  DEPLOYMENT_ID: 'AKfycbyWuGn7rigFDy1CQOVuepcSkaouCbUhNw7aeq07clE'
+
 jobs:
   deploy:
     name: Deploy to Google Apps Script
@@ -34,7 +38,7 @@ jobs:
       - name: Setup .clasp.json
         run: |
           echo '{
-            "scriptId": "${{ secrets.SCRIPT_ID }}",
+            "scriptId": "${{ env.SCRIPT_ID }}",
             "rootDir": "./src/apps-script"
           }' > .clasp.json
       
@@ -42,9 +46,8 @@ jobs:
         run: npm run clasp:push
       
       - name: Deploy (if deployment ID is set)
-        if: ${{ secrets.DEPLOYMENT_ID != '' }}
-        run: |
-          DEPLOYMENT_ID="${{ secrets.DEPLOYMENT_ID }}" npm run clasp:deploy
+        if: env.DEPLOYMENT_ID != ''
+        run: npm run clasp:deploy
       
       - name: Cleanup credentials
         if: always()
