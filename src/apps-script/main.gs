@@ -39,26 +39,19 @@ function setupTriggers() {
     ScriptApp.deleteTrigger(trigger);
   });
   
-  // // Create a one-time trigger to run normalization immediately
-  // ScriptApp.newTrigger('processNewTransactions')
-  //   .timeBased()
-  //   .at(new Date())
-  //   .create();
-  // console.log('[setupTriggers] Created one-time immediate trigger for processNewTransactions');
-
-  // // Create a recurring trigger to run normalization every 15 minutes
-  // ScriptApp.newTrigger('processNewTransactions')
-  //   .timeBased()
-  //   .everyMinutes(15)
-  //   .create();
-  // console.log('[setupTriggers] Created 15-minute recurring trigger for processNewTransactions');
+  // Create a recurring trigger to run normalization every 15 minutes
+  ScriptApp.newTrigger('processNewTransactions')
+    .timeBased()
+    .everyMinutes(15)
+    .create();
+  console.log('[setupTriggers] Created 15-minute recurring trigger for processNewTransactions');
   
-  // // Create a recurring trigger to run categorization every hour
-  // ScriptApp.newTrigger('categorizeTransactions')
-  //   .timeBased()
-  //   .everyHours(1)
-  //   .create();
-  // console.log('[setupTriggers] Created hourly recurring trigger for categorizeTransactions');
+  // Create a recurring trigger to run categorization every hour
+  ScriptApp.newTrigger('categorizeTransactions')
+    .timeBased()
+    .everyHours(1)
+    .create();
+  console.log('[setupTriggers] Created hourly recurring trigger for categorizeTransactions');
     
   // Create an edit trigger for each source sheet
   const sourceSheets = config.getSourceSheets();
@@ -107,13 +100,15 @@ function onSheetEdit(e) {
 
 /**
  * Main function to process new transactions
+ * Called by time-based trigger every 15 minutes
  */
 function processNewTransactions() {
   console.info('[processNewTransactions] Starting transaction processing...');
   
-  // Guard clause for required objects
-  if (!config) config = new Config();
-  if (!utils) utils = new Utils();
+  try {
+    // Guard clause for required objects
+    if (!config) config = new Config();
+    if (!utils) utils = new Utils();
   
   // Get source sheets
   const sourceSheets = config.getSourceSheets();
@@ -200,28 +195,37 @@ function processNewTransactions() {
   });
   
   console.info('[processNewTransactions] Transaction processing complete.');
+  } catch (error) {
+    console.error('[processNewTransactions] Error during transaction processing:', error);
+    console.error('[processNewTransactions] Stack trace:', error.stack);
+    // Re-throw to ensure the trigger system knows about the failure
+    throw error;
+  }
 }
 
 /**
  * Categorize a batch of transactions using OpenAI
- * This function should be triggered separately and only process rows with Processing Status 'Normalized'.
+ * This function should be triggered separately and only process rows with Processing Status 'UNPROCESSED'.
+ * Called by time-based trigger every hour
  */
 function categorizeTransactions() {
   console.info('[categorizeTransactions] Starting transaction categorization...');
   
-  // Guard clause for required objects
-  if (!config) config = new Config();
-  if (!utils) utils = new Utils();
-  
-  const outputSheet = config.getOutputSheet();
-  const categorizationService = new CategorizationService();
-  
   try {
+    // Guard clause for required objects
+    if (!config) config = new Config();
+    if (!utils) utils = new Utils();
+    
+    const outputSheet = config.getOutputSheet();
+    const categorizationService = new CategorizationService();
+    
     // Process all uncategorized transactions
     categorizationService.processUncategorizedTransactions(outputSheet);
     console.info('[categorizeTransactions] Transaction categorization complete.');
   } catch (error) {
     console.error('[categorizeTransactions] Error during categorization:', error);
+    console.error('[categorizeTransactions] Stack trace:', error.stack);
+    // Re-throw to ensure the trigger system knows about the failure
     throw error;
   }
 }
