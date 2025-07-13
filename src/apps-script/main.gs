@@ -122,9 +122,13 @@ function processNewTransactions() {
   // Get all existing originalReferences in the output sheet - key change for duplicate detection
   const lastRow = outputSheet.getLastRow();
   const originalRefCol = 10; // Original Reference column (1-based)
-  const existingRefs = lastRow > 1 ? outputSheet.getRange(2, originalRefCol, lastRow - 1, 1).getValues().flat() : [];
+  const existingRefs = lastRow > 1 ? outputSheet.getRange(2, originalRefCol, lastRow - 1, 1).getValues().flat().filter(ref => ref && ref.toString().trim() !== '') : [];
   
   console.log(`[processNewTransactions] Found ${existingRefs.length} existing transaction references.`);
+  console.log(`[processNewTransactions] Sample existing references: ${existingRefs.slice(0, 5).join(', ')}`);
+  
+  // Create a Set for faster lookup with normalized references
+  const existingRefsSet = new Set(existingRefs.map(ref => ref.toString().trim()));
 
   // Summary stats for logging and reporting
   const processingStats = {
@@ -141,12 +145,20 @@ function processNewTransactions() {
     
     // Normalize all transactions from the sheet
     const transactions = utils.getNewTransactions(sheet).map(t => ({ ...t, sourceSheet: sheetName }));
+    console.log(`[processNewTransactions] Normalized ${transactions.length} transactions from ${sheetName}`);
     
-    // Run duplicate check with detailed logging
+    // Filter out already processed transactions by originalReference BEFORE logging stats
+    const newTransactions = transactions.filter(t => {
+      const normalizedRef = t.originalReference ? t.originalReference.toString().trim() : '';
+      const isDuplicate = existingRefsSet.has(normalizedRef);
+      if (isDuplicate) {
+        console.log(`[processNewTransactions] Skipping duplicate: ${normalizedRef}`);
+      }
+      return !isDuplicate && normalizedRef !== '';
+    });
+    
+    // Run duplicate check for logging purposes
     const duplicateCheck = utils.checkForDuplicates(transactions, existingRefs, sheetName);
-    
-    // Filter out already processed transactions by originalReference
-    const newTransactions = transactions.filter(t => !existingRefs.includes(t.originalReference));
     
     // Update processing stats
     processingStats.processed += transactions.length;
@@ -164,6 +176,14 @@ function processNewTransactions() {
       // Persist normalized transactions to output sheet
       utils.writeNormalizedTransactions(newTransactions, outputSheet);
       console.log(`[processNewTransactions] Added ${newTransactions.length} new transactions from ${sheetName}`);
+      
+      // Add new references to existingRefsSet to prevent duplicates within the same run
+      newTransactions.forEach(t => {
+        const normalizedRef = t.originalReference ? t.originalReference.toString().trim() : '';
+        if (normalizedRef) {
+          existingRefsSet.add(normalizedRef);
+        }
+      });
     } else {
       console.log(`[processNewTransactions] No new transactions to add from ${sheetName}`);
     }
