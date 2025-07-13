@@ -12,7 +12,6 @@ This is the FIRE (Financial Independence, Retire Early) project - a Google Apps 
 - Documentation locations:
   - `docs/adr/` - Architecture Decision Records (source of truth)
   - `docs/coding-standards/` - Code style and patterns
-  - `docs/plans/` - Implementation plans
   - `docs/issues/bug-tracker.md` - Bug tracking
 
 ### 2. Commit-As-You-Go
@@ -26,11 +25,10 @@ This is the FIRE (Financial Independence, Retire Early) project - a Google Apps 
   - Example: `fix(normalization): handle edge case in date parsing`
   - Example: `docs(adr): update ADR-001 with new bank format`
 
-### 3. Planning Requirements
-- Create implementation plans in `docs/plans/active/` using format: `YYYY-MM-DD-HH-MM_description.md`
-- Plans must include: Problem Statement, Related ADRs, Implementation Steps (checklist), Test Cases, Lessons Learned
-- Always request code samples when making plans
-- Move completed plans to `docs/plans/completed/`
+### 3. Documentation Standards  
+- Documentation remains the source of truth for architectural decisions and coding standards
+- Always reference and update relevant documentation when making changes
+- The `docs/plans/` directory contains historical implementation plans from Cursor usage
 
 ## Technical Stack
 
@@ -77,11 +75,13 @@ function parseData(input) {
 }
 ```
 
-### Logging Levels
+### Logging Levels (Supported in Apps Script)
 - `console.error()`: Actual errors preventing operation
 - `console.warn()`: Potential issues (deprecated features, etc.)
 - `console.info()`: Important business events
 - `console.log()`: Debugging information
+
+Note: All standard console methods are fully supported in Google Apps Script. View logs via "View > Logs" in the Apps Script editor.
 
 ## Transaction Processing Flow
 
@@ -146,7 +146,7 @@ When testing changes:
 ├── docs/
 │   ├── adr/              # Architecture decisions
 │   ├── coding-standards/ # Code style guides
-│   ├── plans/            # Implementation plans
+│   ├── plans/            # Historical implementation plans (Cursor-specific)
 │   └── issues/           # Bug tracking
 └── .cursor/rules/        # Editor-specific rules
 ```
