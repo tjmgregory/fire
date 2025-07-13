@@ -43,14 +43,34 @@ jobs:
       
       - name: Setup clasp authentication
         run: |
-          # Try both possible locations for clasp credentials
-          echo "${{ secrets.CLASP_CREDENTIALS }}" > ~/.clasprc.json
+          # Debug: Check the raw secret format
+          echo "Debug: First 10 chars of secret (base64): $(echo '${{ secrets.CLASP_CREDENTIALS }}' | base64 | head -c 10)"
+          echo "Debug: Length of secret: ${#CLASP_CREDS}"
+          
+          # Try to fix potential JSON issues
+          # Remove potential BOM, trim whitespace, and ensure proper JSON
+          echo '${{ secrets.CLASP_CREDENTIALS }}' | sed 's/^\xEF\xBB\xBF//' | tr -d '\r' > ~/.clasprc.json.tmp
+          
+          # Validate and pretty-print JSON
+          if jq . ~/.clasprc.json.tmp > ~/.clasprc.json 2>/dev/null; then
+            echo "Successfully parsed and formatted JSON"
+          else
+            echo "Failed to parse JSON, trying alternative approach"
+            # Try removing outer quotes if they exist
+            echo '${{ secrets.CLASP_CREDENTIALS }}' | sed 's/^"//;s/"$//' | sed 's/^\xEF\xBB\xBF//' | tr -d '\r' > ~/.clasprc.json
+          fi
+          
           chmod 600 ~/.clasprc.json
           
           # Also try the newer location
           mkdir -p ~/.config/clasp
-          echo "${{ secrets.CLASP_CREDENTIALS }}" > ~/.config/clasp/.clasprc.json
+          cp ~/.clasprc.json ~/.config/clasp/.clasprc.json
           chmod 600 ~/.config/clasp/.clasprc.json
+          
+          # Clean up temp file
+          rm -f ~/.clasprc.json.tmp
+        env:
+          CLASP_CREDS: ${{ secrets.CLASP_CREDENTIALS }}
           
       - name: Debug - Verify clasp credentials files
         run: |
