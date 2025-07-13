@@ -5,6 +5,7 @@
 // Global variables
 let config;
 let utils;
+let logger;
 
 /**
  * Initialize the script and set up necessary configurations
@@ -15,6 +16,7 @@ function initialize() {
   // Guard clause for required objects
   if (!config) config = new Config();
   if (!utils) utils = new Utils();
+  if (!logger) logger = getLogger();
   
   // Set up triggers if they don't exist
   setupTriggers();
@@ -52,6 +54,15 @@ function setupTriggers() {
     .everyHours(1)
     .create();
   console.log('[setupTriggers] Created hourly recurring trigger for categorizeTransactions');
+  
+  // Create a weekly trigger to clean up old logs
+  ScriptApp.newTrigger('cleanupLogs')
+    .timeBased()
+    .everyWeeks(1)
+    .onWeekDay(ScriptApp.WeekDay.SUNDAY)
+    .atHour(2)
+    .create();
+  console.log('[setupTriggers] Created weekly trigger for log cleanup');
     
   // Create an edit trigger for each source sheet
   const sourceSheets = config.getSourceSheets();
@@ -109,6 +120,7 @@ function processNewTransactions() {
     // Guard clause for required objects
     if (!config) config = new Config();
     if (!utils) utils = new Utils();
+    if (!logger) logger = getLogger();
   
   // Get source sheets
   const sourceSheets = config.getSourceSheets();
@@ -195,11 +207,36 @@ function processNewTransactions() {
   });
   
   console.info('[processNewTransactions] Transaction processing complete.');
+  
+  // Log processing statistics to System Logs sheet
+  logger.logStats('processNewTransactions', 'Transaction processing completed', processingStats);
+  
   } catch (error) {
     console.error('[processNewTransactions] Error during transaction processing:', error);
     console.error('[processNewTransactions] Stack trace:', error.stack);
+    
+    // Log error to System Logs sheet
+    logger.error('processNewTransactions', 'Transaction processing failed', error, {
+      processed: processingStats.processed,
+      added: processingStats.added
+    });
+    
     // Re-throw to ensure the trigger system knows about the failure
     throw error;
+  }
+}
+
+/**
+ * Clean up old log entries
+ * Called by weekly trigger
+ */
+function cleanupLogs() {
+  try {
+    if (!logger) logger = getLogger();
+    logger.cleanupOldLogs();
+  } catch (error) {
+    console.error('[cleanupLogs] Error during log cleanup:', error);
+    // Don't re-throw as this is not critical
   }
 }
 
@@ -215,6 +252,7 @@ function categorizeTransactions() {
     // Guard clause for required objects
     if (!config) config = new Config();
     if (!utils) utils = new Utils();
+    if (!logger) logger = getLogger();
     
     const outputSheet = config.getOutputSheet();
     const categorizationService = new CategorizationService();
