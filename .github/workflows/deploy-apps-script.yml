@@ -42,9 +42,10 @@ jobs:
         run: npm run clasp:push
       
       - name: Deploy (if deployment ID is set)
-        if: ${{ secrets.DEPLOYMENT_ID != '' }}
-        run: |
-          DEPLOYMENT_ID="${{ secrets.DEPLOYMENT_ID }}" npm run clasp:deploy
+        env:
+          DEPLOYMENT_ID: ${{ secrets.DEPLOYMENT_ID }}
+        if: env.DEPLOYMENT_ID != ''
+        run: npm run clasp:deploy
       
       - name: Cleanup credentials
         if: always()
