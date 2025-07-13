@@ -1,0 +1,14 @@
+**/**
+!src/apps-script/*.gs
+!src/apps-script/appsscript.json
+node_modules/
+.git/
+.env
+.env.*
+!.env.example
+*.md
+.clasp.json.example
+scripts/
+docs/
+src/*
+!src/apps-script/

@@ -1,0 +1,51 @@
+name: Deploy Google Apps Script
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/apps-script/**'
+      - '.github/workflows/deploy-apps-script.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Google Apps Script
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Setup clasp authentication
+        run: |
+          echo "${{ secrets.CLASP_CREDENTIALS }}" > ~/.clasprc.json
+          chmod 600 ~/.clasprc.json
+      
+      - name: Setup .clasp.json
+        run: |
+          echo '{
+            "scriptId": "${{ secrets.SCRIPT_ID }}",
+            "rootDir": "./src/apps-script"
+          }' > .clasp.json
+      
+      - name: Push to Google Apps Script
+        run: npm run clasp:push
+      
+      - name: Deploy (if deployment ID is set)
+        if: ${{ secrets.DEPLOYMENT_ID != '' }}
+        run: |
+          DEPLOYMENT_ID="${{ secrets.DEPLOYMENT_ID }}" npm run clasp:deploy
+      
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f ~/.clasprc.json .clasp.json

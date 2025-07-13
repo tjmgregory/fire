@@ -1,2 +1,17 @@
 # SpecStory explanation file
 .specstory/
+
+# Node dependencies
+node_modules/
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# Clasp configuration
+.clasp.json
+.clasprc.json
+
+# OS files
+.DS_Store
