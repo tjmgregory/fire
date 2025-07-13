@@ -32,8 +32,14 @@ jobs:
       
       - name: Setup clasp authentication
         run: |
+          # Try both possible locations for clasp credentials
           echo "${{ secrets.CLASP_CREDENTIALS }}" > ~/.clasprc.json
           chmod 600 ~/.clasprc.json
+          
+          # Also try the newer location
+          mkdir -p ~/.config/clasp
+          echo "${{ secrets.CLASP_CREDENTIALS }}" > ~/.config/clasp/.clasprc.json
+          chmod 600 ~/.config/clasp/.clasprc.json
       
       - name: Setup .clasp.json
         run: |
@@ -42,14 +48,19 @@ jobs:
             "rootDir": "./src/apps-script"
           }' > .clasp.json
       
-      - name: Debug - Check .clasp.json
+      - name: Debug - Check configuration
         run: |
           echo "Current directory: $(pwd)"
           echo "Contents of .clasp.json:"
           cat .clasp.json
+          echo "Checking for .clasprc.json:"
+          ls -la ~/.clasprc.json || echo "~/.clasprc.json not found"
+          echo "Checking clasp config directory:"
+          ls -la ~/.config/clasp/ || echo "~/.config/clasp/ not found"
           echo "Environment variables:"
           echo "SCRIPT_ID=${{ env.SCRIPT_ID }}"
           echo "DEPLOYMENT_ID=${{ env.DEPLOYMENT_ID }}"
+          echo "HOME=$HOME"
       
       - name: Push to Google Apps Script
         run: npm run clasp:push
@@ -60,4 +71,6 @@ jobs:
       
       - name: Cleanup credentials
         if: always()
-        run: rm -f ~/.clasprc.json .clasp.json
+        run: |
+          rm -f ~/.clasprc.json .clasp.json
+          rm -f ~/.config/clasp/.clasprc.json
