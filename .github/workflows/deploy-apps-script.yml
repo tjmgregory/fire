@@ -32,42 +32,46 @@ jobs:
       
       - name: Setup clasp authentication
         run: |
-          # Try both possible locations for clasp credentials
-          echo "${{ secrets.CLASP_CREDENTIALS }}" > ~/.clasprc.json
+          # Parse and validate JSON credentials
+          # Remove potential BOM, trim whitespace, and ensure proper JSON
+          echo '${{ secrets.CLASP_CREDENTIALS }}' | sed 's/^\xEF\xBB\xBF//' | tr -d '\r' > ~/.clasprc.json.tmp
+          
+          # Validate and pretty-print JSON
+          if jq . ~/.clasprc.json.tmp > ~/.clasprc.json 2>/dev/null; then
+            echo "Successfully parsed and formatted JSON"
+          else
+            echo "Failed to parse JSON, trying alternative approach"
+            # Try removing outer quotes if they exist
+            echo '${{ secrets.CLASP_CREDENTIALS }}' | sed 's/^"//;s/"$//' | sed 's/^\xEF\xBB\xBF//' | tr -d '\r' > ~/.clasprc.json
+          fi
+          
           chmod 600 ~/.clasprc.json
           
           # Also try the newer location
           mkdir -p ~/.config/clasp
-          echo "${{ secrets.CLASP_CREDENTIALS }}" > ~/.config/clasp/.clasprc.json
+          cp ~/.clasprc.json ~/.config/clasp/.clasprc.json
           chmod 600 ~/.config/clasp/.clasprc.json
-      
+          
+          # Clean up temp file
+          rm -f ~/.clasprc.json.tmp
+          
       - name: Setup .clasp.json
         run: |
           echo '{
             "scriptId": "${{ env.SCRIPT_ID }}",
             "rootDir": "./src/apps-script"
           }' > .clasp.json
-      
-      - name: Debug - Check configuration
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Contents of .clasp.json:"
-          cat .clasp.json
-          echo "Checking for .clasprc.json:"
-          ls -la ~/.clasprc.json || echo "~/.clasprc.json not found"
-          echo "Checking clasp config directory:"
-          ls -la ~/.config/clasp/ || echo "~/.config/clasp/ not found"
-          echo "Environment variables:"
-          echo "SCRIPT_ID=${{ env.SCRIPT_ID }}"
-          echo "DEPLOYMENT_ID=${{ env.DEPLOYMENT_ID }}"
-          echo "HOME=$HOME"
-      
+          
       - name: Push to Google Apps Script
-        run: npm run clasp:push
+        run: npx clasp push --force
       
       - name: Deploy (if deployment ID is set)
         if: env.DEPLOYMENT_ID != ''
-        run: npx clasp deploy --deploymentId ${{ env.DEPLOYMENT_ID }}
+        run: |
+          echo "Note: The deployment ${{ env.DEPLOYMENT_ID }} appears to be read-only."
+          echo "This typically means it's a HEAD deployment or was created manually."
+          echo "Creating a new versioned deployment instead..."
+          npx clasp deploy --description "GitHub Actions deployment $(date +'%Y-%m-%d %H:%M:%S')"
       
       - name: Cleanup credentials
         if: always()
