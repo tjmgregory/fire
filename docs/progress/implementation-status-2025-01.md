@@ -13,96 +13,96 @@ The FIRE (Financial Independence, Retire Early) project is a Google Apps Script-
 **Status**: 70% Complete
 
 #### ✅ Implemented
-- Column mapping system for Monzo, Revolut, and Yonder
-- Transaction ID generation using `Utilities.getUuid()`
-- Original reference generation for duplicate detection
-- Date normalization to ISO format (UTC)
-- Amount normalization (negative for debits)
-- Transaction type normalization (PAYMENT, TRANSFER, ATM)
-- Basic currency conversion to GBP (hardcoded rates)
-- Description normalization with bank-specific field combination strategies
-- Stable reference generation without amounts (avoiding exchange rate issues)
+- **[1a]** Column mapping system for Monzo, Revolut, and Yonder
+- **[1b]** Transaction ID generation using `Utilities.getUuid()`
+- **[1c]** Original reference generation for duplicate detection
+- **[1d]** Date normalization to ISO format (UTC)
+- **[1e]** Amount normalization (negative for debits)
+- **[1f]** Transaction type normalization (PAYMENT, TRANSFER, ATM)
+- **[1g]** Basic currency conversion to GBP (hardcoded rates)
+- **[1h]** Description normalization with bank-specific field combination strategies
+- **[1i]** Stable reference generation without amounts (avoiding exchange rate issues)
 
 #### ❌ Missing
-- Real-time exchange rate API integration
-- Proper metadata storage for original currency/amount
-- Category split information preservation
+- **[1j]** Real-time exchange rate API integration
+- **[1k]** Proper metadata storage for original currency/amount
+- **[1l]** Category split information preservation
 
 ### ADR 002: Transaction Categorization Strategy
 **Status**: 60% Complete
 
 #### ✅ Implemented
-- OpenAI GPT-4 integration for categorization
-- Batch processing (10 transactions per batch)
-- Confidence scores
-- JSON response format enforcement
-- Rate limiting (1 second delay between batches)
-- Error handling for failed categorization
+- **[2a]** OpenAI GPT-4 integration for categorization
+- **[2b]** Batch processing (10 transactions per batch)
+- **[2c]** Confidence scores
+- **[2d]** JSON response format enforcement
+- **[2e]** Rate limiting (1 second delay between batches)
+- **[2f]** Error handling for failed categorization
 
 #### ❌ Missing
-- Manual override functionality (column exists but no UI/trigger)
-- Learning mechanism from manual corrections
-- Caching system for API responses
-- Transaction history context (last 5 similar transactions)
-- Categorization accuracy tracking
-- Periodic retraining based on manual corrections
+- **[2g]** Manual override functionality (column exists but no UI/trigger)
+- **[2h]** Learning mechanism from manual corrections
+- **[2i]** Caching system for API responses
+- **[2j]** Transaction history context (last 5 similar transactions)
+- **[2k]** Categorization accuracy tracking
+- **[2l]** Periodic retraining based on manual corrections
 
 ### ADR 003: Output Sheet Structure
 **Status**: 30% Complete
 
 #### ✅ Implemented
-- Main transaction sheet with all specified columns
-- Processing status tracking (UNPROCESSED, CATEGORIZED, ERROR)
-- Timestamp tracking for normalization and categorization
-- Error details column
+- **[3a]** Main transaction sheet with all specified columns
+- **[3b]** Processing status tracking (UNPROCESSED, CATEGORIZED, ERROR)
+- **[3c]** Timestamp tracking for normalization and categorization
+- **[3d]** Error details column
 
 #### ❌ Missing
-- Category column formula (should use AI Category unless Manual Override exists)
-- Monthly Summary Sheet (auto-generated summaries)
-- System Logs Sheet (error tracking, API usage)
-- Category Definitions Sheet
-- Data validation rules
-- Sheet protection
+- **[3e]** Category column formula (should use AI Category unless Manual Override exists)
+- **[3f]** Monthly Summary Sheet (auto-generated summaries)
+- **[3g]** System Logs Sheet (error tracking, API usage)
+- **[3h]** Category Definitions Sheet
+- **[3i]** Data validation rules
+- **[3j]** Sheet protection
 
 ### ADR 004: Trigger System Design
 **Status**: 10% Complete
 
 #### ✅ Implemented
-- OnEdit triggers created (functionality questionable)
-- Basic trigger setup/cleanup logic
+- **[4a]** OnEdit triggers created (functionality questionable)
+- **[4b]** Basic trigger setup/cleanup logic
 
 #### ❌ Missing
-- Time-based triggers (all commented out):
+- **[4c]** Time-based triggers (all commented out):
   - Hourly categorization trigger
   - 15-minute normalization trigger
   - Daily summary generation
   - Weekly cleanup
   - Monthly report generation
-- Error recovery and state management
-- Trigger monitoring and cleanup
-- API rate limit monitoring
+- **[4d]** Error recovery and state management
+- **[4e]** Trigger monitoring and cleanup
+- **[4f]** API rate limit monitoring
 
 ### ADR 005: Normalization-Categorization Separation
 **Status**: 90% Complete
 
 #### ✅ Implemented
-- Separate `processNewTransactions()` for normalization
-- Separate `categorizeTransactions()` for AI categorization
-- Status-based processing (only categorizes UNPROCESSED transactions)
-- Clear separation of concerns in code structure
+- **[5a]** Separate `processNewTransactions()` for normalization
+- **[5b]** Separate `categorizeTransactions()` for AI categorization
+- **[5c]** Status-based processing (only categorizes UNPROCESSED transactions)
+- **[5d]** Clear separation of concerns in code structure
 
 #### ❌ Missing
-- More sophisticated state management between phases
+- **[5e]** More sophisticated state management between phases
 
 ## Critical Bugs
 
-### BUG-001: Duplicate Transaction Processing
+### **[BUG-001]** Duplicate Transaction Processing
 - **Priority**: High
 - **Impact**: Normalization re-adds all rows from input sheets on each run
 - **Root Cause**: Broken logic for checking existing transactions
 - **Status**: Open
 
-### BUG-002: Credit/Debit Normalization
+### **[BUG-002]** Credit/Debit Normalization
 - **Priority**: High
 - **Impact**: All transactions assumed to be debits
 - **Root Cause**: Missing logic to respect transaction type from source sheets
@@ -125,74 +125,74 @@ The FIRE (Financial Independence, Retire Early) project is a Google Apps Script-
 
 ## Missing Production Features
 
-1. **Automation**
-   - All time-based triggers disabled
-   - No automatic processing pipeline
+### **[P1]** Automation
+- **[P1a]** All time-based triggers disabled
+- **[P1b]** No automatic processing pipeline
 
-2. **User Interface**
-   - No manual override workflow
-   - No data validation on user inputs
-   - No user feedback mechanisms
+### **[P2]** User Interface
+- **[P2a]** No manual override workflow
+- **[P2b]** No data validation on user inputs
+- **[P2c]** No user feedback mechanisms
 
-3. **Monitoring & Logging**
-   - No System Logs sheet
-   - No API usage tracking
-   - No performance metrics
-   - No error alerting
+### **[P3]** Monitoring & Logging
+- **[P3a]** No System Logs sheet
+- **[P3b]** No API usage tracking
+- **[P3c]** No performance metrics
+- **[P3d]** No error alerting
 
-4. **Data Management**
-   - Broken duplicate detection
-   - No backup system
-   - No data retention policy
-   - No cleanup mechanisms
+### **[P4]** Data Management
+- **[P4a]** Broken duplicate detection
+- **[P4b]** No backup system
+- **[P4c]** No data retention policy
+- **[P4d]** No cleanup mechanisms
 
-5. **Reporting**
-   - No monthly summaries
-   - No trend analysis
-   - No budget comparisons
-   - No category analytics
+### **[P5]** Reporting
+- **[P5a]** No monthly summaries
+- **[P5b]** No trend analysis
+- **[P5c]** No budget comparisons
+- **[P5d]** No category analytics
 
 ## Recommendations for Next Steps
 
 ### Immediate Priorities (Fix Critical Issues)
-1. Fix BUG-001: Implement proper duplicate detection using originalReference
-2. Fix BUG-002: Add credit/debit transaction handling
-3. Enable basic time-based triggers for automated processing
+- **[R1]** Fix BUG-001: Implement proper duplicate detection using originalReference
+- **[R2]** Fix BUG-002: Add credit/debit transaction handling
+- **[R3]** Enable basic time-based triggers for automated processing
 
 ### Short-term Goals (Core Functionality)
-1. Implement System Logs sheet for monitoring
-2. Add manual override functionality
-3. Create Monthly Summary sheet
-4. Add real exchange rate API integration
+- **[R4]** Implement System Logs sheet for monitoring **[3g]**
+- **[R5]** Add manual override functionality **[2g]**
+- **[R6]** Create Monthly Summary sheet **[3f]**
+- **[R7]** Add real exchange rate API integration **[1j]**
 
 ### Medium-term Goals (Production Readiness)
-1. Implement learning mechanism from manual corrections
-2. Add comprehensive error recovery
-3. Create backup and restore functionality
-4. Add data validation rules
+- **[R8]** Implement learning mechanism from manual corrections **[2h]**
+- **[R9]** Add comprehensive error recovery **[4d]**
+- **[R10]** Create backup and restore functionality **[P4b]**
+- **[R11]** Add data validation rules **[3i]**
 
 ### Long-term Goals (Enhanced Features)
-1. Implement transaction history context for better categorization
-2. Add budget comparison features
-3. Create advanced analytics and reporting
-4. Build user-friendly configuration interface
+- **[R12]** Implement transaction history context for better categorization **[2j]**
+- **[R13]** Add budget comparison features **[P5c]**
+- **[R14]** Create advanced analytics and reporting **[P5b, P5d]**
+- **[R15]** Build user-friendly configuration interface **[P2]**
 
 ## Technical Debt
 
-1. **Hardcoded Values**
-   - Currency exchange rates
-   - API model name ('gpt-4.1-nano')
-   - Batch size and rate limits
+### **[T1]** Hardcoded Values
+- **[T1a]** Currency exchange rates
+- **[T1b]** API model name ('gpt-4.1-nano')
+- **[T1c]** Batch size and rate limits
 
-2. **Missing Abstractions**
-   - No proper state management
-   - No caching layer
-   - No proper error recovery
+### **[T2]** Missing Abstractions
+- **[T2a]** No proper state management
+- **[T2b]** No caching layer
+- **[T2c]** No proper error recovery
 
-3. **Testing**
-   - No automated tests
-   - No validation of edge cases
-   - No performance testing
+### **[T3]** Testing
+- **[T3a]** No automated tests
+- **[T3b]** No validation of edge cases
+- **[T3c]** No performance testing
 
 ## Conclusion
 
