@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - fix-main-deploy-debug  # Temporary for validation
     paths:
       - 'src/apps-script/**'
       - '.github/workflows/deploy-apps-script.yml'
