@@ -1,7 +1,5 @@
 ---
-description: 
-globs: 
-alwaysApply: true
+alwaysApply: false
 ---
 When I ask you to make a plan, only make the plan. Do not execute the plan until I tell you to.
 
