@@ -832,11 +832,17 @@ class Utils {
     if (!transactions.length) return;
     
     const now = new Date();
+    const startRow = outputSheet.getLastRow() + 1;
+    
+    // Get column index for Category column (where we'll set the formula)
+    const headers = outputSheet.getRange(1, 1, 1, outputSheet.getLastColumn()).getValues()[0];
+    const categoryCol = headers.indexOf(this.config.OUTPUT_COLUMNS.CATEGORY) + 1; // 1-based
+    
     const rows = transactions.map(t => [
       t.date,
       t.description,
       t.amount,
-      '', // Category (final, to be filled after categorization)
+      '', // Category (will be set as formula below)
       '', // AI Category (to be filled after categorization)
       '', // Manual Override
       '', // Confidence
@@ -851,8 +857,55 @@ class Utils {
       ''  // Error Details
     ]);
     
-    console.log(`[writeNormalizedTransactions] Writing ${rows.length} transactions to output sheet`);
-    outputSheet.getRange(outputSheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+    console.log(`[writeNormalizedTransactions] Writing ${rows.length} transactions to output sheet starting at row ${startRow}`);
+    outputSheet.getRange(startRow, 1, rows.length, rows[0].length).setValues(rows);
+    
+    // Set formulas for Category column: IF(Manual Override <> "", Manual Override, AI Category)
+    // Column references: E = AI Category (column 5), F = Manual Override (column 6)
+    const categoryFormulas = transactions.map((t, index) => {
+      const rowNum = startRow + index;
+      return [`=IF(F${rowNum}<>"", F${rowNum}, E${rowNum})`];
+    });
+    outputSheet.getRange(startRow, categoryCol, rows.length, 1).setFormulas(categoryFormulas);
+    
+    console.log(`[writeNormalizedTransactions] Set Category column formulas for ${rows.length} rows`);
+  }
+  
+  /**
+   * Backfill Category column formulas for existing rows that don't have them
+   * This is useful for updating existing data to use the calculated Category column
+   * @param {Sheet} outputSheet - The output sheet
+   * @param {number} startRow - Optional starting row (default: 2, skipping header)
+   * @param {number} endRow - Optional ending row (default: last row)
+   */
+  backfillCategoryFormulas(outputSheet, startRow = null, endRow = null) {
+    // Guard clause for required parameter
+    if (!outputSheet) {
+      throw new Error('Output sheet is required');
+    }
+    
+    const headers = outputSheet.getRange(1, 1, 1, outputSheet.getLastColumn()).getValues()[0];
+    const categoryCol = headers.indexOf(this.config.OUTPUT_COLUMNS.CATEGORY) + 1; // 1-based
+    
+    const lastRow = endRow || outputSheet.getLastRow();
+    const firstRow = startRow || 2; // Skip header row
+    
+    if (lastRow < firstRow) {
+      console.log('[backfillCategoryFormulas] No rows to update');
+      return;
+    }
+    
+    const numRows = lastRow - firstRow + 1;
+    const formulas = [];
+    
+    for (let i = 0; i < numRows; i++) {
+      const rowNum = firstRow + i;
+      formulas.push([`=IF(F${rowNum}<>"", F${rowNum}, E${rowNum})`]);
+    }
+    
+    console.log(`[backfillCategoryFormulas] Backfilling Category formulas for rows ${firstRow} to ${lastRow}`);
+    outputSheet.getRange(firstRow, categoryCol, numRows, 1).setFormulas(formulas);
+    console.log(`[backfillCategoryFormulas] Updated ${numRows} rows with Category formulas`);
   }
   
   /**
