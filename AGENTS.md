@@ -1,4 +1,6 @@
-# CLAUDE.md - FIRE Project Assistant Guide
+# FIRE Project Assistant Guide
+
+BEFORE ANYTHING ELSE: run 'bd onboard' and follow the instructions
 
 ## Project Overview
 
