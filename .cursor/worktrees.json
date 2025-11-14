@@ -4,14 +4,12 @@
     "echo ''",
     "echo '✅ Dependencies installed'",
     "echo ''",
-    "if [ ! -f .clasp.json ] && [ -f .clasp.json.example ]; then echo '⚠️  .clasp.json not found. Copy .clasp.json.example to .clasp.json and configure your script ID'; fi",
-    "if [ ! -f .env ] && [ -f .env.example ]; then echo '⚠️  .env not found. Copy .env.example to .env and configure your settings'; fi",
-    "if [ -f .clasp.json ] && [ -f .env ]; then echo '✅ Configuration files found'; fi",
+    "if [ ! -f .clasp.json ] && [ -f .clasp.json.example ]; then cp .clasp.json.example .clasp.json && echo '✅ Created .clasp.json from example (update scriptId if needed)'; fi",
+    "if [ ! -f .env ] && [ -f .env.example ]; then cp .env.example .env && echo '✅ Created .env from example'; fi",
+    "if [ -f .clasp.json ] && [ -f .env ]; then echo '✅ Configuration files ready'; fi",
+    "if [ ! -f ~/.clasprc.json ]; then echo '⚠️  Not authenticated with Google. Run \"npm run clasp:login\" when ready'; else echo '✅ Google authentication found'; fi",
     "echo ''",
-    "echo '📝 Optional next steps:'",
-    "echo '  • Run \"npm run setup\" for interactive configuration'",
-    "echo '  • Run \"npm run clasp:login\" to authenticate with Google'",
-    "echo '  • Run \"npm run deploy\" to push code to Apps Script'"
+    "echo '🎉 Worktree setup complete!'"
   ]
 }
 
