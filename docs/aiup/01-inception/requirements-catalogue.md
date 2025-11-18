@@ -55,17 +55,21 @@
 
 ### FR-005: Asynchronous AI Categorization
 
-**Description**: The system must categorize transactions using AI. This process runs on a schedule to populate category fields for any rows that haven't been categorized since the last run.
+**Description**: The system must categorize transactions using AI through batch processing. This process runs on a schedule to populate category fields for any rows that haven't been categorized since the last run.
 
 **Acceptance Criteria**:
 
-- Categorization runs on a defined schedule (not real-time)
+- Categorization runs on a defined schedule (not real-time), less frequently than normalization (e.g., hourly)
+- Process transactions in batches (e.g., batches of 10) to optimize API usage and costs
 - Only uncategorized transactions are processed in each run
-- Categories are populated in the result sheet
+- Categories are selected from a predefined list of valid categories
+- AI provides confidence scores (0-100%) for each categorization
+- Confidence scores are stored alongside categories for auditability
 - System tracks which transactions have been categorized
+- Include recent similar transactions as context for better accuracy
 
 **Priority**: Must Have
-**Risk**: Medium (AI model accuracy and reliability)
+**Risk**: Medium (AI model accuracy and reliability, API costs)
 
 ### FR-006: Source Sheet Schema Support
 
@@ -208,6 +212,21 @@
 
 **Note**: This requirement enhances FR-005 (Asynchronous AI Categorization) by providing context from FR-013 (Manual Category Override) to improve accuracy over time.
 
+### FR-015: Category Definitions Management
+
+**Description**: The system must maintain a predefined set of transaction categories that the AI uses for categorization.
+
+**Acceptance Criteria**:
+
+- Categories are stored in a dedicated configuration location
+- Category list includes descriptions and examples for each category
+- AI categorization only assigns categories from this approved list
+- Categories can be updated by developers through configuration changes
+- Category changes are logged for audit purposes
+
+**Priority**: Must Have
+**Risk**: Low
+
 ---
 
 ## Non-Functional Requirements
@@ -273,11 +292,25 @@
 **Priority**: Should Have
 **Risk**: Low
 
----
+### NFR-006: Two-Phase Processing Architecture
 
-## Resolved Questions
+**Description**: The system architecture must separate transaction processing into two distinct phases - normalization and categorization - each running on independent schedules to optimize reliability and cost-efficiency.
 
-- **Transaction volume**: 100 transactions per day maximum
-- **Source sheet schemas**: Monzo, Revolut, and Yonder (defined in FR-006)
-- **Exchange rate API failures**: Log errors and mark transactions as incomplete for developer review (FR-008)
-- **Retry mechanisms**: Basic exponential backoff with maximum 5 retry attempts (FR-009)
+**Acceptance Criteria**:
+
+- Normalization phase runs frequently (e.g., every 15 minutes) to ensure new transactions are captured quickly
+- Categorization phase runs less frequently (e.g., hourly) to batch process and optimize API usage
+- Normalized transactions are persisted immediately to the output sheet with status "NORMALIZED"
+- Categorization updates existing rows, changing status to "CATEGORIZED" upon completion
+- Each phase can fail independently without affecting the other
+- Processing status column tracks current state: "UNPROCESSED", "NORMALIZED", "CATEGORIZED", "ERROR"
+- Failed categorizations don't block normalization of new transactions
+
+**Priority**: Must Have
+**Risk**: Medium (more complex state management and scheduling)
+
+**Rationale**: This architectural constraint ensures:
+
+- **Data Integrity** (NFR-001): Normalized data is persisted immediately
+- **Performance** (NFR-002): Categorization batching optimizes API costs
+- **Reliability** (NFR-003): Independent failure handling for each phase

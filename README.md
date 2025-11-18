@@ -19,7 +19,6 @@ See the [Vision](/docs/aiup/01-inception/VISION.md) for more details.
 - `src/apps-script/`: Google Apps Script implementation for transaction processing
   - See [Apps Script README](src/apps-script/README.md) for setup and usage
 - `docs/`: Project documentation
-  - `adr/`: Architecture Decision Records
   - `aiup/`: AI Unified Process specifications, including vision, inception, elaboration, construction, and transition phase documentation
   - `coding-standards/`: Coding patterns and best practices to adhere to
 
@@ -115,13 +114,6 @@ To set up GitHub Actions:
 2. Copy the contents of `~/.clasprc.json`
 3. Add as `CLASP_CREDENTIALS` secret in GitHub repository settings
 4. Add your `SCRIPT_ID` as a repository secret
-
-## Contributing
-
-1. Review the relevant ADRs for architectural context
-2. Check the implementation plans for current status
-3. Follow the coding standards in `docs/coding-standards`
-4. Update documentation as needed
 
 ## Security
 

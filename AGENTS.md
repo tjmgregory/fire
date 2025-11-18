@@ -67,17 +67,7 @@ This is the FIRE (Financial Independence, Retire Early) project - a Google Apps 
 3. Ensure all tests pass
 4. Update use case diagrams if behavior changed
 
-## Core Principles
-
-### 1. Documentation-First Development
-
-- **Always** consult existing documentation before making changes
-- Update docs BEFORE implementing code changes
-- Documentation locations:
-  - `docs/adr/` - Architecture Decision Records (source of truth)
-  - `docs/coding-standards/` - Code style and patterns
-
-### 2. Commit-As-You-Go
+## Commit-As-You-Go
 
 - Commit regularly and silently after each file update
 - Use clear, descriptive commit messages
@@ -87,45 +77,6 @@ This is the FIRE (Financial Independence, Retire Early) project - a Google Apps 
   - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
   - Example: `feat(categorization): add support for Amex transactions`
   - Example: `fix(normalization): handle edge case in date parsing`
-  - Example: `docs(adr): update ADR-001 with new bank format`
-
-### 3. Documentation Standards  
-
-- Documentation remains the source of truth for architectural decisions and coding standards
-- Always reference and update relevant documentation when making changes
-
-## Technical Stack
-
-- **Platform**: Google Apps Script
-- **Language**: JavaScript (Apps Script dialect)
-- **External APIs**: OpenAI GPT-4 for categorization
-- **Storage**: Google Sheets (transaction data, logs)
-- **Security**: API keys in Properties Service
-
-## Testing & Validation
-
-When testing changes:
-
-1. Test with real transaction data from all bank sources
-2. Verify currency conversion handling
-3. Test edge cases (refunds, transfers)
-4. Validate manual override functionality
-5. Run lint/typecheck commands if available
-
-## Common Tasks
-
-### Modifying Categories
-
-1. Update `CATEGORIES` array in `config.gs`
-2. Test categorization with new categories
-3. Document reasoning in appropriate ADR
-
-### Debugging Transaction Issues
-
-1. Check System Logs sheet for errors
-2. Verify transaction ID generation
-3. Check currency conversion if applicable
-4. Validate date parsing
 
 ## Security Notes
 
@@ -144,18 +95,9 @@ When testing changes:
 │   ├── categorization.gs # AI categorization logic
 │   └── utils.gs          # Utility functions
 ├── docs/
-│   ├── adr/              # Architecture decisions
-│   ├── coding-standards/ # Code style guides
-│   ├── plans/            # Historical implementation plans (Cursor-specific)
-│   └── issues/           # Bug tracking
-└── .cursor/rules/        # Editor-specific rules
+|   ├── aiup              # AI categorization logic
+│   └── coding-standards/ # Code style guides
 ```
-
-## Important ADRs
-
-- **ADR 001**: Data Normalization Strategy - How we handle different bank formats
-- **ADR 002**: Transaction Categorization Strategy - AI-powered categorization approach
-- **ADR 005**: Normalization-Categorization Separation - System architecture
 
 ## Useful Commands
 

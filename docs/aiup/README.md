@@ -4,26 +4,25 @@ This directory contains all AIUP artifacts for the FIRE project, organized by ph
 
 ## Directory Structure
 
-```
+```text
 docs/aiup/
-├── README.md                    # This file
-├── VISION.md                    # Project vision and goals
-├── inception/                   # Phase 1: Foundation
-│   ├── business-requirements.md # Business needs catalog
-│   ├── stakeholders.md          # Stakeholder identification
-│   └── test-strategy.md         # Overall test approach
-├── elaboration/                 # Phase 2: Design
-│   ├── use-case-diagrams.md     # Business use case diagrams
-│   ├── entity-models.md         # Data models
-│   ├── system-diagrams.md       # System use case diagrams
-│   └── test-cases.md            # Detailed test cases
-├── construction/                # Phase 3: Implementation
-│   ├── use-case-specs/          # Detailed specifications
-│   └── implementation-notes.md  # Construction insights
-└── transition/                  # Phase 4: Deployment
-    ├── uat-plan.md              # User acceptance testing
-    ├── deployment-strategy.md   # Continuous delivery approach
-    └── improvement-log.md       # Continuous improvement tracking
+├── README.md                     # This file
+├── inception/                    # Phase 1: Foundation
+│   ├── requirements-catalogue.md # Business needs catalog
+│   ├── stakeholders.md           # Stakeholder identification
+│   ├── test-strategy.md          # Overall test approach
+|   └── VISION.md                 # Project vision and goals
+├── elaboration/                  # Phase 2: Design
+│   ├── entity-model.md           # Data model
+│   ├── system-use-cases.md       # Business use case diagrams
+│   ├── software-architecture-document.md  # System use case diagrams
+│   └── acceptance-test-cases.md  # Detailed test cases
+├── construction/                 # Phase 3: Implementation
+│   └── implementation-notes.md   # Construction insights
+└── transition/                   # Phase 4: Deployment
+    ├── uat-plan.md               # User acceptance testing
+    ├── deployment-strategy.md    # Continuous delivery approach
+    └── improvement-log.md        # Continuous improvement tracking
 ```
 
 ## AIUP Principles Applied to FIRE
@@ -52,13 +51,13 @@ Changes are validated against stakeholder needs documented in `01-inception/stak
 
 Each document references related documents, creating a chain:
 
-```
+```text
 Business Requirement → Use Case → Specification → Code → Test Case → Deployment
 ```
 
 ## Document Relationships
 
-```
+```text
 VISION.md
     ↓
 01-inception/business-requirements.md
@@ -80,15 +79,15 @@ src/apps-script/*.gs
 
 ### For AI Agents
 
-1. **Starting new work**: Check `01-inception/business-requirements.md` for context
-2. **Writing tests**: Reference `02-elaboration/test-cases.md`
-3. **Implementing features**: Follow specs in `03-construction/use-case-specs/`
+1. **Starting new work**: Check `01-inception/requirements-catalogue.md` for context
+2. **Writing tests**: Reference `02-elaboration/test-strategy.md`
+3. **Implementing features**: Follow specs in `02-elaboration/system-use-cases.md`
 4. **Discovering gaps**: Update relevant specs, document in beads issue
 
 ### For Humans
 
-1. **Understanding the system**: Start with `VISION.md`, then browse by phase
-2. **Adding features**: Document in `01-inception/business-requirements.md` first
+1. **Understanding the system**: Start with `01-inception/VISION.md`, then browse by phase
+2. **Adding features**: Document in `01-inception/requirements-catalogue.md` first
 3. **Reviewing changes**: Verify specs match implementation
 4. **Planning work**: Use specs to create beads issues
 
@@ -118,5 +117,5 @@ This creates full traceability from business need to working code.
 ## References
 
 - [AI Unified Process Official Site](https://aiup.dev/)
-- [AIUP Process Diagram](../ai-unified-process.svg)
+- [AIUP Process Diagram](./ai-unified-process.svg)
 - [Project AGENTS.md](../../AGENTS.md) - AI agent guidelines
