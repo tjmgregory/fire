@@ -24,7 +24,9 @@
       "Bash(bd close:*)",
       "Bash(tree:*)",
       "Bash(npm install:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": []

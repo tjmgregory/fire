@@ -5,6 +5,10 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:watch": "vitest --watch",
     "deploy": "npm run build && npm run clasp:push",
     "deploy:prod": "npm run build && npm run clasp:push && npm run clasp:deploy",
     "clasp:login": "clasp login",
@@ -18,8 +22,11 @@
   "devDependencies": {
     "@google/clasp": "^2.4.2",
     "@types/google-apps-script": "^2.0.7",
+    "@vitest/coverage-v8": "^4.0.10",
+    "@vitest/ui": "^4.0.10",
     "dotenv": "^16.0.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.10"
   },
   "engines": {
     "node": ">=14.0.0"
