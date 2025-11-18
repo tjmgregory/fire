@@ -87,10 +87,10 @@ The FIRE (Financial Independence, Retire Early) project provides intelligent, au
 
 ### Technical Success Metrics
 
-1. **Processing Speed**: <10 seconds to categorize 100 transactions
+1. **Processing Speed**: <60 seconds to categorize 100 transactions
 2. **Error Rate**: <1% of transactions fail to process
 3. **Data Integrity**: 100% of transactions preserved exactly as received
-4. **Scalability**: Handles 10,000+ transactions/month per user
+4. **Scalability**: Handles 100+ transactions/month per user
 5. **Maintainability**: New bank formats added in <2 hours
 
 ## Strategic Goals
