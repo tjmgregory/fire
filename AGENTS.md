@@ -7,14 +7,15 @@ This is the FIRE (Financial Independence, Retire Early) project - a Google Apps 
 ## Core Principles
 
 ### 1. Documentation-First Development
+
 - **Always** consult existing documentation before making changes
 - Update docs BEFORE implementing code changes
 - Documentation locations:
   - `docs/adr/` - Architecture Decision Records (source of truth)
   - `docs/coding-standards/` - Code style and patterns
-  - `docs/issues/bug-tracker.md` - Bug tracking
 
 ### 2. Commit-As-You-Go
+
 - Commit regularly and silently after each file update
 - Use clear, descriptive commit messages
 - Keep commits atomic and focused
@@ -26,9 +27,9 @@ This is the FIRE (Financial Independence, Retire Early) project - a Google Apps 
   - Example: `docs(adr): update ADR-001 with new bank format`
 
 ### 3. Documentation Standards  
+
 - Documentation remains the source of truth for architectural decisions and coding standards
 - Always reference and update relevant documentation when making changes
-- The `docs/plans/` directory contains historical implementation plans from Cursor usage
 
 ## Technical Stack
 
@@ -38,69 +39,10 @@ This is the FIRE (Financial Independence, Retire Early) project - a Google Apps 
 - **Storage**: Google Sheets (transaction data, logs)
 - **Security**: API keys in Properties Service
 
-## Supported Banks
-
-| Bank | Integration Type | Transaction ID |
-|------|-----------------|----------------|
-| Monzo | Live API | Native ID |
-| Revolut | CSV Import | Generated |
-| Yonder | CSV Import | Generated |
-
-## Code Standards
-
-### JavaScript/Apps Script
-- Follow Google Apps Script style guide
-- Use JSDoc comments for all functions
-- Prefer descriptive variable names (e.g., `transactionDescription` over `desc`)
-- Keep functions single-purpose and focused
-
-### Error Handling Pattern
-```javascript
-// Top-level functions catch and log
-function onTrigger() {
-  try {
-    processNewTransactions();
-  } catch (err) {
-    console.error(`[onTrigger] Execution failed: ${err.message}`, err.stack);
-    return false;
-  }
-}
-
-// Mid-level functions throw without logging
-function parseData(input) {
-  if (!input) {
-    throw new Error('Input is null or undefined');
-  }
-  // Process...
-}
-```
-
-### Logging Levels (Supported in Apps Script)
-- `console.error()`: Actual errors preventing operation
-- `console.warn()`: Potential issues (deprecated features, etc.)
-- `console.info()`: Important business events
-- `console.log()`: Debugging information
-
-Note: All standard console methods are fully supported in Google Apps Script. View logs via "View > Logs" in the Apps Script editor.
-
-## Transaction Processing Flow
-
-1. **Normalization** (ADR 001)
-   - Convert dates to YYYY-MM-DD
-   - Standardize amounts (negative for debits)
-   - Convert all amounts to GBP
-   - Generate transaction IDs using `Utilities.getUuid()`
-   - Create stable `originalReference` for duplicate detection
-
-2. **Categorization** (ADR 002)
-   - AI categorization using OpenAI GPT-4
-   - Manual override capability
-   - Batch processing (10 transactions per API call)
-   - Categories defined in `config.gs`
-
 ## Testing & Validation
 
 When testing changes:
+
 1. Test with real transaction data from all bank sources
 2. Verify currency conversion handling
 3. Test edge cases (refunds, transfers)
@@ -109,19 +51,14 @@ When testing changes:
 
 ## Common Tasks
 
-### Adding a New Bank
-1. Update ADR 001 with new bank's format
-2. Create normalizer in appropriate module
-3. Add to `getSourceSheets()` in config
-4. Test with sample data
-5. Update documentation
-
 ### Modifying Categories
+
 1. Update `CATEGORIES` array in `config.gs`
 2. Test categorization with new categories
 3. Document reasoning in appropriate ADR
 
 ### Debugging Transaction Issues
+
 1. Check System Logs sheet for errors
 2. Verify transaction ID generation
 3. Check currency conversion if applicable
@@ -136,7 +73,7 @@ When testing changes:
 
 ## File Structure Reference
 
-```
+```text
 /
 ├── src/apps-script/
 │   ├── main.gs           # Core transaction processing
@@ -160,6 +97,7 @@ When testing changes:
 ## Useful Commands
 
 For Google Apps Script development:
+
 - Deploy: Via Apps Script editor UI
 - Test: Run functions directly in editor
 - Logs: View > Logs in Apps Script editor
@@ -179,23 +117,27 @@ For Google Apps Script development:
 ### Quick Start
 
 **Check for ready work:**
+
 ```bash
 bd ready --json
 ```
 
 **Create new issues:**
+
 ```bash
 bd create "Issue title" -t bug|feature|task -p 0-4 --json
 bd create "Issue title" -p 1 --deps discovered-from:bd-123 --json
 ```
 
 **Claim and update:**
+
 ```bash
 bd update bd-42 --status in_progress --json
 bd update bd-42 --priority 1 --json
 ```
 
 **Complete work:**
+
 ```bash
 bd close bd-42 --reason "Completed" --json
 ```
@@ -229,6 +171,7 @@ bd close bd-42 --reason "Completed" --json
 ### Auto-Sync
 
 bd automatically syncs with git:
+
 - Exports to `.beads/issues.jsonl` after changes (5s debounce)
 - Imports from JSONL when newer (e.g., after `git pull`)
 - No manual export/import needed!
@@ -242,6 +185,7 @@ pip install beads-mcp
 ```
 
 Add to MCP config (e.g., `~/.config/claude/config.json`):
+
 ```json
 {
   "beads": {
@@ -256,6 +200,7 @@ Then use `mcp__beads__*` functions instead of CLI commands.
 ### Managing AI-Generated Planning Documents
 
 AI assistants often create planning and design documents during development:
+
 - PLAN.md, IMPLEMENTATION.md, ARCHITECTURE.md
 - DESIGN.md, CODEBASE_SUMMARY.md, INTEGRATION_PLAN.md
 - TESTING_GUIDE.md, TECHNICAL_DESIGN.md, and similar files
@@ -263,18 +208,21 @@ AI assistants often create planning and design documents during development:
 **Best Practice: Use a dedicated directory for these ephemeral files**
 
 **Recommended approach:**
+
 - Create a `history/` directory in the project root
 - Store ALL AI-generated planning/design docs in `history/`
 - Keep the repository root clean and focused on permanent project files
 - Only access `history/` when explicitly asked to review past planning
 
 **Example .gitignore entry (optional):**
+
 ```
 # AI planning documents (ephemeral)
 history/
 ```
 
 **Benefits:**
+
 - ✅ Clean repository root
 - ✅ Clear separation between ephemeral and permanent documentation
 - ✅ Easy to exclude from version control if desired
