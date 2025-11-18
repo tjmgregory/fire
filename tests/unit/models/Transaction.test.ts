@@ -25,7 +25,8 @@ import {
   TransactionValidator,
   ProcessingStatus,
   TransactionType,
-  CurrencyCode
+  CurrencyCode,
+  BankSourceId
 } from '../../../src/apps-script/models/Transaction';
 
 describe('TransactionValidator', () => {
@@ -34,7 +35,7 @@ describe('TransactionValidator', () => {
       // Arrange - Normalized transaction from UC-005 (Execute Scheduled Normalization)
       const validTransaction: Transaction = {
         id: '123e4567-e89b-12d3-a456-426614174000',
-        bankSourceId: 'MONZO',
+        bankSourceId: BankSourceId.MONZO,
         originalTransactionId: 'tx_00001',
         transactionDate: new Date('2025-11-15'),
         transactionType: TransactionType.DEBIT,
@@ -65,7 +66,7 @@ describe('TransactionValidator', () => {
     test('BR-T-01: Given transaction without unique ID, when validated, then rejects (entity identity requirement)', () => {
       // Arrange
       const invalidTransaction = {
-        bankSourceId: 'MONZO',
+        bankSourceId: BankSourceId.MONZO,
         originalTransactionId: 'tx_00001',
         transactionDate: new Date('2025-11-15'),
         originalAmountValue: 23.45
@@ -80,7 +81,7 @@ describe('TransactionValidator', () => {
       // Arrange
       const invalidTransaction = {
         id: '123e4567-e89b-12d3-a456-426614174000',
-        bankSourceId: 'MONZO',
+        bankSourceId: BankSourceId.MONZO,
         originalTransactionId: 'tx_00001',
         transactionDate: new Date('2025-11-15'),
         originalAmountValue: 23.45
@@ -95,7 +96,7 @@ describe('TransactionValidator', () => {
       // Arrange - Per UC-001 Alternative Flow 3b: System detects duplicates by transaction ID
       const invalidTransaction = {
         id: '123e4567-e89b-12d3-a456-426614174000',
-        bankSourceId: 'MONZO',
+        bankSourceId: BankSourceId.MONZO,
         description: 'Tesco',
         transactionDate: new Date('2025-11-15'),
         originalAmountValue: 23.45
@@ -112,7 +113,7 @@ describe('TransactionValidator', () => {
       // Arrange - Per UC-002: AI returns confidence scores 0-100%
       const transaction: Transaction = {
         id: '123e4567-e89b-12d3-a456-426614174000',
-        bankSourceId: 'MONZO',
+        bankSourceId: BankSourceId.MONZO,
         originalTransactionId: 'tx_00001',
         transactionDate: new Date('2025-11-15'),
         transactionType: TransactionType.DEBIT,
@@ -145,7 +146,7 @@ describe('TransactionValidator', () => {
       // Arrange
       const transaction: Transaction = {
         id: '123e4567-e89b-12d3-a456-426614174000',
-        bankSourceId: 'MONZO',
+        bankSourceId: BankSourceId.MONZO,
         originalTransactionId: 'tx_00001',
         transactionDate: new Date('2025-11-15'),
         transactionType: TransactionType.DEBIT,

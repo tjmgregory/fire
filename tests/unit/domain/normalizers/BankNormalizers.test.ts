@@ -25,11 +25,11 @@ import { RevolutNormalizer } from '../../../../src/apps-script/domain/normalizer
 import { YonderNormalizer } from '../../../../src/apps-script/domain/normalizers/YonderNormalizer';
 import { BankSource, ColumnMapping } from '../../../../src/apps-script/models/BankSource';
 import { RawRowData } from '../../../../src/apps-script/domain/ports/SheetDataPort';
-import { CurrencyCode, ProcessingStatus, TransactionType } from '../../../../src/apps-script/models/Transaction';
+import { BankSourceId, CurrencyCode, ProcessingStatus, TransactionType } from '../../../../src/apps-script/models/Transaction';
 
 // Test fixtures
 const createMonzoSource = (): BankSource => ({
-  id: 'MONZO',
+  id: BankSourceId.MONZO,
   displayName: 'Monzo',
   sheetName: 'Monzo',
   hasNativeTransactionId: true,
@@ -48,7 +48,7 @@ const createMonzoSource = (): BankSource => ({
 });
 
 const createRevolutSource = (): BankSource => ({
-  id: 'REVOLUT',
+  id: BankSourceId.REVOLUT,
   displayName: 'Revolut',
   sheetName: 'Revolut',
   hasNativeTransactionId: false,
@@ -65,7 +65,7 @@ const createRevolutSource = (): BankSource => ({
 });
 
 const createYonderSource = (): BankSource => ({
-  id: 'YONDER',
+  id: BankSourceId.YONDER,
   displayName: 'Yonder',
   sheetName: 'Yonder',
   hasNativeTransactionId: false,
@@ -113,7 +113,7 @@ describe('MonzoNormalizer', () => {
       expect(result.originalAmountValue).toBe(23.45);
       expect(result.originalAmountCurrency).toBe(CurrencyCode.GBP);
       expect(result.notes).toBe('#groceries');
-      expect(result.bankSourceId).toBe('MONZO');
+      expect(result.bankSourceId).toBe(BankSourceId.MONZO);
       expect(result.processingStatus).toBe(ProcessingStatus.UNPROCESSED);
     });
 

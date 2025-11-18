@@ -29,7 +29,7 @@ describe('BankSourceValidator', () => {
     test('UC-005: Given valid Monzo bank source, when validated, then passes all business rules', () => {
       // Arrange - Monzo configuration from UC-005
       const monzoSource: BankSource = {
-        id: 'MONZO' as BankSourceId,
+        id: BankSourceId.MONZO,
         displayName: 'Monzo',
         sheetName: 'Monzo',
         hasNativeTransactionId: true,
@@ -54,7 +54,7 @@ describe('BankSourceValidator', () => {
     test('UC-001: Given valid Revolut bank source, when validated, then passes validation', () => {
       // Arrange - Revolut configuration without native IDs
       const revolutSource: BankSource = {
-        id: 'REVOLUT' as BankSourceId,
+        id: BankSourceId.REVOLUT,
         displayName: 'Revolut',
         sheetName: 'Revolut',
         hasNativeTransactionId: false,
@@ -77,7 +77,7 @@ describe('BankSourceValidator', () => {
     test('UC-001: Given valid Yonder bank source, when validated, then passes validation', () => {
       // Arrange - Yonder configuration
       const yonderSource: BankSource = {
-        id: 'YONDER' as BankSourceId,
+        id: BankSourceId.YONDER,
         displayName: 'Yonder',
         sheetName: 'Yonder',
         hasNativeTransactionId: false,
@@ -101,7 +101,7 @@ describe('BankSourceValidator', () => {
     test('BR-BS-01: Given invalid bank source ID, when validated, then throws BankSourceValidationError', () => {
       // Arrange - Invalid ID
       const invalidSource = {
-        id: 'INVALID' as BankSourceId,
+        id: 'INVALID' as unknown as BankSourceId,
         displayName: 'Invalid Bank',
         sheetName: 'Invalid',
         hasNativeTransactionId: false,
@@ -126,7 +126,7 @@ describe('BankSourceValidator', () => {
     test('BR-BS-01: Given missing display name, when validated, then throws BankSourceValidationError', () => {
       // Arrange
       const sourceWithoutName = {
-        id: 'MONZO' as BankSourceId,
+        id: BankSourceId.MONZO,
         displayName: '',
         sheetName: 'Monzo',
         hasNativeTransactionId: true,
@@ -150,7 +150,7 @@ describe('BankSourceValidator', () => {
     test('BR-BS-01: Given missing sheet name, when validated, then throws BankSourceValidationError', () => {
       // Arrange
       const sourceWithoutSheet = {
-        id: 'MONZO' as BankSourceId,
+        id: BankSourceId.MONZO,
         displayName: 'Monzo',
         sheetName: '   ',
         hasNativeTransactionId: true,
@@ -174,7 +174,7 @@ describe('BankSourceValidator', () => {
     test('BR-BS-01: Given invalid hasNativeTransactionId type, when validated, then throws BankSourceValidationError', () => {
       // Arrange
       const sourceWithInvalidBoolean = {
-        id: 'MONZO' as BankSourceId,
+        id: BankSourceId.MONZO,
         displayName: 'Monzo',
         sheetName: 'Monzo',
         hasNativeTransactionId: 'yes' as unknown as boolean,
@@ -197,7 +197,7 @@ describe('BankSourceValidator', () => {
     test('BR-BS-01: Given invalid isActive type, when validated, then throws BankSourceValidationError', () => {
       // Arrange
       const sourceWithInvalidActive = {
-        id: 'MONZO' as BankSourceId,
+        id: BankSourceId.MONZO,
         displayName: 'Monzo',
         sheetName: 'Monzo',
         hasNativeTransactionId: true,
@@ -221,7 +221,7 @@ describe('BankSourceValidator', () => {
     test('BR-BS-01: Given invalid createdAt date, when validated, then throws BankSourceValidationError', () => {
       // Arrange
       const sourceWithInvalidDate = {
-        id: 'MONZO' as BankSourceId,
+        id: BankSourceId.MONZO,
         displayName: 'Monzo',
         sheetName: 'Monzo',
         hasNativeTransactionId: true,
@@ -245,7 +245,7 @@ describe('BankSourceValidator', () => {
     test('BR-BS-01: Given invalid lastProcessedAt date, when validated, then throws BankSourceValidationError', () => {
       // Arrange
       const sourceWithInvalidProcessedDate = {
-        id: 'MONZO' as BankSourceId,
+        id: BankSourceId.MONZO,
         displayName: 'Monzo',
         sheetName: 'Monzo',
         hasNativeTransactionId: true,
@@ -269,7 +269,7 @@ describe('BankSourceValidator', () => {
     test('UC-005: Given null lastProcessedAt, when validated, then accepts as valid', () => {
       // Arrange - New source never processed
       const newSource: BankSource = {
-        id: 'MONZO' as BankSourceId,
+        id: BankSourceId.MONZO,
         displayName: 'Monzo',
         sheetName: 'Monzo',
         hasNativeTransactionId: true,
@@ -425,7 +425,7 @@ describe('BankSourceValidator', () => {
     test('BR-BS-04: Given source never processed, when checking immutability, then returns false', () => {
       // Arrange - New source
       const newSource: BankSource = {
-        id: 'MONZO' as BankSourceId,
+        id: BankSourceId.MONZO,
         displayName: 'Monzo',
         sheetName: 'Monzo',
         hasNativeTransactionId: true,
@@ -451,7 +451,7 @@ describe('BankSourceValidator', () => {
     test('BR-BS-04: Given source processed before, when checking immutability, then returns true', () => {
       // Arrange - Previously processed source
       const processedSource: BankSource = {
-        id: 'MONZO' as BankSourceId,
+        id: BankSourceId.MONZO,
         displayName: 'Monzo',
         sheetName: 'Monzo',
         hasNativeTransactionId: true,
@@ -477,7 +477,7 @@ describe('BankSourceValidator', () => {
     test('UC-005: Given source just processed, when checking immutability, then becomes immutable', () => {
       // Arrange - Source right after first processing
       const source: BankSource = {
-        id: 'REVOLUT' as BankSourceId,
+        id: BankSourceId.REVOLUT,
         displayName: 'Revolut',
         sheetName: 'Revolut',
         hasNativeTransactionId: false,
