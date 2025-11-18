@@ -17,7 +17,14 @@
       "Bash(do bd dep add $issue fire-9lh --type parent-child)",
       "Bash(for issue in fire-2rl fire-ebp fire-cbw fire-wy4 fire-7nr)",
       "Bash(do bd dep add $issue fire-8to --type parent-child)",
-      "Bash(bd dep tree:*)"
+      "Bash(bd dep tree:*)",
+      "Bash(bd stats:*)",
+      "Bash(bd show:*)",
+      "Bash(bd update:*)",
+      "Bash(bd close:*)",
+      "Bash(tree:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

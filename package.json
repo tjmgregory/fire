@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "description": "Google Apps Script deployment for FIRE financial categorization",
   "scripts": {
-    "deploy": "npm run clasp:push",
-    "deploy:prod": "npm run clasp:push && npm run clasp:deploy",
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "deploy": "npm run build && npm run clasp:push",
+    "deploy:prod": "npm run build && npm run clasp:push && npm run clasp:deploy",
     "clasp:login": "clasp login",
     "clasp:push": "clasp push",
     "clasp:deploy": "clasp deploy --deploymentId $DEPLOYMENT_ID",
@@ -15,7 +17,9 @@
   },
   "devDependencies": {
     "@google/clasp": "^2.4.2",
-    "dotenv": "^16.0.3"
+    "@types/google-apps-script": "^2.0.7",
+    "dotenv": "^16.0.3",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=14.0.0"

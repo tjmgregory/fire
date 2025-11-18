@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2015",
+    "lib": ["ES2015"],
+    "module": "None",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "removeComments": true,
+    "rootDir": "./src/apps-script",
+    "outDir": "./build"
+  },
+  "include": [
+    "src/apps-script/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
