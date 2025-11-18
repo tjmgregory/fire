@@ -29,15 +29,15 @@ We prioritize reliable, accurate financial data over rapid feature delivery. A b
 
 ```text
          /\
-        /  \  E2E Tests (5-10%)
-       /----\  - Full workflow validation
+        /--\  E2E Tests (5%)
+       /    \  - Full workflow validation
       /      \  - User acceptance scenarios
      /--------\  Integration Tests (20-30%)
     /          \  - Apps Script + OpenAI
-   /------------\  - Sheet read/write
-  /--------------\  - Multi-component flows
- /----------------\
-/------------------\ Unit Tests (60-70%)
+   /            \  - Sheet read/write
+  /              \  - Multi-component flows
+ /                \
+/------------------\ Unit Tests (70-80%)
  Categorization logic, normalization, validation
 ```
 
@@ -50,6 +50,7 @@ We prioritize reliable, accurate financial data over rapid feature delivery. A b
 **Purpose**: Test individual functions in isolation
 
 **Scope**:
+
 - Transaction normalization logic
 - Date parsing and formatting
 - Currency handling
@@ -58,25 +59,17 @@ We prioritize reliable, accurate financial data over rapid feature delivery. A b
 - Error handling functions
 
 **Tools**:
+
 - Google Apps Script testing framework (future)
 - Manual test cases (current)
 - Assertion-based validation
-
-**Coverage Goal**: 70% of functions
-
-**Example Test Cases**:
-- TC-010: Normalize Monzo transaction format
-- TC-011: Normalize Revolut transaction format
-- TC-012: Handle invalid date formats
-- TC-013: Parse negative amounts (refunds)
-
----
 
 ### 2. Integration Tests
 
 **Purpose**: Test component interactions and external integrations
 
 **Scope**:
+
 - Google Sheets read/write operations
 - OpenAI API categorization requests
 - Error logging to System Logs sheet
@@ -84,118 +77,43 @@ We prioritize reliable, accurate financial data over rapid feature delivery. A b
 - Configuration loading from Script Properties
 
 **Tools**:
+
 - Apps Script debugger
 - Live API testing (OpenAI)
 - Manual validation with test spreadsheets
-
-**Coverage Goal**: All critical integration points
-
-**Example Test Cases**:
-- TC-150: Read transactions from Monzo sheet
-- TC-151: Call OpenAI API with sample transaction
-- TC-152: Write categorized transactions to output sheet
-- TC-153: Log errors to System Logs sheet
-- TC-154: Execute time-based trigger
-
----
 
 ### 3. End-to-End (E2E) Tests
 
 **Purpose**: Validate complete user workflows from start to finish
 
 **Scope**:
+
 - Import CSV → Normalize → Categorize → Output
 - Manual override workflow
 - Error recovery workflow
 - Multi-bank processing in single run
 
 **Tools**:
+
 - Test spreadsheet with known data
 - Manual execution and validation
 - Automated scripts (future)
 
-**Coverage Goal**: All primary use cases
-
-**Example Test Cases**:
-- TC-200: Complete workflow - Monzo transactions
-- TC-201: Complete workflow - Revolut transactions
-- TC-202: Complete workflow - Mixed banks
-- TC-203: Error recovery - Invalid data
-- TC-204: Manual override - Change category
-
----
-
-### 4. Acceptance Tests (UAT)
-
-**Purpose**: Validate system meets business requirements from user perspective
-
-**Scope**:
-- Real-world usage by FIRE practitioners (PS-001)
-- Actual bank exports (not sanitized test data)
-- Production-like environment
-- User satisfaction metrics
-
-**Tools**:
-- Production spreadsheet copies
-- User feedback forms
-- Usage analytics (future)
-
-**Coverage Goal**: All business requirements
-
-**Example Test Cases**:
-- UAT-001: User can set up system in <30 minutes
-- UAT-002: Categorization accuracy >95% on real data
-- UAT-003: Users understand error messages
-- UAT-004: Manual overrides work as expected
-
----
-
-### 5. Performance Tests
-
-**Purpose**: Validate system meets performance requirements
-
-**Scope**:
-- Processing time for various batch sizes
-- Apps Script execution time limits
-- OpenAI API response times
-- Sheet update performance
-
-**Tools**:
-- Apps Script Logger with timestamps
-- Performance monitoring (future)
-
-**Coverage Goal**: All performance requirements (NREQ-*)
-
-**Example Test Cases**:
-- PERF-001: Process 100 transactions in <10 seconds
-- PERF-002: Stay within 6-minute Apps Script limit
-- PERF-003: Handle 500 transactions per execution
-- PERF-004: OpenAI API response time <3 seconds per transaction
-
----
-
-### 6. Security Tests
+### 4. Security Tests
 
 **Purpose**: Validate security and privacy requirements
 
 **Scope**:
+
 - API key storage and access
 - Data privacy (no external storage)
 - Input validation
 - Error message sanitization (no secrets in logs)
 
 **Tools**:
-- Manual code review
+
+- AI code review
 - Security checklist
-- Penetration testing (manual)
-
-**Coverage Goal**: All security requirements (SREQ-*)
-
-**Example Test Cases**:
-- SEC-001: API keys not in source code
-- SEC-002: API keys not in logs
-- SEC-003: Invalid input rejected gracefully
-- SEC-004: No data sent to unauthorized external services
 
 ---
 
@@ -210,23 +128,27 @@ We prioritize reliable, accurate financial data over rapid feature delivery. A b
 ### Test Data Sets
 
 #### TD-001: Monzo Test Set
+
 - 50 transactions covering all categories
 - Includes refunds, transfers, foreign currency
 - Known correct categorizations
 - Edge cases: £0 amounts, very large amounts, special characters
 
 #### TD-002: Revolut Test Set
+
 - 50 transactions covering all categories
 - Multi-currency transactions (GBP, USD, EUR)
 - Forex transactions
 - Edge cases: Crypto purchases, stock trades
 
 #### TD-003: Yonder Test Set
+
 - 30 credit card transactions
 - Points/rewards transactions
 - Edge cases: Annual fees, cashback
 
 #### TD-004: Mixed Bank Set
+
 - 150 transactions from all banks
 - Duplicate detection scenarios
 - Same merchant across different banks
@@ -246,6 +168,7 @@ We prioritize reliable, accurate financial data over rapid feature delivery. A b
 ### Current State (Manual)
 
 All tests currently executed manually:
+
 1. Create test spreadsheet
 2. Add test data
 3. Run categorization manually
@@ -255,17 +178,20 @@ All tests currently executed manually:
 ### Future State (Automated)
 
 **Phase 1: Unit Test Automation**
+
 - Implement Apps Script test framework
 - Automate normalization tests
 - Automate validation tests
 - Run on every commit (CI)
 
 **Phase 2: Integration Test Automation**
+
 - Mock OpenAI API for predictable tests
 - Automate sheet read/write tests
 - Run nightly
 
 **Phase 3: E2E Test Automation**
+
 - Automated spreadsheet setup
 - Headless execution
 - Result validation
@@ -317,6 +243,7 @@ All tests currently executed manually:
 ### Regression Test Suite
 
 Maintain a suite of tests for **every bug fix**:
+
 1. Bug discovered → Create test case that reproduces bug
 2. Fix bug
 3. Verify test case now passes
@@ -324,11 +251,13 @@ Maintain a suite of tests for **every bug fix**:
 5. Run regression suite before every release
 
 **Regression Suite Test Cases**:
+
 - To be populated as bugs are discovered and fixed
 
 ### Continuous Monitoring
 
 **Production Monitoring** (future):
+
 - Error rate alerts
 - Categorization accuracy tracking
 - Processing time monitoring
@@ -421,6 +350,7 @@ Examples:
 ### Test Case Format
 
 Each test case documented with:
+
 - **ID**: Unique identifier
 - **Title**: Clear description
 - **Requirements**: Links to FREQ/NREQ/etc.
@@ -447,11 +377,13 @@ Each test case documented with:
 
 1. **Discovery**: Bug found during testing
 2. **Documentation**: Create beads issue
+
    ```bash
    bd create "Bug: Incorrect category for refunds" \
      -t bug -p 1 \
      --description "Test case TC-060 fails. Refunds categorized as purchases."
    ```
+
 3. **Test Case Creation**: Create regression test
 4. **Fix**: Implement fix, link to beads issue
 5. **Verification**: Run regression test
