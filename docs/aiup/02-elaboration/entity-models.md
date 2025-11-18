@@ -237,11 +237,14 @@ Standard Field → Source Column Name
 
 ```mermaid
 erDiagram
+    %% Direct FK relationships (solid lines)
     BankSource ||--o{ Transaction : "bankSourceId"
     Category ||--o{ Transaction : "categoryAiValue / categoryManualValue"
-    ProcessingRun ||--o{ Transaction : "processes"
     ProcessingRun ||--o{ ExchangeRateSnapshot : "processingRunId"
-    Transaction }o--o| ExchangeRateSnapshot : "uses rate"
+
+    %% Indirect relationships (dotted lines)
+    ProcessingRun ||..o{ Transaction : "audits via timestamps"
+    Transaction }o..o| ExchangeRateSnapshot : "uses rate (no FK)"
 
     BankSource {
         String id PK
