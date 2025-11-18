@@ -1,0 +1,321 @@
+# Entity Models
+
+This document defines the core domain entities for the FIRE transaction categorization system. These entities represent the fundamental business concepts that persist throughout the system lifecycle.
+
+## Overview
+
+The FIRE system manages financial transactions from multiple bank sources, normalizes them, and applies AI-driven categorization. The entity model reflects this multi-phase processing architecture.
+
+## Core Entities
+
+### 1. Transaction
+
+**Description**: Represents a single financial transaction from a bank source through its entire lifecycle (normalization and categorization).
+
+**Identity**: Unique transaction identifier (UUID)
+
+**Attributes**:
+- `id` (UUID) - Unique identifier for the transaction
+- `sourceSheetId` (String) - Identifier of the source sheet (Monzo, Revolut, or Yonder)
+- `originalTransactionId` (String) - Original transaction ID from the bank (may be auto-generated for banks without native IDs)
+- `transactionDate` (DateTime) - Date and time of the transaction (ISO 8601 UTC format)
+- `description` (String) - Transaction description/merchant name
+- `originalAmount` (Decimal) - Original transaction amount
+- `originalCurrency` (CurrencyCode) - Original currency (ISO 4217)
+- `gbpAmount` (Decimal) - Amount converted to GBP
+- `exchangeRate` (Decimal, nullable) - Exchange rate used for conversion (null if originally in GBP)
+- `transactionType` (TransactionType) - Debit or Credit
+- `status` (ProcessingStatus) - Current processing state
+- `aiCategory` (String, nullable) - AI-generated category
+- `manualCategory` (String, nullable) - User-provided manual override category
+- `confidenceScore` (Decimal, nullable) - AI categorization confidence (0-100%)
+- `notes` (String, nullable) - Additional notes or tags from source
+- `country` (String, nullable) - Transaction country (if available)
+- `createdAt` (DateTime) - System creation timestamp
+- `normalizedAt` (DateTime, nullable) - Normalization completion timestamp
+- `categorizedAt` (DateTime, nullable) - Categorization completion timestamp
+- `lastModifiedAt` (DateTime) - Last modification timestamp
+- `errorMessage` (String, nullable) - Error details if processing failed
+
+**Enumerations**:
+- `ProcessingStatus`: UNPROCESSED, NORMALIZED, CATEGORIZED, ERROR
+- `TransactionType`: DEBIT, CREDIT
+- `CurrencyCode`: GBP, USD, EUR, CAD, AUD, JPY, MAD, THB, SGD, HKD, ZAR, NOK, CNY, SEK
+
+**Lifecycle States**:
+```
+UNPROCESSED → NORMALIZED → CATEGORIZED
+            ↓
+          ERROR (can occur at any stage)
+```
+
+**Business Rules**:
+- Each transaction must have a unique ID
+- Transactions cannot be deleted, only marked as ERROR
+- Once categorized, transactions can be re-categorized but previous categorization is not retained
+- Manual category overrides always take precedence over AI categories
+- GBP amount is required; original amount and currency must be preserved
+- Exchange rate is required for non-GBP transactions
+
+**Relationships**:
+- Belongs to one `BankSource`
+- May reference one `Category` (via AI or manual assignment)
+- May have multiple similar transactions for historical learning (implicit relationship)
+
+---
+
+### 2. BankSource
+
+**Description**: Represents a source bank/financial institution with its specific schema configuration.
+
+**Identity**: Unique source identifier (String)
+
+**Attributes**:
+- `id` (String) - Unique identifier (e.g., "monzo", "revolut", "yonder")
+- `displayName` (String) - Human-readable name
+- `sheetId` (String) - Google Sheets ID for this source
+- `hasNativeTransactionId` (Boolean) - Whether bank provides native transaction IDs
+- `isActive` (Boolean) - Whether this source is currently being processed
+- `columnMappings` (Map<String, String>) - Maps standard fields to source-specific column names
+- `createdAt` (DateTime) - When source was configured
+- `lastProcessedAt` (DateTime, nullable) - Last successful processing timestamp
+
+**Column Mapping Schema**:
+```
+Standard Field → Source Column Name
+- date → "Date" | "Date/Time of transaction" | "Started Date"
+- description → "Description" | "Name"
+- amount → "Amount" | "Amount (GBP)"
+- currency → "Currency"
+- transactionId → "Transaction ID" | "ID"
+- type → "Type" | "Debit or Credit"
+- category → "Category" (source-provided, not used for AI categorization)
+- notes → "Notes and #tags" (optional)
+- country → "Country" (optional)
+```
+
+**Business Rules**:
+- Each source must have a unique identifier
+- Column mappings must include all required fields: date, description, amount, currency
+- Sources without native transaction IDs require ID backfilling
+- Column mappings are immutable once transactions are processed
+
+**Relationships**:
+- Has many `Transaction` entities
+- Configuration relates to specific Google Sheets
+
+**Supported Sources**:
+1. **Monzo**: Native transaction IDs, comprehensive metadata
+2. **Revolut**: No native IDs (requires backfilling), separate started/completed dates
+3. **Yonder**: No native IDs (requires backfilling), GBP-only transactions
+
+---
+
+### 3. Category
+
+**Description**: Represents a transaction category used for classification.
+
+**Identity**: Unique category name (String)
+
+**Attributes**:
+- `name` (String) - Unique category identifier (e.g., "Groceries", "Transport", "Entertainment")
+- `displayName` (String) - Human-readable category name
+- `description` (String) - Detailed description of what transactions belong in this category
+- `examples` (Array<String>) - Example merchants/descriptions for this category
+- `isActive` (Boolean) - Whether category is currently available for assignment
+- `createdAt` (DateTime) - When category was defined
+- `modifiedAt` (DateTime) - Last modification timestamp
+- `usageCount` (Integer) - Number of transactions assigned to this category (denormalized for performance)
+
+**Business Rules**:
+- Category names must be unique
+- Categories cannot be deleted if transactions reference them (soft delete via isActive)
+- AI can only assign categories from the active category list
+- Manual overrides can use any string value but should use predefined categories
+
+**Relationships**:
+- Referenced by many `Transaction` entities (via aiCategory or manualCategory)
+
+**Example Categories**:
+- Groceries
+- Transport
+- Entertainment
+- Bills & Utilities
+- Dining Out
+- Shopping
+- Healthcare
+- Travel
+- Income
+- Transfers
+- Savings
+
+---
+
+### 4. ExchangeRateSnapshot
+
+**Description**: Represents a snapshot of exchange rates fetched during a processing run.
+
+**Identity**: Composite key (baseCurrency, targetCurrency, fetchedAt)
+
+**Attributes**:
+- `baseCurrency` (CurrencyCode) - Base currency (always GBP for this system)
+- `targetCurrency` (CurrencyCode) - Target currency being converted from
+- `rate` (Decimal) - Exchange rate (1 targetCurrency = rate GBP)
+- `fetchedAt` (DateTime) - When this rate was fetched
+- `provider` (String) - Exchange rate provider name
+- `processingRunId` (String) - Identifier for the processing run that fetched this rate
+
+**Business Rules**:
+- Rates are fetched once per processing run for all required currencies
+- Rates are immutable once fetched
+- Multiple transactions in the same run use the same rate snapshot
+- Historical rates are preserved for audit trail
+
+**Relationships**:
+- Used by many `Transaction` entities for conversion
+- Associated with a specific processing run
+
+---
+
+### 5. ProcessingRun
+
+**Description**: Represents a single execution of the normalization or categorization process.
+
+**Identity**: Unique run identifier (UUID)
+
+**Attributes**:
+- `id` (UUID) - Unique run identifier
+- `runType` (RunType) - NORMALIZATION or CATEGORIZATION
+- `startedAt` (DateTime) - When processing started
+- `completedAt` (DateTime, nullable) - When processing completed
+- `status` (RunStatus) - Current run status
+- `transactionsProcessed` (Integer) - Number of transactions processed
+- `transactionsSucceeded` (Integer) - Number successfully processed
+- `transactionsFailed` (Integer) - Number that failed
+- `errorLog` (Array<String>) - Collection of error messages
+- `exchangeRateSnapshot` (Array<ExchangeRateSnapshot>) - Rates used in this run (normalization only)
+
+**Enumerations**:
+- `RunType`: NORMALIZATION, CATEGORIZATION
+- `RunStatus`: IN_PROGRESS, COMPLETED, FAILED, PARTIAL_SUCCESS
+
+**Business Rules**:
+- Each run must complete before the next run of the same type
+- Failed runs should be logged for developer review
+- Partial success is acceptable (some transactions fail, others succeed)
+- Exchange rates are only fetched during normalization runs
+
+**Relationships**:
+- Processes many `Transaction` entities
+- May create multiple `ExchangeRateSnapshot` entities
+
+---
+
+## Entity Relationships Diagram
+
+```
+┌─────────────┐         ┌─────────────────┐         ┌──────────────┐
+│ BankSource  │         │   Transaction   │         │   Category   │
+│─────────────│◄────────│─────────────────│────────►│──────────────│
+│ id          │  1    * │ id              │ *    0..1│ name         │
+│ displayName │         │ sourceSheetId   │         │ displayName  │
+│ sheetId     │         │ transactionDate │         │ description  │
+│ ...         │         │ originalAmount  │         │ examples     │
+└─────────────┘         │ gbpAmount       │         └──────────────┘
+                        │ status          │
+                        │ aiCategory      │
+                        │ manualCategory  │
+                        │ ...             │
+                        └────────┬────────┘
+                                 │ *
+                                 │
+                                 │ 0..1
+                        ┌────────▼────────┐
+                        │ ExchangeRate    │
+                        │   Snapshot      │
+                        │─────────────────│
+                        │ baseCurrency    │
+                        │ targetCurrency  │
+                        │ rate            │
+                        │ fetchedAt       │
+                        └────────┬────────┘
+                                 │ *
+                                 │
+                                 │ 1
+                        ┌────────▼────────┐
+                        │ ProcessingRun   │
+                        │─────────────────│
+                        │ id              │
+                        │ runType         │
+                        │ status          │
+                        │ startedAt       │
+                        └─────────────────┘
+```
+
+## Key Design Decisions
+
+### 1. Single Transaction Entity
+Rather than separate entities for source and normalized transactions, we use a single `Transaction` entity that evolves through its lifecycle. This simplifies deduplication and provides a clear audit trail.
+
+### 2. Status-Based Processing
+The `ProcessingStatus` enum enables the two-phase architecture (NFR-006), allowing normalization and categorization to run independently.
+
+### 3. Dual Category Storage
+Storing both `aiCategory` and `manualCategory` separately (rather than overwriting) maintains auditability and allows for historical learning (FR-014).
+
+### 4. Exchange Rate Snapshots
+Rather than storing a single "current" exchange rate, we snapshot rates per processing run. This provides:
+- Audit trail for conversions
+- Consistency within a processing batch
+- Historical rate tracking
+
+### 5. Immutable Transaction IDs
+Once assigned, transaction IDs never change. This is critical for:
+- Deduplication (FR-010)
+- Concurrent processing (FR-002)
+- Cross-system referential integrity
+
+## Implementation Notes
+
+### Google Sheets Mapping
+Each entity corresponds to specific columns in Google Sheets:
+
+**Transaction → Result Sheet Columns**:
+- Row number → Implicit surrogate key
+- Columns → Direct mapping to attributes
+- Formula columns → `Category` (calculated as `=IF(ManualOverride<>"", ManualOverride, AICategory)`)
+
+**BankSource → Configuration**:
+- Stored in Google Apps Script properties
+- Not persisted as rows in sheets
+
+**Category → Configuration Sheet or Script Properties**:
+- Option 1: Separate "Categories" sheet
+- Option 2: Stored in script properties as JSON
+
+**ExchangeRateSnapshot → Audit Log Sheet (optional)**:
+- Could be logged to separate sheet for audit purposes
+- Or stored only in memory during processing run
+
+### Persistence Strategy
+- **Primary Storage**: Google Sheets (rows = transactions)
+- **Configuration**: Script Properties (sources, categories, mappings)
+- **Audit Logs**: Execution logs + optional audit sheet
+- **State Management**: Status column in result sheet
+
+## Related Requirements
+
+This entity model directly supports the following requirements:
+
+- **FR-001**: Transaction entity supports normalization
+- **FR-002**: Unique IDs enable concurrent handling
+- **FR-003/004**: Currency attributes support conversion
+- **FR-005**: Status and category attributes support async categorization
+- **FR-006**: BankSource entity encapsulates schema support
+- **FR-007**: ExchangeRateSnapshot handles API integration
+- **FR-010**: Transaction ID enables deduplication
+- **FR-012**: Transaction ID backfilling
+- **FR-013**: Dual category storage for manual overrides
+- **FR-014**: Transaction relationships support historical learning
+- **FR-015**: Category entity manages definitions
+- **NFR-006**: ProcessingStatus supports two-phase architecture
