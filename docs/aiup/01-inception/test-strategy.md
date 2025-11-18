@@ -1,6 +1,6 @@
 # Test Strategy
 
-**Document Version**: 1.0
+**Document Version**: 1.1
 **Last Updated**: 2025-11-18
 **Phase**: Inception
 **Traceability**: References [VISION.md](../VISION.md)
@@ -19,9 +19,34 @@ This document defines the overall testing strategy for the FIRE project, includi
 - **Regression prevention is paramount**
 - **Tests serve as living documentation**
 
+### Test Behaviors, Not Implementation (Ian Cooper's TDD Philosophy)
+
+**Key Principles:**
+
+1. **Trigger for tests**: Write a test when adding a new *behavior*, not when creating a new method/class
+2. **Test the public API**: Test module behaviors through stable interfaces, not internal implementation
+3. **Test independence**: Tests must run in complete isolation from each other—no shared state or data
+4. **Refactoring must be safe**: If tests break during refactoring (behavior unchanged), tests are too coupled to implementation
+5. **Red-Green-Refactor**: Design emerges during refactor phase, not during green phase
+6. **Avoid excessive mocking**: Only mock external dependencies (APIs, databases), never internal classes
+
+**What This Means for FIRE:**
+
+- Test "categorize transactions" behavior, not individual helper functions
+- Each test generates its own data via builders/fakers
+- Tests must be runnable independently in any order
+- Implementation changes (e.g., refactoring normalization logic) shouldn't break tests
+
 ### Quality Over Speed
 
 We prioritize reliable, accurate financial data over rapid feature delivery. A bug in categorization could affect user's financial decisions for months before discovery.
+
+### Testing Philosophy References
+
+This philosophy draws heavily from:
+
+- Ian Cooper's ["TDD, Where Did It All Go Wrong"](https://www.youtube.com/watch?v=EZ05e7EMOLM) (NDC 2013)
+- Kent Beck's *Test Driven Development: By Example* (2002)
 
 ---
 
@@ -47,40 +72,54 @@ We prioritize reliable, accurate financial data over rapid feature delivery. A b
 
 ### 1. Unit Tests
 
-**Purpose**: Test individual functions in isolation
+**Purpose**: Test module behaviors through their public APIs
 
-**Scope**:
+**Scope** (organized by behavior, not implementation):
 
-- Transaction normalization logic
-- Date parsing and formatting
-- Currency handling
-- Category mapping
-- Data validation
-- Error handling functions
+- **Transaction Import Behavior**: Given raw bank CSV → When imported → Then normalized to standard format
+- **Categorization Behavior**: Given normalized transaction → When categorized → Then assigned correct category
+- **Override Behavior**: Given manual category override → When applied → Then persists and never auto-categorizes again
+- **Duplicate Detection Behavior**: Given identical transactions → When processed → Then marked as duplicates
+- **Error Handling Behavior**: Given invalid input → When processed → Then logs error and continues
+
+**What NOT to Test**:
+
+- Internal helper functions (unless they represent a distinct behavior)
+- Private methods or implementation details
+- Getters/setters without logic
+- Individual steps within a behavior (test the whole behavior)
 
 **Tools**:
 
 - Google Apps Script testing framework (future)
 - Manual test cases (current)
 - Assertion-based validation
+- Transaction builders for test data generation
 
 ### 2. Integration Tests
 
-**Purpose**: Test component interactions and external integrations
+**Purpose**: Test interactions with external dependencies (ports & adapters boundaries)
 
 **Scope**:
 
-- Google Sheets read/write operations
-- OpenAI API categorization requests
-- Error logging to System Logs sheet
-- Trigger execution
-- Configuration loading from Script Properties
+- **Sheets Integration**: Read/write to Google Sheets (real sheets in test environment)
+- **OpenAI Integration**: API categorization requests (mocked for deterministic tests)
+- **Error Logging**: System Logs sheet integration (real sheets)
+- **Configuration**: Script Properties loading (real properties)
+- **Trigger Execution**: Scheduled and manual triggers (real Apps Script environment)
+
+**Mocking Strategy**:
+
+- **Mock external APIs** (OpenAI): Expensive, slow, non-deterministic responses
+- **Use real Google Sheets**: Fast enough, deterministic, part of our platform
+- **Never mock internal classes**: Tests should exercise real categorization logic
 
 **Tools**:
 
 - Apps Script debugger
-- Live API testing (OpenAI)
-- Manual validation with test spreadsheets
+- OpenAI API mock/stub
+- Test spreadsheet (generated per test or per suite)
+- Manual validation
 
 ### 3. End-to-End (E2E) Tests
 
@@ -119,63 +158,119 @@ We prioritize reliable, accurate financial data over rapid feature delivery. A b
 
 ## Test Data Strategy
 
-### Test Data Types
+### Principle: Complete Test Independence
 
-1. **Synthetic Data**: Hand-crafted test cases for edge cases
-2. **Anonymized Real Data**: Actual bank exports with PII removed
-3. **Production Clones**: Copies of real user data for debugging
+**All automated tests MUST generate their own data.** Shared test datasets create painful coupling between tests—when one test needs to change the dataset, other tests break. This violates the principle that tests must run independently.
 
-### Test Data Sets
+### Test Data Approaches by Test Type
 
-#### TD-001: Monzo Test Set
+#### Unit & Integration Tests: Generated Data (Builders/Fakers)
 
-- 50 transactions covering all categories
-- Includes refunds, transfers, foreign currency
-- Known correct categorizations
-- Edge cases: £0 amounts, very large amounts, special characters
+**Approach**: Each test generates exactly the data it needs using builder patterns or faker libraries.
 
-#### TD-002: Revolut Test Set
+**Benefits**:
 
-- 50 transactions covering all categories
-- Multi-currency transactions (GBP, USD, EUR)
-- Forex transactions
-- Edge cases: Crypto purchases, stock trades
+- Tests can run in any order
+- Tests can run in parallel
+- No risk of one test polluting another's data
+- Test intent is clear (data setup shows what matters)
+- Refactoring tests is safe and easy
 
-#### TD-003: Yonder Test Set
+**Implementation**:
 
-- 30 credit card transactions
-- Points/rewards transactions
-- Edge cases: Annual fees, cashback
+```javascript
+// Example: Transaction builder pattern
+class TransactionBuilder {
+  withMerchant(name) { ... }
+  withAmount(amount) { ... }
+  withDate(date) { ... }
+  withCategory(category) { ... }
+  build() { ... }
+}
 
-#### TD-004: Mixed Bank Set
+// In test:
+test("categorizes grocery purchases correctly", () => {
+  const transaction = new TransactionBuilder()
+    .withMerchant("Tesco")
+    .withAmount(-45.67)
+    .build();
 
-- 150 transactions from all banks
-- Duplicate detection scenarios
-- Same merchant across different banks
-- Concurrent processing scenarios
+  const result = categorize(transaction);
+  expect(result.category).toBe("Groceries");
+});
+```
+
+**Data Generators Needed**:
+
+- Transaction builder (per bank format: Monzo, Revolut, Yonder)
+- Random but realistic merchant names
+- Random but valid amounts, dates, currencies
+- Edge case generators (zero amounts, very large amounts, etc.)
+
+#### E2E Tests: Static Reference Dataset
+
+**Approach**: A single, stable, version-controlled dataset used only for end-to-end workflow validation.
+
+**Why static data works here**:
+
+- E2E tests validate complete user journeys, not individual behaviors
+- Humans need to inspect results manually (for now)
+- Having consistent data makes visual validation easier
+- These tests don't run frequently (pre-release only)
+- Few E2E tests exist (5% of test suite)
+
+**E2E Reference Dataset** (`test-data/e2e-reference-set.csv`):
+
+- 50 transactions covering all banks (Monzo, Revolut, Yonder)
+- All categories represented
+- Known edge cases: refunds, transfers, foreign currency, £0 amounts
+- **Immutable**: Only updated when bank formats change or new features added
+- Documented expected outputs for each transaction
+
+#### Manual Testing & Debugging: Anonymized Production Data
+
+**Use Case**: Investigating production bugs or validating fixes.
+
+**Approach**:
+
+- Keep anonymized copies of real user data that triggered bugs
+- Store in `test-data/debugging/` (git-ignored, not committed)
+- Used for one-off manual testing only
+- Never used in automated tests
+
+### Test Data Anti-Patterns to Avoid
+
+❌ **Shared mutable dataset**: Multiple tests reading/writing same data
+❌ **Tests that depend on previous test state**: Test B assumes Test A ran first
+❌ **Golden master files shared across tests**: Changes break multiple tests
+❌ **Database seeding shared by test suite**: Tests interfere with each other
+❌ **Hard-coded production-like data in tests**: Obscures test intent
 
 ### Test Data Management
 
-- Test data stored in `test-data/` directory (future)
-- Version controlled alongside code
-- Anonymized before commit
-- Updated when bank formats change
+**Generated Data**:
+
+- Builders/fakers live in `test/builders/` directory
+- Version controlled with tests
+- Documented with examples
+- Reusable across test suite
+
+**E2E Reference Dataset**:
+
+- Stored in `test-data/e2e-reference-set.csv`
+- Version controlled
+- Change requires documentation of why
+- Expected outputs documented in `test-data/e2e-expected-results.md`
+
+**Debugging Data**:
+
+- Stored in `test-data/debugging/` (git-ignored)
+- Never committed to version control
+- Anonymized before saving locally
 
 ---
 
 ## Test Automation Strategy
-
-### Current State (Manual)
-
-All tests currently executed manually:
-
-1. Create test spreadsheet
-2. Add test data
-3. Run categorization manually
-4. Validate output visually
-5. Document results in test log
-
-### Future State (Automated)
 
 **Phase 1: Unit Test Automation**
 
@@ -196,19 +291,6 @@ All tests currently executed manually:
 - Headless execution
 - Result validation
 - Run on release candidates
-
----
-
-## Test Coverage Goals
-
-| Test Type | Current Coverage | Target Coverage | Timeline |
-|-----------|-----------------|-----------------|----------|
-| Unit Tests | ~20% (manual) | 70% (automated) | Phase 1 |
-| Integration Tests | ~40% (manual) | 90% (automated) | Phase 2 |
-| E2E Tests | ~60% (manual) | 100% (automated) | Phase 3 |
-| UAT | Not started | 100% (manual) | Transition |
-| Performance | ~30% (manual) | 100% (automated) | Phase 2 |
-| Security | ~70% (manual) | 100% (manual) | Phase 1 |
 
 ---
 
@@ -451,24 +533,67 @@ Each test case documented with:
 
 | Date | Version | Change | Reason |
 |------|---------|--------|--------|
+| 2025-11-18 | 1.1 | Major revision: Ian Cooper TDD philosophy integrated | Align with behavior-driven testing, eliminate shared datasets |
 | 2025-11-18 | 1.0 | Initial test strategy created | AIUP migration |
+
+---
+
+## Key Principles Summary
+
+### The Golden Rules
+
+1. **Test behaviors, not implementations** - Write tests when adding behaviors, not methods
+2. **Test independence is sacred** - Every test generates its own data and runs in isolation
+3. **Refactoring must be safe** - If refactoring breaks tests, tests are wrong (too coupled)
+4. **Mock only external dependencies** - Never mock internal classes or domain logic
+5. **Given-When-Then** - Structure all tests clearly: setup → action → assertion
+
+### What This Means in Practice
+
+**DO**:
+
+- ✅ Generate test data with builders/fakers (except E2E)
+- ✅ Test through public module APIs
+- ✅ Mock OpenAI API for deterministic tests
+- ✅ Run tests in any order, in parallel
+- ✅ Test complete behaviors (import → normalize → categorize)
+- ✅ Create regression tests for every bug
+
+**DON'T**:
+
+- ❌ Share test datasets between tests
+- ❌ Test private helper functions directly
+- ❌ Mock internal categorization logic
+- ❌ Write tests that depend on other tests running first
+- ❌ Break tests when refactoring (behavior unchanged)
+- ❌ Test implementation details like data structure choices
 
 ---
 
 ## Next Steps
 
 1. ✅ Create test-strategy.md (this document)
-2. ⏳ Create detailed test cases in `elaboration/test-cases.md`
-3. ⏳ Implement first automated unit tests (Phase 1)
-4. ⏳ Set up CI/CD pipeline for automated testing
-5. ⏳ Establish test metrics dashboard
+2. ⏳ Create transaction builder pattern for test data generation
+3. ⏳ Create detailed test cases in `elaboration/test-cases.md`
+4. ⏳ Implement first behavior-focused unit tests (Phase 1)
+5. ⏳ Set up CI/CD pipeline for automated testing
+6. ⏳ Establish test metrics dashboard
 
 ---
 
 ## References
+
+### Project Documentation
 
 - [VISION.md](../VISION.md)
 - [Business Requirements](business-requirements.md)
 - [Test Cases](../elaboration/test-cases.md) *(to be created)*
 - [Coding Standards](../../coding-standards/)
 - [ADR-002: Transaction Categorization Strategy](../../adr/002-transaction-categorization-strategy.md)
+
+### External References
+
+- Ian Cooper, ["TDD, Where Did It All Go Wrong"](https://www.youtube.com/watch?v=EZ05e7EMOLM) (NDC 2013)
+  - [Herberto Graca's Distillation](https://herbertograca.com/2018/08/27/distillation-of-tdd-where-did-it-all-go-wrong/)
+  - [Robert Moore's Review](http://robdmoore.id.au/blog/2015/01/26/review-of-ian-cooper-tdd-where-did-it-all-go-wrong)
+- Kent Beck, *Test Driven Development: By Example* (2002)
