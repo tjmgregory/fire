@@ -2,7 +2,65 @@
 
 ## Project Overview
 
-This is the FIRE (Financial Independence, Retire Early) project - a Google Apps Script-based system for automated transaction categorization across multiple bank accounts. The system is "entirely vibecoded" with a focus on practical financial automation.
+This is the FIRE (Financial Independence, Retire Early) project - a Google Apps Script-based system for automated transaction categorization across multiple bank accounts. The project follows the **AI Unified Process (AIUP)** methodology - an agile, iterative, requirements- and spec-driven development approach powered by AI.
+
+## Development Methodology: AI Unified Process (AIUP)
+
+**CRITICAL**: This project uses the AI Unified Process. See [docs/ai-unified-process.svg](docs/ai-unified-process.svg) for the complete workflow diagram.
+
+### AIUP Core Philosophy
+
+- **Specifications drive code**, not the other way around
+- **Iterative improvement** - specs, code, and tests evolve together
+- **AI-assisted development** - AI handles tedious tasks; humans focus on logic
+- **Test-protected** - comprehensive tests ensure consistent behavior
+- **Requirements traceability** - from business needs to implementation
+
+### AIUP Four Phases
+
+1. **Inception** (`docs/aiup/inception/`)
+   - Business Requirements Catalog
+   - Stakeholder alignment
+   - Test strategy planning
+   - Quick iterations for feedback
+
+2. **Elaboration** (`docs/aiup/elaboration/`)
+   - Business Use Case Diagrams
+   - Entity Models
+   - System Use Case Diagrams
+   - Test cases
+
+3. **Construction** (`docs/aiup/construction/`)
+   - System Use Case Specifications
+   - AI-generated code from specs
+   - Unit and integration testing
+   - Developer review
+
+4. **Transition** (`docs/aiup/transition/`)
+   - User acceptance testing
+   - Continuous delivery
+   - Production optimization
+   - Continuous improvement
+
+### Working with AIUP as an AI Agent
+
+**BEFORE writing code:**
+1. Check `docs/aiup/` for existing specifications
+2. Verify requirements are documented
+3. Ensure test cases exist or create them
+4. Review relevant use case diagrams
+
+**WHEN implementing:**
+1. Follow specifications in `docs/aiup/construction/`
+2. Update specs if you discover gaps
+3. Write tests BEFORE implementation when possible
+4. Link code commits to requirements using beads
+
+**AFTER implementation:**
+1. Update specifications to match reality
+2. Document any deviations from original spec
+3. Ensure all tests pass
+4. Update use case diagrams if behavior changed
 
 ## Core Principles
 
@@ -105,7 +163,59 @@ For Google Apps Script development:
 
 ## Issue Tracking with bd (beads)
 
-**IMPORTANT**: This project uses **bd (beads)** for ALL issue tracking. Do NOT use markdown TODOs, task lists, or other tracking methods.
+**🚨 CRITICAL - READ THIS FIRST 🚨**
+
+This project uses **bd (beads)** for **ALL** work tracking. This is **NON-NEGOTIABLE**.
+
+### What This Means for AI Agents
+
+**✅ ALWAYS DO:**
+- Track ALL work items in beads (bugs, features, tasks, epics, chores)
+- Check `bd ready` before starting new work
+- Update issue status as you work (`in_progress`, `completed`)
+- Link discovered work with `discovered-from` dependencies
+- Commit `.beads/issues.jsonl` with code changes
+- Use beads MCP tools (`mcp__beads__*`) when available
+
+**❌ NEVER DO:**
+- Create markdown TODO lists
+- Use GitHub Issues, Linear, Jira, or any other tracker
+- Track work in comments, documentation, or commit messages
+- Create planning documents without linking to beads issues
+- Skip updating beads when discovering new work
+
+### Why Beads is Mandatory
+
+Beads provides:
+- **Dependency tracking**: See what blocks what
+- **Git integration**: Auto-syncs to `.beads/issues.jsonl`
+- **AI-optimized**: JSON output, ready work detection
+- **Traceability**: Links requirements → specs → code → tests
+- **Single source of truth**: No duplicate tracking systems
+
+### AIUP + Beads Integration
+
+Beads issues should reference AIUP artifacts:
+
+```bash
+# Link to requirements
+bd create "Implement transaction categorization" \
+  -t feature -p 1 \
+  --description "See docs/aiup/inception/business-requirements.md #REQ-001"
+
+# Link discovered work during construction
+bd create "Add validation for negative amounts" \
+  -t task -p 2 \
+  --deps discovered-from:bd-123 \
+  --description "Found during implementation of use case UC-005"
+
+# Link to test cases
+bd create "Fix failing categorization test" \
+  -t bug -p 0 \
+  --description "Test case TC-012 in docs/aiup/elaboration/test-cases.md"
+```
+
+This creates full traceability: `Business Requirement → Use Case → Beads Issue → Code → Test`
 
 ### Why bd?
 
