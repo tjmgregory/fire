@@ -67,6 +67,147 @@
 **Priority**: Must Have
 **Risk**: Medium (AI model accuracy and reliability)
 
+### FR-006: Source Sheet Schema Support
+
+**Description**: The system must support transactions from three specific bank sources (Monzo, Revolut, Yonder), each with their own column schemas.
+
+**Acceptance Criteria**:
+
+- Support Monzo schema: Date, Time, Name, Description, Amount, Currency, Category, Type, Transaction ID, Notes and #tags
+- Support Revolut schema: Started Date/Completed Date, Description, Amount, Currency, Type, ID, Product
+- Support Yonder schema: Date/Time of transaction, Description, Amount (GBP), Currency, Category, Debit or Credit, Country
+- Column mapping is configurable per source sheet
+- System validates required columns exist before processing
+
+**Priority**: Must Have
+**Risk**: Low (well-defined schemas)
+
+### FR-007: Exchange Rate API Integration
+
+**Description**: The system must use a reliable exchange rate provider for currency conversion, and optimize API usage by fetching rates only once per system run for all new non-GBP transactions.
+
+**Acceptance Criteria**:
+
+- Exchange rates are fetched from a reliable external provider only once per processing run, and only if there are transactions in non-GBP currencies that have not previously been converted in this run
+- System handles common currencies (USD, EUR, CAD, AUD, JPY, MAD, THB, SGD, HKD, ZAR, NOK, CNY, SEK) using ISO 4217 codes.
+- Conversion rates are applied consistently and efficiently across all relevant transactions within a single run
+
+**Priority**: Must Have  
+**Risk**: Medium (external API dependency, risk of stale rates if run duration is long)
+
+### FR-008: Error Handling and Logging
+
+**Description**: When any failure occurs that prevents a result row from completing, the system must log the error and expect the developer to review the logs.
+
+**Acceptance Criteria**:
+
+- All processing errors are logged with sufficient detail for debugging
+- Incomplete transactions are marked with error status
+- Error logs include transaction reference, timestamp, and error message
+- Developers can review logs to identify and resolve issues
+
+**Priority**: Must Have
+**Risk**: Low
+
+### FR-009: Network Retry Mechanism
+
+**Description**: The system must implement a basic backoff strategy for network calls with a maximum of 5 retry attempts.
+
+**Acceptance Criteria**:
+
+- Failed network calls are retried up to 5 times
+- Exponential backoff is used between retry attempts
+- After 5 failed attempts, error is logged and processing continues
+- Retry logic applies to exchange rate API and any other network operations
+
+**Priority**: Must Have
+**Risk**: Low
+
+### FR-010: Transaction Deduplication
+
+**Description**: The system must detect and prevent duplicate transactions from being added to the result sheet.
+
+**Acceptance Criteria**:
+
+- Each transaction has a unique identifier (original reference)
+- System checks for existing transactions before adding new ones
+- Duplicate transactions are skipped with appropriate logging
+- Deduplication works across concurrent writes
+
+**Priority**: Must Have
+**Risk**: Medium (related to FR-002 concurrent handling)
+
+### FR-011: Data Validation
+
+**Description**: The system must validate transaction data before normalization and reject invalid entries.
+
+**Acceptance Criteria**:
+
+- Date formats are validated and standardized to UTC ISO format
+- Amount values are numeric and non-null
+- Required fields (date, amount, description) are present
+- Invalid transactions are logged with clear error messages
+
+**Priority**: Must Have
+**Risk**: Low
+
+### FR-012: Source Sheet ID Backfilling
+
+**Description**: The system must automatically populate missing transaction IDs on source sheets that don't provide native identifiers, eliminating the need for manual UUID entry.
+
+**Acceptance Criteria**:
+
+- When processing transactions, detect rows in source sheets without an ID
+- Generate and write back unique identifiers to the source sheet ID column
+- Ensure generated IDs are persistent and consistent across multiple runs
+- Support backfilling for Revolut and Yonder sheets (which lack native IDs)
+- Preserve existing IDs on sheets that already have them (e.g., Monzo)
+- ID generation happens before or during normalization to ensure traceability
+
+**Priority**: Must Have
+**Risk**: Medium (write-back to source sheets, potential for concurrent write conflicts)
+
+**Note**: This requirement works in conjunction with FR-002 (Concurrent Transaction Handling) and FR-010 (Transaction Deduplication) to ensure stable, unique identifiers across the system.
+
+### FR-013: Manual Category Override
+
+**Description**: Users must be able to manually override AI-generated transaction categories, and these manual overrides must take precedence over AI categorizations.
+
+**Acceptance Criteria**:
+
+- Result sheet includes three category-related columns:
+  - "AI Category" - populated by the AI categorization process
+  - "Manual Override" - for user input (empty by default)
+  - "Category" - a calculated column using a Google Sheets formula
+- The "Category" column uses a formula: `=IF(ManualOverride<>"", ManualOverride, AICategory)`
+- Formula is set by the script when creating new rows, but calculated by Google Sheets (not by script)
+- Manual overrides are preserved across system runs
+- AI categorization only writes to "AI Category" column, never "Manual Override" or "Category"
+- Manual overrides are tracked for auditability
+
+**Priority**: Must Have
+**Risk**: Low
+
+**Note**: Google Sheets formulas are fully supported and this approach ensures the Category column updates instantly when users enter manual overrides, without requiring a script re-run.
+
+### FR-014: Historical Transaction Learning
+
+**Description**: The AI categorization system must leverage historical transaction data and manual overrides to improve categorization accuracy for similar transactions.
+
+**Acceptance Criteria**:
+
+- Before categorizing a new transaction, search for similar historical transactions
+- Similarity matching considers description, amount range, and merchant patterns
+- Manual overrides from historical transactions are prioritized over AI suggestions
+- If a similar transaction with manual override exists, suggest that category
+- System provides context to AI about historical categorization patterns
+- Similarity search is efficient and doesn't significantly slow down processing
+
+**Priority**: Should Have
+**Risk**: Medium (similarity matching complexity, potential performance impact)
+
+**Note**: This requirement enhances FR-005 (Asynchronous AI Categorization) by providing context from FR-013 (Manual Category Override) to improve accuracy over time.
+
 ---
 
 ## Non-Functional Requirements
@@ -77,11 +218,66 @@
 
 **Priority**: Must Have
 
+### NFR-002: Performance
+
+**Description**: The system must handle the expected transaction volume efficiently without degradation.
+
+**Acceptance Criteria**:
+
+- Process up to 100 transactions per day
+- Normalization completes within reasonable time for user workflow
+- Categorization batch processing completes within scheduled window
+
+**Priority**: Must Have
+**Risk**: Low (volume is manageable)
+
+### NFR-003: Reliability
+
+**Description**: The system must operate reliably within the Google Sheets environment despite platform limitations.
+
+**Acceptance Criteria**:
+
+- Handle Google Sheets API rate limits gracefully
+- Recover from transient failures automatically (via retry mechanism)
+- Log all errors for developer review
+- Maintain data consistency even when partial failures occur
+
+**Priority**: Must Have
+**Risk**: Medium (Google Sheets concurrency and API limitations)
+
+### NFR-004: Auditability
+
+**Description**: The system must maintain sufficient audit trail for transaction processing and categorization.
+
+**Acceptance Criteria**:
+
+- Track processing timestamps for each transaction
+- Log all categorization decisions with confidence scores
+- Maintain original transaction data alongside normalized data
+- Enable manual override tracking for user corrections
+
+**Priority**: Should Have
+**Risk**: Low
+
+### NFR-005: Maintainability
+
+**Description**: The system must be maintainable and extensible for adding new bank sources.
+
+**Acceptance Criteria**:
+
+- Bank-specific schema mappings are clearly defined and isolated
+- Adding a new bank source requires minimal code changes
+- Configuration is separate from logic
+- Code follows consistent patterns across all bank integrations
+
+**Priority**: Should Have
+**Risk**: Low
+
 ---
 
-## Open Questions
+## Resolved Questions
 
-- What is the expected transaction volume (per day/month)?
-- What are the specific source sheet schemas we need to support?
-- How should the system handle exchange rate API failures?
-- What retry/error recovery mechanisms are needed?
+- **Transaction volume**: 100 transactions per day maximum
+- **Source sheet schemas**: Monzo, Revolut, and Yonder (defined in FR-006)
+- **Exchange rate API failures**: Log errors and mark transactions as incomplete for developer review (FR-008)
+- **Retry mechanisms**: Basic exponential backoff with maximum 5 retry attempts (FR-009)
