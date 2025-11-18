@@ -179,20 +179,22 @@
 
 **Acceptance Criteria**:
 
-- Result sheet includes three category-related columns:
-  - "AI Category" - populated by the AI categorization process
-  - "Manual Override" - for user input (empty by default)
-  - "Category" - a calculated column using a Google Sheets formula
-- The "Category" column uses a formula: `=IF(ManualOverride<>"", ManualOverride, AICategory)`
-- Formula is set by the script when creating new rows, but calculated by Google Sheets (not by script)
+- Result sheet includes category-related columns:
+  - "AI Category ID" - category ID assigned by AI
+  - "AI Category" - cached category name from AI (for display)
+  - "Manual Category ID" - category ID from user override (populated by onEdit trigger)
+  - "Manual Category" - user-editable category name
+  - "Category" - calculated column using formula: `=IF(ManualCategory<>"", ManualCategory, AICategory)`
+- Users type category names directly in "Manual Category" column
+- onEdit trigger automatically resolves category name to ID and updates "Manual Category ID"
 - Manual overrides are preserved across system runs
-- AI categorization only writes to "AI Category" column, never "Manual Override" or "Category"
-- Manual overrides are tracked for auditability
+- AI categorization only writes to "AI Category ID" and "AI Category" columns
+- Manual overrides are tracked for auditability via dual ID/name storage
 
 **Priority**: Must Have
 **Risk**: Low
 
-**Note**: Google Sheets formulas are fully supported and this approach ensures the Category column updates instantly when users enter manual overrides, without requiring a script re-run.
+**Note**: The onEdit trigger provides seamless user experience - users type category names naturally, and the system handles ID resolution automatically.
 
 ### FR-014: Historical Transaction Learning
 
@@ -219,14 +221,35 @@
 **Acceptance Criteria**:
 
 - Categories are stored in a dedicated "Categories" configuration sheet
-- Each category row includes name, description, examples, and isActive flag
+- Each category row includes id (row number), name, description, examples, and isActive flag
+- Row number serves as stable category ID for foreign key references
 - Category list includes descriptions and examples for each category
 - AI categorization only assigns categories from the active category list
 - Categories can be updated by users directly in the Categories sheet
 - Category changes take effect on next processing run
+- Categories cannot be deleted (breaks references); must use soft delete via isActive=FALSE
 
 **Priority**: Must Have
 **Risk**: Low
+
+### FR-016: Category Name Resolution via onEdit Trigger
+
+**Description**: When users manually edit transaction category names in the result sheet, the system must automatically resolve the category name to its corresponding category ID.
+
+**Acceptance Criteria**:
+
+- onEdit trigger monitors the "Manual Category" column for user edits
+- When user types a category name, trigger searches Categories sheet for matching active category
+- If exact match found, trigger writes category ID to "Manual Category ID" column
+- Trigger only responds to human edits, not script-generated updates (to avoid infinite loops)
+- If category name not found, trigger leaves "Manual Category ID" empty and logs warning
+- Partial name matching or autocomplete suggestions are optional (nice-to-have)
+- Trigger performance must not degrade user experience (executes quickly)
+
+**Priority**: Must Have
+**Risk**: Medium (trigger complexity, potential for infinite loops if not properly guarded)
+
+**Note**: This requirement enables the seamless user experience described in FR-013, where users can type category names naturally without manually looking up IDs.
 
 ---
 

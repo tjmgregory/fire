@@ -219,29 +219,41 @@ This document defines the user-facing use cases for the FIRE transaction categor
 1. User opens result sheet in Google Sheets
 2. User identifies transaction with incorrect AI category
    - Example: AI categorized "Tesco" as "Shopping" but user wants "Groceries"
-3. User clicks on "Manual Override" column cell for that transaction
+3. User clicks on "Manual Category" column cell for that transaction
 4. User types desired category name (e.g., "Groceries")
 5. User presses Enter to confirm
-6. Google Sheets formula automatically updates "Category" column to show manual override
-7. User sees immediate change reflected in all views and analyses
-8. Future similar transactions benefit from this correction (historical learning)
+6. onEdit trigger automatically resolves "Groceries" to category ID and updates "Manual Category ID"
+7. Google Sheets formula automatically updates "Category" column to show "Groceries"
+8. User sees immediate change reflected in all views and analyses
+9. Future similar transactions benefit from this correction (historical learning)
 
 **Alternative Flows**:
 
-**4a. User wants to use custom category**:
+**4a. User types category name not in Categories sheet**:
 
 - 4a1. User types category not in predefined list (e.g., "Weekend Treats")
-- 4a2. System accepts custom category (no validation)
-- 4a3. Category appears in "Category" column
-- 4a4. Future AI runs may learn from this custom category
-- 4a5. Resume at step 6
+- 4a2. onEdit trigger searches Categories sheet but finds no match
+- 4a3. Trigger logs warning but allows custom category name
+- 4a4. "Manual Category ID" remains empty (no foreign key reference)
+- 4a5. Category name appears in "Category" column
+- 4a6. Future AI runs may learn from this custom category
+- 4a7. Resume at step 8
 
 **4b. User wants to clear previous manual override**:
 
-- 4b1. User selects "Manual Override" cell
+- 4b1. User selects "Manual Category" cell
 - 4b2. User deletes content (makes cell empty)
-- 4b3. "Category" column reverts to showing AI category
-- 4b4. Resume at step 7
+- 4b3. onEdit trigger clears "Manual Category ID" as well
+- 4b4. "Category" column reverts to showing AI category
+- 4b5. Resume at step 8
+
+**6a. onEdit trigger fails to execute**:
+
+- 6a1. Trigger error occurs (permissions, script disabled, etc.)
+- 6a2. User sees category name but ID is not populated
+- 6a3. Category still appears in "Category" column (name-based)
+- 6a4. User can continue working; ID resolution can happen later
+- 6a5. Resume at step 8
 
 **3a. Transaction not yet categorized by AI**:
 
@@ -252,14 +264,16 @@ This document defines the user-facing use cases for the FIRE transaction categor
 
 **Postconditions**:
 
-- "Manual Override" column contains user's correction
+- "Manual Category" column contains user's typed category name
+- "Manual Category ID" contains resolved category ID (if match found)
 - "Category" column displays user's chosen category (via formula)
 - Original AI category remains preserved for audit
 - Manual override persists across all system runs
+- Category ID enables referential integrity and category renaming
 - System learns from override for future similar transactions (FR-014)
 - User's financial analysis reflects corrected category
 
-**Requirements Satisfied**: FR-013, FR-014, NFR-004
+**Requirements Satisfied**: FR-013, FR-014, FR-016, NFR-004
 
 **Related Use Cases**: UC-002 (discovering need to override)
 
@@ -560,7 +574,7 @@ User sees results: [UC-002: Review Categories]
 |----------|------------------------|-----------------|
 | UC-001 | FR-001, FR-002, FR-003, FR-004, FR-006, FR-007, FR-010, FR-011, FR-012, NFR-001, NFR-006 | Multi-bank transaction consolidation |
 | UC-002 | FR-005, FR-014, NFR-004 | Automated spending analysis |
-| UC-003 | FR-013, FR-014, NFR-004 | User control and accuracy |
+| UC-003 | FR-013, FR-014, FR-016, NFR-004 | User control and accuracy |
 | UC-004 | FR-008, NFR-003, NFR-004 | System transparency |
 | UC-005 | FR-001, FR-002, FR-003, FR-004, FR-006, FR-007, FR-009, FR-010, FR-011, FR-012, NFR-001, NFR-002, NFR-003, NFR-006 | Automation reliability |
 | UC-006 | FR-005, FR-009, FR-014, FR-015, NFR-002, NFR-004, NFR-006 | AI categorization automation |

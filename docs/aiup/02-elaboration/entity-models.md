@@ -16,9 +16,11 @@ The FIRE system manages financial transactions from multiple bank sources, norma
 
 **Attributes** (alphabetically ordered, related fields grouped):
 
-- `categoryAiValue` (String, nullable) - AI-generated category
+- `categoryAiId` (Integer, nullable) - Reference to Category entity (AI-assigned)
+- `categoryAiName` (String, nullable) - Cached category name from AI (denormalized for performance)
 - `categoryConfidenceScore` (Decimal, nullable) - AI categorisation confidence (0-100%)
-- `categoryManualValue` (String, nullable) - User-provided manual override category
+- `categoryManualId` (Integer, nullable) - Reference to Category entity (user override)
+- `categoryManualName` (String, nullable) - Cached category name from user (denormalized for performance)
 - `country` (String, nullable) - Transaction country (if available)
 - `description` (String) - Transaction description/merchant name
 - `errorMessage` (String, nullable) - Error details if processing failed
@@ -59,13 +61,16 @@ UNPROCESSED → NORMALISED → CATEGORISED
 - Transactions cannot be deleted, only marked as ERROR
 - Once categorised, transactions can be re-categorised but previous categorisation is not retained
 - Manual category overrides always take precedence over AI categories
+- Category IDs reference the Categories sheet; cached names are denormalized for performance
+- When user edits categoryManualName, system resolves name to categoryManualId via onEdit trigger
 - GBP amount is required; original amount and currency must be preserved
 - Exchange rate is required for non-GBP transactions
 
 **Relationships**:
 
 - Belongs to one `BankSource`
-- May reference one `Category` (via AI or manual assignment)
+- May reference one `Category` via `categoryAiId` (AI assignment)
+- May reference one `Category` via `categoryManualId` (manual override)
 - May have multiple similar transactions for historical learning (implicit relationship)
 
 ---
@@ -126,29 +131,30 @@ Standard Field → Source Column Name
 
 **Description**: Represents a transaction category used for classification.
 
-**Identity**: Unique category name (String)
+**Identity**: Unique category ID (Integer - Google Sheets row number)
 
 **Attributes**:
 
-- `name` (String) - Unique category identifier (e.g., "Groceries", "Transport", "Entertainment")
-- `displayName` (String) - Human-readable category name
+- `id` (Integer) - Unique identifier (row number in Categories sheet)
+- `name` (String) - Unique category name (e.g., "Groceries", "Transport", "Entertainment")
 - `description` (String) - Detailed description of what transactions belong in this category
-- `examples` (Array<String>) - Example merchants/descriptions for this category
+- `examples` (String) - Example merchants/descriptions for this category
 - `isActive` (Boolean) - Whether category is currently available for assignment
 - `createdAt` (DateTime) - When category was defined
 - `modifiedAt` (DateTime) - Last modification timestamp
-- `usageCount` (Integer) - Number of transactions assigned to this category (denormalised for performance)
 
 **Business Rules**:
 
-- Category names must be unique
+- Category IDs are stable (row numbers in Categories sheet)
+- Category names must be unique among active categories
 - Categories cannot be deleted if transactions reference them (soft delete via isActive)
 - AI can only assign categories from the active category list
-- Manual overrides can use any string value but should use predefined categories
+- When user types category name, system resolves to category ID via onEdit trigger
+- Inactive categories remain in sheet for historical reference but cannot be assigned to new transactions
 
 **Relationships**:
 
-- Referenced by many `Transaction` entities (via aiCategory or manualCategory)
+- Referenced by many `Transaction` entities (via categoryAiId or categoryManualId)
 
 **Example Categories**:
 
@@ -239,7 +245,8 @@ Standard Field → Source Column Name
 erDiagram
     %% Direct FK relationships (solid lines)
     BankSource ||--o{ Transaction : "bankSourceId"
-    Category ||--o{ Transaction : "categoryAiValue / categoryManualValue"
+    Category ||--o{ Transaction : "categoryAiId"
+    Category ||--o{ Transaction : "categoryManualId"
     ProcessingRun ||--o{ ExchangeRateSnapshot : "processingRunId"
 
     %% Indirect relationships (dotted lines)
@@ -255,8 +262,10 @@ erDiagram
     Transaction {
         UUID id PK
         BankSourceId bankSourceId FK
-        String categoryAiValue FK
-        String categoryManualValue FK
+        Integer categoryAiId FK
+        String categoryAiName
+        Integer categoryManualId FK
+        String categoryManualName
         Decimal originalAmountValue
         CurrencyCode originalAmountCurrency
         Decimal gbpAmountValue
@@ -264,9 +273,11 @@ erDiagram
     }
 
     Category {
-        String name PK
-        String displayName
+        Integer id PK
+        String name
         String description
+        String examples
+        Boolean isActive
     }
 
     ExchangeRateSnapshot {
@@ -294,9 +305,20 @@ Rather than separate entities for source and normalised transactions, we use a s
 
 The `ProcessingStatus` enum enables the two-phase architecture (NFR-006), allowing normalisation and categorisation to run independently.
 
-### 3. Dual Category Storage
+### 3. Category References with Denormalized Names
 
-Storing both `categoryAiValue` and `categoryManualValue` separately (rather than overwriting) maintains auditability and allows for historical learning (FR-014).
+Categories use a hybrid approach with both IDs and cached names:
+
+- **Category IDs** (`categoryAiId`, `categoryManualId`) provide referential integrity and enable category renaming
+- **Cached names** (`categoryAiName`, `categoryManualName`) provide performance and human readability
+- **Dual storage** (AI vs Manual) maintains auditability and allows for historical learning (FR-014)
+- **onEdit trigger** resolves user-typed category names to IDs automatically
+
+This design allows:
+- Users to type category names naturally in Google Sheets
+- Categories to be renamed without breaking historical data
+- Fast sheet performance (no VLOOKUP formulas needed)
+- Category names to be reused over time (via soft delete/recreate)
 
 ### 4. Exchange Rate Snapshots
 
@@ -324,7 +346,12 @@ Each entity corresponds to specific columns in Google Sheets:
 
 - Row number → Implicit surrogate key
 - Columns → Direct mapping to attributes
-- Formula columns → `Category` (calculated as `=IF(ManualOverride<>"", ManualOverride, AICategory)`)
+- Category columns:
+  - `categoryAiId` - Integer reference to Categories sheet row
+  - `categoryAiName` - Cached AI category name (written by script)
+  - `categoryManualId` - Integer reference to Categories sheet row
+  - `categoryManualName` - User-editable category name (resolved to ID by onEdit trigger)
+  - `category` - Formula: `=IF(categoryManualName<>"", categoryManualName, categoryAiName)`
 
 **BankSource → Configuration**:
 
@@ -333,9 +360,11 @@ Each entity corresponds to specific columns in Google Sheets:
 
 **Category → Categories Configuration Sheet**:
 
-- Dedicated "Categories" sheet with columns for name, description, examples, isActive
-- Each row represents one category
+- Dedicated "Categories" sheet with columns: id (row number), name, description, examples, isActive
+- Each row represents one category with stable ID (row number)
+- Row number serves as category ID for foreign key references
 - Easy for users to view and modify without touching code
+- Users should not delete rows (breaks references); use isActive=FALSE instead
 
 **ExchangeRateSnapshot → Audit Log Sheet (optional)**:
 
