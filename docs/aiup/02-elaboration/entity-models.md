@@ -1,63 +1,68 @@
 # Entity Models
 
-This document defines the core domain entities for the FIRE transaction categorization system. These entities represent the fundamental business concepts that persist throughout the system lifecycle.
+This document defines the core domain entities for the FIRE transaction categorisation system. These entities represent the fundamental business concepts that persist throughout the system lifecycle.
 
 ## Overview
 
-The FIRE system manages financial transactions from multiple bank sources, normalizes them, and applies AI-driven categorization. The entity model reflects this multi-phase processing architecture.
+The FIRE system manages financial transactions from multiple bank sources, normalises them, and applies AI-driven categorisation. The entity model reflects this multi-phase processing architecture.
 
 ## Core Entities
 
 ### 1. Transaction
 
-**Description**: Represents a single financial transaction from a bank source through its entire lifecycle (normalization and categorization).
+**Description**: Represents a single financial transaction from a bank source through its entire lifecycle (normalisation and categorisation).
 
 **Identity**: Unique transaction identifier (UUID)
 
-**Attributes**:
-- `id` (UUID) - Unique identifier for the transaction
-- `sourceSheetId` (String) - Identifier of the source sheet (Monzo, Revolut, or Yonder)
-- `originalTransactionId` (String) - Original transaction ID from the bank (may be auto-generated for banks without native IDs)
-- `transactionDate` (DateTime) - Date and time of the transaction (ISO 8601 UTC format)
-- `description` (String) - Transaction description/merchant name
-- `originalAmount` (Decimal) - Original transaction amount
-- `originalCurrency` (CurrencyCode) - Original currency (ISO 4217)
-- `gbpAmount` (Decimal) - Amount converted to GBP
-- `exchangeRate` (Decimal, nullable) - Exchange rate used for conversion (null if originally in GBP)
-- `transactionType` (TransactionType) - Debit or Credit
-- `status` (ProcessingStatus) - Current processing state
-- `aiCategory` (String, nullable) - AI-generated category
-- `manualCategory` (String, nullable) - User-provided manual override category
-- `confidenceScore` (Decimal, nullable) - AI categorization confidence (0-100%)
-- `notes` (String, nullable) - Additional notes or tags from source
+**Attributes** (alphabetically ordered, related fields grouped):
+- `categoryAiValue` (String, nullable) - AI-generated category
+- `categoryConfidenceScore` (Decimal, nullable) - AI categorisation confidence (0-100%)
+- `categoryManualValue` (String, nullable) - User-provided manual override category
 - `country` (String, nullable) - Transaction country (if available)
-- `createdAt` (DateTime) - System creation timestamp
-- `normalizedAt` (DateTime, nullable) - Normalization completion timestamp
-- `categorizedAt` (DateTime, nullable) - Categorization completion timestamp
-- `lastModifiedAt` (DateTime) - Last modification timestamp
+- `description` (String) - Transaction description/merchant name
 - `errorMessage` (String, nullable) - Error details if processing failed
+- `exchangeRateValue` (Decimal, nullable) - Exchange rate used for conversion (null if originally in GBP)
+- `gbpAmountValue` (Decimal) - Amount converted to GBP
+- `id` (UUID) - Unique identifier for the transaction
+- `notes` (String, nullable) - Additional notes or tags from source
+- `originalAmountCurrency` (CurrencyCode) - Original currency (ISO 4217)
+- `originalAmountValue` (Decimal) - Original transaction amount
+- `originalTransactionId` (String) - Original transaction ID from the bank (may be auto-generated for banks without native IDs)
+- `processingStatus` (ProcessingStatus) - Current processing state
+- `sourceBankId` (BankSourceId) - Identifier of the source bank (Monzo, Revolut, or Yonder)
+- `timestampCategorised` (DateTime, nullable) - Categorisation completion timestamp
+- `timestampCreated` (DateTime) - System creation timestamp
+- `timestampLastModified` (DateTime) - Last modification timestamp
+- `timestampNormalised` (DateTime, nullable) - Normalisation completion timestamp
+- `transactionDate` (DateTime) - Date and time of the transaction (ISO 8601 UTC format)
+- `transactionType` (TransactionType) - Debit or Credit
 
 **Enumerations**:
-- `ProcessingStatus`: UNPROCESSED, NORMALIZED, CATEGORIZED, ERROR
-- `TransactionType`: DEBIT, CREDIT
+
+- `BankSourceId`: MONZO, REVOLUT, YONDER
 - `CurrencyCode`: GBP, USD, EUR, CAD, AUD, JPY, MAD, THB, SGD, HKD, ZAR, NOK, CNY, SEK
+- `ProcessingStatus`: UNPROCESSED, NORMALISED, CATEGORISED, ERROR
+- `TransactionType`: DEBIT, CREDIT
 
 **Lifecycle States**:
+
 ```
-UNPROCESSED → NORMALIZED → CATEGORIZED
+UNPROCESSED → NORMALISED → CATEGORISED
             ↓
           ERROR (can occur at any stage)
 ```
 
 **Business Rules**:
+
 - Each transaction must have a unique ID
 - Transactions cannot be deleted, only marked as ERROR
-- Once categorized, transactions can be re-categorized but previous categorization is not retained
+- Once categorised, transactions can be re-categorised but previous categorisation is not retained
 - Manual category overrides always take precedence over AI categories
 - GBP amount is required; original amount and currency must be preserved
 - Exchange rate is required for non-GBP transactions
 
 **Relationships**:
+
 - Belongs to one `BankSource`
 - May reference one `Category` (via AI or manual assignment)
 - May have multiple similar transactions for historical learning (implicit relationship)
@@ -89,7 +94,7 @@ Standard Field → Source Column Name
 - currency → "Currency"
 - transactionId → "Transaction ID" | "ID"
 - type → "Type" | "Debit or Credit"
-- category → "Category" (source-provided, not used for AI categorization)
+- category → "Category" (source-provided, not used for AI categorisation)
 - notes → "Notes and #tags" (optional)
 - country → "Country" (optional)
 ```
@@ -125,7 +130,7 @@ Standard Field → Source Column Name
 - `isActive` (Boolean) - Whether category is currently available for assignment
 - `createdAt` (DateTime) - When category was defined
 - `modifiedAt` (DateTime) - Last modification timestamp
-- `usageCount` (Integer) - Number of transactions assigned to this category (denormalized for performance)
+- `usageCount` (Integer) - Number of transactions assigned to this category (denormalised for performance)
 
 **Business Rules**:
 - Category names must be unique
@@ -179,13 +184,13 @@ Standard Field → Source Column Name
 
 ### 5. ProcessingRun
 
-**Description**: Represents a single execution of the normalization or categorization process.
+**Description**: Represents a single execution of the normalization or categorisation process.
 
 **Identity**: Unique run identifier (UUID)
 
 **Attributes**:
 - `id` (UUID) - Unique run identifier
-- `runType` (RunType) - NORMALIZATION or CATEGORIZATION
+- `runType` (RunType) - NORMALISATION or CATEGORISATION
 - `startedAt` (DateTime) - When processing started
 - `completedAt` (DateTime, nullable) - When processing completed
 - `status` (RunStatus) - Current run status
@@ -193,11 +198,12 @@ Standard Field → Source Column Name
 - `transactionsSucceeded` (Integer) - Number successfully processed
 - `transactionsFailed` (Integer) - Number that failed
 - `errorLog` (Array<String>) - Collection of error messages
-- `exchangeRateSnapshot` (Array<ExchangeRateSnapshot>) - Rates used in this run (normalization only)
+- `exchangeRateSnapshot` (Array<ExchangeRateSnapshot>) - Rates used in this run (normalisation only)
 
 **Enumerations**:
-- `RunType`: NORMALIZATION, CATEGORIZATION
+
 - `RunStatus`: IN_PROGRESS, COMPLETED, FAILED, PARTIAL_SUCCESS
+- `RunType`: NORMALISATION, CATEGORISATION
 
 **Business Rules**:
 - Each run must complete before the next run of the same type
@@ -214,19 +220,20 @@ Standard Field → Source Column Name
 ## Entity Relationships Diagram
 
 ```
-┌─────────────┐         ┌─────────────────┐         ┌──────────────┐
-│ BankSource  │         │   Transaction   │         │   Category   │
-│─────────────│◄────────│─────────────────│────────►│──────────────│
-│ id          │  1    * │ id              │ *    0..1│ name         │
-│ displayName │         │ sourceSheetId   │         │ displayName  │
-│ sheetId     │         │ transactionDate │         │ description  │
-│ ...         │         │ originalAmount  │         │ examples     │
-└─────────────┘         │ gbpAmount       │         └──────────────┘
-                        │ status          │
-                        │ aiCategory      │
-                        │ manualCategory  │
-                        │ ...             │
-                        └────────┬────────┘
+┌─────────────┐         ┌──────────────────────────┐         ┌──────────────┐
+│ BankSource  │         │      Transaction         │         │   Category   │
+│─────────────│◄────────│──────────────────────────│────────►│──────────────│
+│ id          │  1    * │ id                       │ *    0..1│ name         │
+│ displayName │         │ sourceBankId             │         │ displayName  │
+│ sheetId     │         │ transactionDate          │         │ description  │
+│ ...         │         │ originalAmountValue      │         │ examples     │
+└─────────────┘         │ originalAmountCurrency   │         └──────────────┘
+                        │ gbpAmountValue           │
+                        │ processingStatus         │
+                        │ categoryAiValue          │
+                        │ categoryManualValue      │
+                        │ ...                      │
+                        └────────┬─────────────────┘
                                  │ *
                                  │
                                  │ 0..1
@@ -255,13 +262,13 @@ Standard Field → Source Column Name
 ## Key Design Decisions
 
 ### 1. Single Transaction Entity
-Rather than separate entities for source and normalized transactions, we use a single `Transaction` entity that evolves through its lifecycle. This simplifies deduplication and provides a clear audit trail.
+Rather than separate entities for source and normalised transactions, we use a single `Transaction` entity that evolves through its lifecycle. This simplifies deduplication and provides a clear audit trail.
 
 ### 2. Status-Based Processing
-The `ProcessingStatus` enum enables the two-phase architecture (NFR-006), allowing normalization and categorization to run independently.
+The `ProcessingStatus` enum enables the two-phase architecture (NFR-006), allowing normalisation and categorisation to run independently.
 
 ### 3. Dual Category Storage
-Storing both `aiCategory` and `manualCategory` separately (rather than overwriting) maintains auditability and allows for historical learning (FR-014).
+Storing both `categoryAiValue` and `categoryManualValue` separately (rather than overwriting) maintains auditability and allows for historical learning (FR-014).
 
 ### 4. Exchange Rate Snapshots
 Rather than storing a single "current" exchange rate, we snapshot rates per processing run. This provides:
@@ -307,10 +314,10 @@ Each entity corresponds to specific columns in Google Sheets:
 
 This entity model directly supports the following requirements:
 
-- **FR-001**: Transaction entity supports normalization
+- **FR-001**: Transaction entity supports normalisation
 - **FR-002**: Unique IDs enable concurrent handling
 - **FR-003/004**: Currency attributes support conversion
-- **FR-005**: Status and category attributes support async categorization
+- **FR-005**: Status and category attributes support async categorisation
 - **FR-006**: BankSource entity encapsulates schema support
 - **FR-007**: ExchangeRateSnapshot handles API integration
 - **FR-010**: Transaction ID enables deduplication
