@@ -16,10 +16,10 @@ The FIRE system manages financial transactions from multiple bank sources, norma
 
 **Attributes** (alphabetically ordered, related fields grouped):
 
-- `categoryAiId` (Integer, nullable) - Reference to Category entity (AI-assigned)
+- `categoryAiId` (UUID, nullable) - Reference to Category entity (AI-assigned)
 - `categoryAiName` (String, nullable) - Cached category name from AI (denormalized for performance)
 - `categoryConfidenceScore` (Decimal, nullable) - AI categorisation confidence (0-100%)
-- `categoryManualId` (Integer, nullable) - Reference to Category entity (user override)
+- `categoryManualId` (UUID, nullable) - Reference to Category entity (user override)
 - `categoryManualName` (String, nullable) - Cached category name from user (denormalized for performance)
 - `country` (String, nullable) - Transaction country (if available)
 - `description` (String) - Transaction description/merchant name
@@ -131,11 +131,11 @@ Standard Field → Source Column Name
 
 **Description**: Represents a transaction category used for classification.
 
-**Identity**: Unique category ID (Integer - Google Sheets row number)
+**Identity**: Unique category ID (UUID)
 
 **Attributes**:
 
-- `id` (Integer) - Unique identifier (row number in Categories sheet)
+- `id` (UUID) - Unique identifier, independent of row position
 - `name` (String) - Unique category name (e.g., "Groceries", "Transport", "Entertainment")
 - `description` (String) - Detailed description of what transactions belong in this category
 - `examples` (String) - Example merchants/descriptions for this category
@@ -145,11 +145,12 @@ Standard Field → Source Column Name
 
 **Business Rules**:
 
-- Category IDs are stable (row numbers in Categories sheet)
+- Category IDs are UUIDs, stable regardless of row position
 - Category names must be unique among active categories
-- Categories cannot be deleted if transactions reference them (soft delete via isActive)
+- Categories can be reordered without breaking references
+- Categories cannot be deleted if transactions reference them (soft delete via isActive preferred)
 - AI can only assign categories from the active category list
-- When user types category name, system resolves to category ID via onEdit trigger
+- When user types category name, system resolves to category UUID via onEdit trigger
 - Inactive categories remain in sheet for historical reference but cannot be assigned to new transactions
 
 **Relationships**:
@@ -262,9 +263,9 @@ erDiagram
     Transaction {
         UUID id PK
         BankSourceId bankSourceId FK
-        Integer categoryAiId FK
+        UUID categoryAiId FK
         String categoryAiName
-        Integer categoryManualId FK
+        UUID categoryManualId FK
         String categoryManualName
         Decimal originalAmountValue
         CurrencyCode originalAmountCurrency
@@ -273,7 +274,7 @@ erDiagram
     }
 
     Category {
-        Integer id PK
+        UUID id PK
         String name
         String description
         String examples
@@ -360,11 +361,12 @@ Each entity corresponds to specific columns in Google Sheets:
 
 **Category → Categories Configuration Sheet**:
 
-- Dedicated "Categories" sheet with columns: id (row number), name, description, examples, isActive
-- Each row represents one category with stable ID (row number)
-- Row number serves as category ID for foreign key references
+- Dedicated "Categories" sheet with columns: id (UUID), name, description, examples, isActive, createdAt, modifiedAt
+- Each row represents one category with stable UUID (independent of row position)
+- UUID serves as category ID for foreign key references
 - Easy for users to view and modify without touching code
-- Users should not delete rows (breaks references); use isActive=FALSE instead
+- Users can reorder rows safely without breaking references
+- Users can delete rows, but soft delete (isActive=FALSE) is preferred for audit trail
 
 **ExchangeRateSnapshot → Audit Log Sheet (optional)**:
 

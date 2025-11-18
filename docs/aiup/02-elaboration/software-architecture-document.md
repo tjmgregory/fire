@@ -429,7 +429,7 @@ sequenceDiagram
         activate CatSheet
 
         alt Category found
-            CatSheet-->>OH: Category row number (ID)
+            CatSheet-->>OH: Category UUID (ID)
             deactivate CatSheet
             OH->>ResultSheet: Update Manual Category ID
             OH->>ResultSheet: Update Manual Category Name (normalized)
@@ -1438,10 +1438,10 @@ Each bank has its own sheet with bank-specific columns:
 | Original Currency | String | - | ISO 4217 code |
 | GBP Amount | Number | - | Converted to GBP |
 | Exchange Rate | Number | - | Conversion rate (null if GBP) |
-| AI Category ID | Integer | - | Foreign key to Categories sheet |
+| AI Category ID | UUID | - | Foreign key to Categories sheet (UUID) |
 | AI Category | String | - | Cached category name from AI |
 | Confidence Score | Number | - | 0-100% |
-| Manual Category ID | Integer | - | Foreign key to Categories sheet |
+| Manual Category ID | UUID | - | Foreign key to Categories sheet (UUID) |
 | Manual Category | String | *(user editable)* | User override |
 | **Category** | String | `=IF(M2<>"", M2, J2)` | **Effective category (formula)** |
 | Processing Status | String | - | NORMALISED / CATEGORISED / ERROR |
@@ -1465,31 +1465,35 @@ This ensures user corrections always take precedence without overwriting AI data
 
 | Column | Type | Description |
 |--------|------|-------------|
-| *(Row Number)* | Integer | **Implicit Category ID** (stable reference) |
+| ID | UUID | **Unique Category Identifier** (stable, independent of row position) |
 | Category Name | String | Unique category name (e.g., "Groceries") |
 | Description | String | What belongs in this category |
 | Examples | String | Example merchants/descriptions |
 | Is Active | Boolean | TRUE = available for assignment |
+| Created At | DateTime | When category was created |
+| Modified At | DateTime | Last modification timestamp |
 
 **Example Data**:
 
-| ID | Category Name | Description | Examples | Is Active |
-|----|---------------|-------------|----------|-----------|
-| 2 | Groceries | Food and household essentials | Tesco, Sainsbury's, Aldi | TRUE |
-| 3 | Transport | Travel and commuting | TfL, Uber, Trainline | TRUE |
-| 4 | Dining Out | Restaurants and takeaways | Nando's, Deliveroo | TRUE |
-| 5 | Bills & Utilities | Recurring bills | Electricity, Water, Internet | TRUE |
-| 6 | Entertainment | Leisure and recreation | Cinema, Spotify, Netflix | TRUE |
-| 7 | Shopping | General retail | Amazon, Clothing stores | TRUE |
-| 8 | Groceries (old) | *Deprecated* | - | FALSE |
+| ID | Category Name | Description | Examples | Is Active | Created At | Modified At |
+|----|---------------|-------------|----------|-----------|------------|-------------|
+| c7f3a8b2-4d1e-... | Groceries | Food and household essentials | Tesco, Sainsbury's, Aldi | TRUE | 2025-01-15 10:00 | 2025-01-15 10:00 |
+| a9e4c2d1-8b3f-... | Transport | Travel and commuting | TfL, Uber, Trainline | TRUE | 2025-01-15 10:05 | 2025-01-15 10:05 |
+| f2b8e9a3-6c7d-... | Dining Out | Restaurants and takeaways | Nando's, Deliveroo | TRUE | 2025-01-15 10:10 | 2025-01-15 10:10 |
+| d5a1c3e7-9f2b-... | Bills & Utilities | Recurring bills | Electricity, Water, Internet | TRUE | 2025-01-15 10:15 | 2025-01-15 10:15 |
+| e8c2d4f1-7a3b-... | Entertainment | Leisure and recreation | Cinema, Spotify, Netflix | TRUE | 2025-01-15 10:20 | 2025-01-15 10:20 |
+| b3f9e1c5-2d8a-... | Shopping | General retail | Amazon, Clothing stores | TRUE | 2025-01-15 10:25 | 2025-01-15 10:25 |
+| a1b2c3d4-e5f6-... | Groceries (old) | *Deprecated* | - | FALSE | 2025-01-10 08:00 | 2025-01-15 10:00 |
 
 **Business Rules**:
 
-- Row number serves as stable category ID (foreign key)
+- UUID serves as stable category ID (foreign key), independent of row position
 - Category names must be unique among active categories
 - Inactive categories preserved for historical reference (soft delete)
 - Users can edit directly; changes take effect on next processing run
-- Deleting rows breaks references (use `Is Active = FALSE` instead)
+- **Users can safely reorder rows** without breaking references (IDs are position-independent)
+- Deleting rows is technically safe but soft delete (Is Active = FALSE) is preferred for audit trail
+- New categories automatically get UUID assigned by system on creation
 
 ### 6.3 Data Integrity Constraints
 
@@ -2002,7 +2006,7 @@ Use Google Sheets as the primary database, with:
 - Rows represent entity instances
 - Columns represent attributes
 - Sheet names represent tables (entities)
-- Row numbers serve as surrogate keys where appropriate (Categories)
+- UUIDs serve as primary keys for entities requiring referential integrity
 
 **Consequences**:
 
@@ -2040,8 +2044,8 @@ Use Google Sheets as the primary database, with:
 **Decision**:
 Store both category ID (foreign key) and cached category name for both AI and manual categories:
 
-- `categoryAiId` (Integer FK) + `categoryAiName` (String)
-- `categoryManualId` (Integer FK) + `categoryManualName` (String)
+- `categoryAiId` (UUID FK) + `categoryAiName` (String)
+- `categoryManualId` (UUID FK) + `categoryManualName` (String)
 
 **Consequences**:
 
@@ -2121,7 +2125,7 @@ Use Google Apps Script `onEdit` trigger to:
 
 1. Detect user edits in "Manual Category" column
 2. Search Categories sheet for matching category name
-3. Automatically populate "Manual Category ID" with row number
+3. Automatically populate "Manual Category ID" with category UUID
 
 **Consequences**:
 
@@ -2214,6 +2218,71 @@ Implement exponential backoff retry for all external API calls:
 - Exponential backoff sufficient for expected failure rates
 
 **Requirements Satisfied**: FR-009, NFR-003 (reliability)
+
+---
+
+#### ADR-008: UUID-based Category IDs
+
+**Status**: Accepted
+
+**Context**:
+
+- Need stable category identifiers that survive row reordering
+- Users may want to reorganize categories for better UX
+- Export/import scenarios require portable identifiers
+- Row numbers are fragile and break foreign key references when rows are reordered
+
+**Problem with Row Number IDs (Alternative Considered)**:
+
+```text
+If we used row numbers as IDs:
+
+Categories Sheet (Before reorder):
+Row 2: Groceries (ID=2)
+Row 3: Transport (ID=3)
+
+Transaction references: categoryAiId = 2 (Groceries)
+
+User reorders rows alphabetically:
+Row 2: Transport (was row 3)
+Row 3: Groceries (was row 2)
+
+Result: categoryAiId = 2 now points to Transport ❌ BROKEN!
+```
+
+**Decision**:
+Use UUIDs for category identifiers:
+
+- Categories sheet has explicit `ID` column (UUID, e.g., `c7f3a8b2-4d1e-...`)
+- `categoryAiId` and `categoryManualId` store UUIDs
+- Row position becomes display order only (not identity)
+- Categories auto-generate UUID on creation via `Utilities.getUuid()`
+
+**Schema**:
+
+Categories Sheet:
+- ID (UUID) - Unique identifier
+- Category Name (String)
+- Description (String)
+- Examples (String)
+- Is Active (Boolean)
+- Created At (DateTime)
+- Modified At (DateTime)
+
+Transactions Sheet:
+- categoryAiId (UUID FK)
+- categoryManualId (UUID FK)
+
+**Consequences**:
+
+- ✅ **Safe reordering** - users can reorganize categories without breaking references
+- ✅ **Safe insertion** - add categories anywhere, not just at end
+- ✅ **Safe deletion** - hard deletes won't corrupt IDs (though soft delete still preferred)
+- ✅ **Export/import** - UUIDs are portable across spreadsheets
+- ✅ **Multi-sheet scenarios** - future-proof if categories split across sheets
+- ❌ **Less human-readable** - UUIDs are opaque (mitigated by cached category names in denormalized fields)
+
+**Requirements Satisfied**: FR-015 (category management), NFR-004 (data integrity)
 
 ---
 
