@@ -3,7 +3,7 @@
 **Document Version**: 1.0
 **Last Updated**: 2025-11-18
 **Phase**: Inception
-**Traceability**: References [VISION.md](../VISION.md), [business-requirements.md](business-requirements.md)
+**Traceability**: References [VISION.md](../VISION.md)
 
 ## Document Purpose
 
@@ -27,7 +27,7 @@ We prioritize reliable, accurate financial data over rapid feature delivery. A b
 
 ## Test Pyramid Strategy
 
-```
+```text
          /\
         /  \  E2E Tests (5-10%)
        /----\  - Full workflow validation
