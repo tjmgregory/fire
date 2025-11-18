@@ -3,7 +3,21 @@
     "allow": [
       "SlashCommand(/beads:*)",
       "Bash(npx markdownlint:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(bd quickstart:*)",
+      "Bash(bd list:*)",
+      "Bash(bd ready:*)",
+      "Bash(bd create:*)",
+      "Bash(bd dep add:*)",
+      "Bash(bd epic add:*)",
+      "Bash(for issue in fire-1ic fire-bz8 fire-des fire-9sy fire-5tt fire-uh2 fire-sc3 fire-rvd)",
+      "Bash(do bd dep add $issue fire-d64 --type parent-child)",
+      "Bash(done)",
+      "Bash(for issue in fire-sl4 fire-wbd fire-e0c fire-0pp fire-0uw fire-adm)",
+      "Bash(do bd dep add $issue fire-9lh --type parent-child)",
+      "Bash(for issue in fire-2rl fire-ebp fire-cbw fire-wy4 fire-7nr)",
+      "Bash(do bd dep add $issue fire-8to --type parent-child)",
+      "Bash(bd dep tree:*)"
     ],
     "deny": [],
     "ask": []
