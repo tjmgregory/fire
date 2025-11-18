@@ -15,6 +15,7 @@ The FIRE system manages financial transactions from multiple bank sources, norma
 **Identity**: Unique transaction identifier (UUID)
 
 **Attributes** (alphabetically ordered, related fields grouped):
+
 - `categoryAiValue` (String, nullable) - AI-generated category
 - `categoryConfidenceScore` (Decimal, nullable) - AI categorisation confidence (0-100%)
 - `categoryManualValue` (String, nullable) - User-provided manual override category
@@ -29,7 +30,7 @@ The FIRE system manages financial transactions from multiple bank sources, norma
 - `originalAmountValue` (Decimal) - Original transaction amount
 - `originalTransactionId` (String) - Original transaction ID from the bank (may be auto-generated for banks without native IDs)
 - `processingStatus` (ProcessingStatus) - Current processing state
-- `sourceBankId` (BankSourceId) - Identifier of the source bank (Monzo, Revolut, or Yonder)
+- `bankSourceId` (BankSourceId) - Identifier of the source bank (Monzo, Revolut, or Yonder)
 - `timestampCategorised` (DateTime, nullable) - Categorisation completion timestamp
 - `timestampCreated` (DateTime) - System creation timestamp
 - `timestampLastModified` (DateTime) - Last modification timestamp
@@ -46,7 +47,7 @@ The FIRE system manages financial transactions from multiple bank sources, norma
 
 **Lifecycle States**:
 
-```
+```text
 UNPROCESSED → NORMALISED → CATEGORISED
             ↓
           ERROR (can occur at any stage)
@@ -76,6 +77,7 @@ UNPROCESSED → NORMALISED → CATEGORISED
 **Identity**: Unique source identifier (String)
 
 **Attributes**:
+
 - `id` (String) - Unique identifier (e.g., "monzo", "revolut", "yonder")
 - `displayName` (String) - Human-readable name
 - `sheetId` (String) - Google Sheets ID for this source
@@ -86,7 +88,8 @@ UNPROCESSED → NORMALISED → CATEGORISED
 - `lastProcessedAt` (DateTime, nullable) - Last successful processing timestamp
 
 **Column Mapping Schema**:
-```
+
+```text
 Standard Field → Source Column Name
 - date → "Date" | "Date/Time of transaction" | "Started Date"
 - description → "Description" | "Name"
@@ -100,16 +103,19 @@ Standard Field → Source Column Name
 ```
 
 **Business Rules**:
+
 - Each source must have a unique identifier
 - Column mappings must include all required fields: date, description, amount, currency
 - Sources without native transaction IDs require ID backfilling
 - Column mappings are immutable once transactions are processed
 
 **Relationships**:
+
 - Has many `Transaction` entities
 - Configuration relates to specific Google Sheets
 
 **Supported Sources**:
+
 1. **Monzo**: Native transaction IDs, comprehensive metadata
 2. **Revolut**: No native IDs (requires backfilling), separate started/completed dates
 3. **Yonder**: No native IDs (requires backfilling), GBP-only transactions
@@ -123,6 +129,7 @@ Standard Field → Source Column Name
 **Identity**: Unique category name (String)
 
 **Attributes**:
+
 - `name` (String) - Unique category identifier (e.g., "Groceries", "Transport", "Entertainment")
 - `displayName` (String) - Human-readable category name
 - `description` (String) - Detailed description of what transactions belong in this category
@@ -133,15 +140,18 @@ Standard Field → Source Column Name
 - `usageCount` (Integer) - Number of transactions assigned to this category (denormalised for performance)
 
 **Business Rules**:
+
 - Category names must be unique
 - Categories cannot be deleted if transactions reference them (soft delete via isActive)
 - AI can only assign categories from the active category list
 - Manual overrides can use any string value but should use predefined categories
 
 **Relationships**:
+
 - Referenced by many `Transaction` entities (via aiCategory or manualCategory)
 
 **Example Categories**:
+
 - Groceries
 - Transport
 - Entertainment
@@ -163,6 +173,7 @@ Standard Field → Source Column Name
 **Identity**: Composite key (baseCurrency, targetCurrency, fetchedAt)
 
 **Attributes**:
+
 - `baseCurrency` (CurrencyCode) - Base currency (always GBP for this system)
 - `targetCurrency` (CurrencyCode) - Target currency being converted from
 - `rate` (Decimal) - Exchange rate (1 targetCurrency = rate GBP)
@@ -171,12 +182,14 @@ Standard Field → Source Column Name
 - `processingRunId` (String) - Identifier for the processing run that fetched this rate
 
 **Business Rules**:
+
 - Rates are fetched once per processing run for all required currencies
 - Rates are immutable once fetched
 - Multiple transactions in the same run use the same rate snapshot
 - Historical rates are preserved for audit trail
 
 **Relationships**:
+
 - Used by many `Transaction` entities for conversion
 - Associated with a specific processing run
 
@@ -189,6 +202,7 @@ Standard Field → Source Column Name
 **Identity**: Unique run identifier (UUID)
 
 **Attributes**:
+
 - `id` (UUID) - Unique run identifier
 - `runType` (RunType) - NORMALISATION or CATEGORISATION
 - `startedAt` (DateTime) - When processing started
@@ -206,12 +220,14 @@ Standard Field → Source Column Name
 - `RunType`: NORMALISATION, CATEGORISATION
 
 **Business Rules**:
+
 - Each run must complete before the next run of the same type
 - Failed runs should be logged for developer review
 - Partial success is acceptable (some transactions fail, others succeed)
 - Exchange rates are only fetched during normalization runs
 
 **Relationships**:
+
 - Processes many `Transaction` entities
 - May create multiple `ExchangeRateSnapshot` entities
 
@@ -223,8 +239,8 @@ Standard Field → Source Column Name
 ┌─────────────┐         ┌──────────────────────────┐         ┌──────────────┐
 │ BankSource  │         │      Transaction         │         │   Category   │
 │─────────────│◄────────│──────────────────────────│────────►│──────────────│
-│ id          │  1    * │ id                       │ *    0..1│ name         │
-│ displayName │         │ sourceBankId             │         │ displayName  │
+│ id          │  1    * │ id                       │ *   0..1│ name         │
+│ displayName │         │ bankSourceId             │         │ displayName  │
 │ sheetId     │         │ transactionDate          │         │ description  │
 │ ...         │         │ originalAmountValue      │         │ examples     │
 └─────────────┘         │ originalAmountCurrency   │         └──────────────┘
@@ -262,22 +278,29 @@ Standard Field → Source Column Name
 ## Key Design Decisions
 
 ### 1. Single Transaction Entity
+
 Rather than separate entities for source and normalised transactions, we use a single `Transaction` entity that evolves through its lifecycle. This simplifies deduplication and provides a clear audit trail.
 
 ### 2. Status-Based Processing
+
 The `ProcessingStatus` enum enables the two-phase architecture (NFR-006), allowing normalisation and categorisation to run independently.
 
 ### 3. Dual Category Storage
+
 Storing both `categoryAiValue` and `categoryManualValue` separately (rather than overwriting) maintains auditability and allows for historical learning (FR-014).
 
 ### 4. Exchange Rate Snapshots
+
 Rather than storing a single "current" exchange rate, we snapshot rates per processing run. This provides:
+
 - Audit trail for conversions
 - Consistency within a processing batch
 - Historical rate tracking
 
 ### 5. Immutable Transaction IDs
+
 Once assigned, transaction IDs never change. This is critical for:
+
 - Deduplication (FR-010)
 - Concurrent processing (FR-002)
 - Cross-system referential integrity
@@ -285,26 +308,32 @@ Once assigned, transaction IDs never change. This is critical for:
 ## Implementation Notes
 
 ### Google Sheets Mapping
+
 Each entity corresponds to specific columns in Google Sheets:
 
 **Transaction → Result Sheet Columns**:
+
 - Row number → Implicit surrogate key
 - Columns → Direct mapping to attributes
 - Formula columns → `Category` (calculated as `=IF(ManualOverride<>"", ManualOverride, AICategory)`)
 
 **BankSource → Configuration**:
+
 - Stored in Google Apps Script properties
 - Not persisted as rows in sheets
 
 **Category → Configuration Sheet or Script Properties**:
+
 - Option 1: Separate "Categories" sheet
 - Option 2: Stored in script properties as JSON
 
 **ExchangeRateSnapshot → Audit Log Sheet (optional)**:
+
 - Could be logged to separate sheet for audit purposes
 - Or stored only in memory during processing run
 
 ### Persistence Strategy
+
 - **Primary Storage**: Google Sheets (rows = transactions)
 - **Configuration**: Script Properties (sources, categories, mappings)
 - **Audit Logs**: Execution logs + optional audit sheet
