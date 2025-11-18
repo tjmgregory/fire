@@ -235,44 +235,50 @@ Standard Field → Source Column Name
 
 ## Entity Relationships Diagram
 
-```
-┌─────────────┐         ┌──────────────────────────┐         ┌──────────────┐
-│ BankSource  │         │      Transaction         │         │   Category   │
-│─────────────│◄────────│──────────────────────────│────────►│──────────────│
-│ id          │  1    * │ id                       │ *   0..1│ name         │
-│ displayName │         │ bankSourceId             │         │ displayName  │
-│ sheetId     │         │ transactionDate          │         │ description  │
-│ ...         │         │ originalAmountValue      │         │ examples     │
-└─────────────┘         │ originalAmountCurrency   │         └──────────────┘
-                        │ gbpAmountValue           │
-                        │ processingStatus         │
-                        │ categoryAiValue          │
-                        │ categoryManualValue      │
-                        │ ...                      │
-                        └────────┬─────────────────┘
-                                 │ *
-                                 │
-                                 │ 0..1
-                        ┌────────▼────────┐
-                        │ ExchangeRate    │
-                        │   Snapshot      │
-                        │─────────────────│
-                        │ baseCurrency    │
-                        │ targetCurrency  │
-                        │ rate            │
-                        │ fetchedAt       │
-                        └────────┬────────┘
-                                 │ *
-                                 │
-                                 │ 1
-                        ┌────────▼────────┐
-                        │ ProcessingRun   │
-                        │─────────────────│
-                        │ id              │
-                        │ runType         │
-                        │ status          │
-                        │ startedAt       │
-                        └─────────────────┘
+```mermaid
+erDiagram
+    BankSource ||--o{ Transaction : "bankSourceId"
+    Category ||--o{ Transaction : "categoryAiValue / categoryManualValue"
+    ProcessingRun ||--o{ Transaction : "processes"
+    ProcessingRun ||--o{ ExchangeRateSnapshot : "processingRunId"
+    Transaction }o--o| ExchangeRateSnapshot : "uses rate"
+
+    BankSource {
+        String id PK
+        String displayName
+        String sheetId
+    }
+
+    Transaction {
+        UUID id PK
+        BankSourceId bankSourceId FK
+        String categoryAiValue FK
+        String categoryManualValue FK
+        Decimal originalAmountValue
+        CurrencyCode originalAmountCurrency
+        Decimal gbpAmountValue
+        ProcessingStatus processingStatus
+    }
+
+    Category {
+        String name PK
+        String displayName
+        String description
+    }
+
+    ExchangeRateSnapshot {
+        CurrencyCode baseCurrency PK
+        CurrencyCode targetCurrency PK
+        DateTime fetchedAt PK
+        String processingRunId FK
+        Decimal rate
+    }
+
+    ProcessingRun {
+        UUID id PK
+        RunType runType
+        RunStatus status
+    }
 ```
 
 ## Key Design Decisions
