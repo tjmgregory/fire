@@ -218,11 +218,12 @@
 
 **Acceptance Criteria**:
 
-- Categories are stored in a dedicated configuration location
+- Categories are stored in a dedicated "Categories" configuration sheet
+- Each category row includes name, description, examples, and isActive flag
 - Category list includes descriptions and examples for each category
-- AI categorization only assigns categories from this approved list
-- Categories can be updated by developers through configuration changes
-- Category changes are logged for audit purposes
+- AI categorization only assigns categories from the active category list
+- Categories can be updated by users directly in the Categories sheet
+- Category changes take effect on next processing run
 
 **Priority**: Must Have
 **Risk**: Low

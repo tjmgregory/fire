@@ -467,23 +467,20 @@ These use cases describe automated workflows where the system acts independently
 
 **Preconditions**:
 
-- Developer has access to Google Apps Script editor
-- Category configuration exists (script properties or dedicated sheet)
+- Developer has access to Google Sheets
+- Categories configuration sheet exists
 
 **Main Success Scenario**:
 
-1. Developer opens category configuration:
-   - **Option A**: Script properties in Apps Script editor
-   - **Option B**: Dedicated "Categories" configuration sheet
-2. Developer reviews current category list with descriptions
+1. Developer opens the "Categories" configuration sheet
+2. Developer reviews current category list with descriptions and examples
 3. Developer makes desired changes:
-   - **Add**: New category with name, description, examples
-   - **Update**: Modify description or examples for existing category
-   - **Deactivate**: Set category `isActive` = false (soft delete)
-4. Developer saves changes
-5. Developer optionally logs change in version control or audit log
-6. System automatically loads new categories on next processing run
-7. Future categorizations use updated category definitions
+   - **Add**: New row with category name, description, and examples
+   - **Update**: Modify description or examples for existing category row
+   - **Deactivate**: Set category `isActive` column to FALSE (soft delete)
+4. Developer saves changes (automatic in Google Sheets)
+5. System automatically loads new categories on next processing run
+6. Future categorizations use updated category definitions
 
 **Alternative Flows**:
 
@@ -494,18 +491,18 @@ These use cases describe automated workflows where the system acts independently
 - 3a3. Developer uses unique name
 - 3a4. Resume at step 4
 
-**3b. Developer tries to delete category with existing usage**:
+**3b. Developer wants to delete category with existing usage**:
 
-- 3b1. System detects category is referenced by transactions
-- 3b2. System prevents hard deletion
-- 3b3. Developer must use soft delete (`isActive` = false)
+- 3b1. Developer should not delete the row (would break historical references)
+- 3b2. Developer sets `isActive` to FALSE instead (soft delete)
+- 3b3. Category remains visible in old transactions but unavailable for new categorizations
 - 3b4. Resume at step 4
 
-**7a. Major category changes require re-categorization**:
+**5a. Major category changes require re-categorization**:
 
-- 7a1. Developer manually triggers re-categorization for all/filtered transactions
-- 7a2. System re-runs categorization with new definitions
-- 7a3. User sees updated categories
+- 5a1. Developer manually triggers re-categorization for all/filtered transactions
+- 5a2. System re-runs categorization with new definitions
+- 5a3. User sees updated categories
 
 **Postconditions**:
 

@@ -331,10 +331,11 @@ Each entity corresponds to specific columns in Google Sheets:
 - Stored in Google Apps Script properties
 - Not persisted as rows in sheets
 
-**Category → Configuration Sheet or Script Properties**:
+**Category → Categories Configuration Sheet**:
 
-- Option 1: Separate "Categories" sheet
-- Option 2: Stored in script properties as JSON
+- Dedicated "Categories" sheet with columns for name, description, examples, isActive
+- Each row represents one category
+- Easy for users to view and modify without touching code
 
 **ExchangeRateSnapshot → Audit Log Sheet (optional)**:
 
@@ -344,7 +345,9 @@ Each entity corresponds to specific columns in Google Sheets:
 ### Persistence Strategy
 
 - **Primary Storage**: Google Sheets (rows = transactions)
-- **Configuration**: Script Properties (sources, categories, mappings)
+- **Configuration**:
+  - Bank sources and mappings: Script Properties
+  - Categories: Dedicated "Categories" sheet
 - **Audit Logs**: Execution logs + optional audit sheet
 - **State Management**: Status column in result sheet
 
