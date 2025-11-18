@@ -372,84 +372,84 @@ Maintain a suite of tests for **every bug fix**:
 
 ---
 
-## Risk-Based Testing Priorities
+## Test Naming & Documentation
 
-### Critical Paths (Must Test Thoroughly)
+### Tests ARE the Documentation
 
-1. **Transaction Categorization** (FREQ-003)
-   - Core business value
-   - Errors affect all downstream analysis
-   - Depends on external API
+Well-written tests serve as executable documentation of system behavior. We don't need separate test case documents - the tests themselves should be clear enough.
 
-2. **Data Normalization** (FREQ-002)
-   - Foundation for all processing
-   - Different code path per bank
-   - Format changes break system
+### Test Naming Convention
 
-3. **Manual Override** (FREQ-004)
-   - User trust depends on this
-   - Data integrity critical
+Test names should clearly express:
 
-### High Risk Areas (Test Well)
+1. **Use case reference** (optional, if applicable)
+2. **Given-When-Then scenario**
 
-1. Currency handling (FREQ-010)
-2. Error handling (FREQ-030, FREQ-031)
-3. API key security (SREQ-001)
-4. Duplicate detection (FREQ-005)
-
-### Medium Risk Areas (Adequate Testing)
-
-1. Refund handling (FREQ-020)
-2. Transfer detection (FREQ-021)
-3. Performance optimization (NREQ-001)
-
----
-
-## Test Case Naming Convention
+**Format**:
 
 ```
-[Type]-[Number]: [Description]
-
-Types:
-- TC: General Test Case
-- UAT: User Acceptance Test
-- PERF: Performance Test
-- SEC: Security Test
-- REG: Regression Test
-
-Examples:
-- TC-010: Normalize Monzo transaction format
-- UAT-001: User setup time under 30 minutes
-- PERF-001: Process 100 transactions in 10 seconds
-- SEC-001: API keys not in source code
-- REG-042: Handle duplicate merchant names (Bug #42)
+test("<Use Case ID>: Given <context>, when <action>, then <expected outcome>")
 ```
 
----
+**Examples**:
 
-## Test Documentation
+```javascript
+// References a use case
+test("UC-003: Given Tesco transaction, when categorized, then assigned to Groceries")
 
-### Test Case Format
+// Doesn't reference use case (internal behavior)
+test("Given £0 transaction, when normalized, then preserves zero amount")
 
-Each test case documented with:
+// Edge case
+test("Given duplicate transactions, when processed, then marked as duplicates")
 
-- **ID**: Unique identifier
-- **Title**: Clear description
-- **Requirements**: Links to FREQ/NREQ/etc.
-- **Preconditions**: Setup required
-- **Steps**: Detailed test steps
-- **Expected Result**: What should happen
-- **Actual Result**: What happened (during execution)
-- **Status**: Pass/Fail/Blocked
-- **Priority**: P0-P4
-- **Automation**: Manual/Automated
+// Regression test (references bug)
+test("Bug #42: Given refund transaction, when categorized, then not treated as purchase")
+```
+
+### What Makes a Good Test Name?
+
+- ✅ Reads like a specification
+- ✅ Non-technical stakeholder can understand it
+- ✅ Describes behavior, not implementation
+- ✅ Clear what failed when test breaks
+- ❌ Doesn't reference class/method names
+- ❌ Doesn't use technical jargon unnecessarily
+
+### Test Code as Documentation
+
+The test code itself should be self-documenting:
+
+```javascript
+// GOOD: Clear, behavior-focused
+test("Given manual override, when transaction re-categorized, then override persists", () => {
+  const transaction = new TransactionBuilder()
+    .withMerchant("Tesco")
+    .withAutoCategory("Groceries")
+    .build();
+
+  const overridden = applyManualOverride(transaction, "Entertainment");
+  const recategorized = categorize(overridden);
+
+  expect(recategorized.category).toBe("Entertainment");
+  expect(recategorized.isManualOverride).toBe(true);
+});
+
+// BAD: Implementation-focused, unclear intent
+test("testCategoryProperty", () => {
+  const t = { merchant: "Tesco", cat: null };
+  setCat(t, "Groceries");
+  processTransaction(t);
+  expect(t.cat).toBe("Groceries");
+});
+```
 
 ### Test Results Tracking
 
-- Test results logged in `test-results/` (future)
-- Pass/fail tracked over time
-- Trends analyzed for quality metrics
-- Failures trigger investigation
+- Test runners report pass/fail automatically
+- CI/CD systems track trends over time
+- No manual test result documentation needed
+- Failed tests are bugs to fix, not status to track
 
 ---
 
@@ -478,35 +478,6 @@ Each test case documented with:
 - **P2 (Medium)**: Edge case failures, minor features broken
 - **P3 (Low)**: Cosmetic issues, rare edge cases
 - **P4 (Backlog)**: Nice-to-have fixes
-
----
-
-## Test Metrics & Reporting
-
-### Key Metrics
-
-1. **Test Coverage**: % of requirements with test cases
-2. **Test Pass Rate**: % of tests passing
-3. **Defect Density**: Bugs per 1000 lines of code
-4. **Test Automation Rate**: % of tests automated
-5. **Mean Time to Detection (MTTD)**: How long bugs exist before detection
-6. **Mean Time to Resolution (MTTR)**: How long to fix bugs
-
-### Current Status (Baseline)
-
-- Test Coverage: ~40% (manual test cases exist)
-- Test Pass Rate: Unknown (not tracked systematically)
-- Defect Density: Unknown (first release)
-- Test Automation Rate: 0%
-- MTTD: Unknown
-- MTTR: Unknown
-
-### Target Metrics (6 months)
-
-- Test Coverage: >80%
-- Test Pass Rate: >95%
-- Test Automation Rate: >50%
-- MTTR: <7 days
 
 ---
 
@@ -570,24 +541,14 @@ Each test case documented with:
 
 ---
 
-## Next Steps
-
-1. ✅ Create test-strategy.md (this document)
-2. ⏳ Create transaction builder pattern for test data generation
-3. ⏳ Create detailed test cases in `elaboration/test-cases.md`
-4. ⏳ Implement first behavior-focused unit tests (Phase 1)
-5. ⏳ Set up CI/CD pipeline for automated testing
-6. ⏳ Establish test metrics dashboard
-
----
-
 ## References
 
 ### Project Documentation
 
 - [VISION.md](../VISION.md)
 - [Business Requirements](business-requirements.md)
-- [Test Cases](../elaboration/test-cases.md) *(to be created)*
+- Requirements Catalogue *(to be created)*
+- System Use Cases *(to be created)*
 - [Coding Standards](../../coding-standards/)
 - [ADR-002: Transaction Categorization Strategy](../../adr/002-transaction-categorization-strategy.md)
 
