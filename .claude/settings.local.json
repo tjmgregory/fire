@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "SlashCommand(/beads:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
