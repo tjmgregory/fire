@@ -96,5 +96,5 @@ This vision document serves as the foundation for all AIUP phases:
 
 - [FIRE Spreadsheet Inspiration](https://www.reddit.com/r/financialindependence/comments/rwq9qw/i_made_a_new_and_improved_advanced/)
 - [AI Unified Process](https://aiup.dev/)
-- [Project README](../../README.md)
-- [AGENTS.md](../../AGENTS.md)
+- [Project README](/README.md)
+- [AGENTS.md](/AGENTS.md)

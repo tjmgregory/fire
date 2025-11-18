@@ -4,7 +4,7 @@ An account-agnostic automation for transaction categorisation. It's designed to 
 
 Special thanks to the excellent work [shared here](https://www.reddit.com/r/financialindependence/comments/rwq9qw/i_made_a_new_and_improved_advanced/), which served as the inspiration for this project.
 
-See the [Vision](/docs/aiup/VISION.md) for more details.
+See the [Vision](/docs/aiup/01-inception/VISION.md) for more details.
 
 ## Supported Accounts
 
@@ -20,6 +20,7 @@ See the [Vision](/docs/aiup/VISION.md) for more details.
   - See [Apps Script README](src/apps-script/README.md) for setup and usage
 - `docs/`: Project documentation
   - `adr/`: Architecture Decision Records
+  - `aiup/`: AI Unified Process specifications, including vision, inception, elaboration, construction, and transition phase documentation
   - `coding-standards/`: Coding patterns and best practices to adhere to
 
 ## Development

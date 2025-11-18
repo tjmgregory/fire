@@ -20,25 +20,25 @@ This is the FIRE (Financial Independence, Retire Early) project - a Google Apps 
 
 ### AIUP Four Phases
 
-1. **Inception** (`docs/aiup/inception/`)
+1. **Inception** (`docs/aiup/01-inception/`)
    - Business Requirements Catalog
    - Stakeholder alignment
    - Test strategy planning
    - Quick iterations for feedback
 
-2. **Elaboration** (`docs/aiup/elaboration/`)
+2. **Elaboration** (`docs/aiup/02-elaboration/`)
    - Business Use Case Diagrams
    - Entity Models
    - System Use Case Diagrams
    - Test cases
 
-3. **Construction** (`docs/aiup/construction/`)
+3. **Construction** (`docs/aiup/03-construction/`)
    - System Use Case Specifications
    - AI-generated code from specs
    - Unit and integration testing
    - Developer review
 
-4. **Transition** (`docs/aiup/transition/`)
+4. **Transition** (`docs/aiup/04-transition/`)
    - User acceptance testing
    - Continuous delivery
    - Production optimization
@@ -47,18 +47,21 @@ This is the FIRE (Financial Independence, Retire Early) project - a Google Apps 
 ### Working with AIUP as an AI Agent
 
 **BEFORE writing code:**
+
 1. Check `docs/aiup/` for existing specifications
 2. Verify requirements are documented
 3. Ensure test cases exist or create them
 4. Review relevant use case diagrams
 
 **WHEN implementing:**
-1. Follow specifications in `docs/aiup/construction/`
+
+1. Follow specifications in `docs/aiup/03-construction/`
 2. Update specs if you discover gaps
 3. Write tests BEFORE implementation when possible
 4. Link code commits to requirements using beads
 
 **AFTER implementation:**
+
 1. Update specifications to match reality
 2. Document any deviations from original spec
 3. Ensure all tests pass
