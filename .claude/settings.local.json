@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "SlashCommand(/beads:*)"
+      "SlashCommand(/beads:*)",
+      "Bash(npx markdownlint:*)"
     ],
     "deny": [],
     "ask": []
