@@ -29,7 +29,8 @@
       "Bash(npm test:*)",
       "Bash(npm run type-check:*)",
       "Bash(npm run:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(bd reopen:*)"
     ],
     "deny": [],
     "ask": []
