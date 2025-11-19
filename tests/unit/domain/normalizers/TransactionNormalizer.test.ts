@@ -22,7 +22,8 @@
 import { describe, test, expect, beforeEach } from 'vitest';
 import { TransactionNormalizer } from '../../../../src/apps-script/domain/normalizers/TransactionNormalizer';
 import { BankSource } from '../../../../src/apps-script/models/BankSource';
-import { BankSourceId, CurrencyCode, ProcessingStatus, TransactionType } from '../../../../src/apps-script/models/Transaction';
+import { CurrencyCode, ProcessingStatus, TransactionType } from '../../../../src/apps-script/models/Transaction';
+import { BankSourceId } from '../../../../src/apps-script/models/BankSource';
 import { RawRowData } from '../../../../src/apps-script/domain/ports/SheetDataPort';
 
 // Test fixtures

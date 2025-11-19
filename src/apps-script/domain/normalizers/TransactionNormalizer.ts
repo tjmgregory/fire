@@ -15,8 +15,8 @@
  * @module domain/normalizers/TransactionNormalizer
  */
 
-import { Transaction, BankSourceId } from '../../models/Transaction';
-import { BankSource } from '../../models/BankSource';
+import { Transaction } from '../../models/Transaction';
+import { BankSource, BankSourceId } from '../../models/BankSource';
 import { RawRowData } from '../ports/SheetDataPort';
 import { BankNormalizer } from './BankNormalizer';
 import { MonzoNormalizer } from './MonzoNormalizer';

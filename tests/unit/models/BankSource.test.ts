@@ -22,7 +22,7 @@ import {
   BankSourceValidationError,
   ColumnMapping
 } from '../../../src/apps-script/models/BankSource';
-import { BankSourceId } from '../../../src/apps-script/models/Transaction';
+import { BankSourceId } from '../../../src/apps-script/models/BankSource';
 
 describe('BankSourceValidator', () => {
   describe('validate - Required fields (BR-BS-01, BR-BS-02)', () => {

@@ -8,7 +8,7 @@
  */
 
 import { Transaction } from '../../models/Transaction';
-import { BankSourceId } from '../../models/Transaction';
+import { BankSourceId } from '../../models/BankSource';
 
 /**
  * Raw row data from source sheets

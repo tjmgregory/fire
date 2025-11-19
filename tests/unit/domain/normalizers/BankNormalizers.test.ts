@@ -25,7 +25,8 @@ import { RevolutNormalizer } from '../../../../src/apps-script/domain/normalizer
 import { YonderNormalizer } from '../../../../src/apps-script/domain/normalizers/YonderNormalizer';
 import { BankSource, ColumnMapping } from '../../../../src/apps-script/models/BankSource';
 import { RawRowData } from '../../../../src/apps-script/domain/ports/SheetDataPort';
-import { BankSourceId, CurrencyCode, ProcessingStatus, TransactionType } from '../../../../src/apps-script/models/Transaction';
+import { CurrencyCode, ProcessingStatus, TransactionType } from '../../../../src/apps-script/models/Transaction';
+import { BankSourceId } from '../../../../src/apps-script/models/BankSource';
 
 // Test fixtures
 const createMonzoSource = (): BankSource => ({

@@ -9,8 +9,7 @@
  * @module infrastructure/config/BankSourceConfig
  */
 
-import { BankSource, ColumnMapping } from '../../models/BankSource';
-import { BankSourceId } from '../../models/Transaction';
+import { BankSource, BankSourceId, ColumnMapping } from '../../models/BankSource';
 
 /**
  * Monzo Bank Configuration

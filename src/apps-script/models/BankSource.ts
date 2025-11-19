@@ -7,7 +7,14 @@
  * @module models/BankSource
  */
 
-import { BankSourceId } from './Transaction';
+/**
+ * Bank source identifiers
+ */
+export enum BankSourceId {
+  MONZO = 'MONZO',
+  REVOLUT = 'REVOLUT',
+  YONDER = 'YONDER'
+}
 
 /**
  * Column mapping for bank-specific source sheets

@@ -21,7 +21,8 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { CurrencyConverter } from '../../../../src/apps-script/domain/converters/CurrencyConverter';
 import { ExchangeRatePort, ExchangeRate } from '../../../../src/apps-script/domain/ports/ExchangeRatePort';
-import { CurrencyCode, Transaction, ProcessingStatus, TransactionType, BankSourceId } from '../../../../src/apps-script/models/Transaction';
+import { CurrencyCode, Transaction, ProcessingStatus, TransactionType } from '../../../../src/apps-script/models/Transaction';
+import { BankSourceId } from '../../../../src/apps-script/models/BankSource';
 
 // Mock ExchangeRatePort
 class MockExchangeRatePort implements ExchangeRatePort {

@@ -25,9 +25,9 @@ import {
   Transaction,
   ProcessingStatus,
   TransactionType,
-  CurrencyCode,
-  BankSourceId
+  CurrencyCode
 } from '../../../../src/apps-script/models/Transaction';
+import { BankSourceId } from '../../../../src/apps-script/models/BankSource';
 
 describe('HistoricalPatternLearner', () => {
   // Test fixture factory

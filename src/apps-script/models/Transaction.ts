@@ -7,14 +7,7 @@
  * @module models/Transaction
  */
 
-/**
- * Bank source identifiers
- */
-export enum BankSourceId {
-  MONZO = 'MONZO',
-  REVOLUT = 'REVOLUT',
-  YONDER = 'YONDER'
-}
+import { BankSourceId } from './BankSource';
 
 /**
  * ISO 4217 currency codes
