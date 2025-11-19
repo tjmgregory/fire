@@ -9,17 +9,15 @@ import { Logger } from '../../../utils/Logger';
 
 describe('CategoryResolver', () => {
   let resolver: CategoryResolver;
-  let mockLogger: Logger;
   let activeCategories: Category[];
 
   beforeEach(() => {
-    mockLogger = {
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn()
-    } as unknown as Logger;
+    // Spy on Logger static methods
+    vi.spyOn(Logger, 'info').mockImplementation(() => {});
+    vi.spyOn(Logger, 'warning').mockImplementation(() => {});
+    vi.spyOn(Logger, 'error').mockImplementation(() => {});
 
-    resolver = new CategoryResolver(mockLogger);
+    resolver = new CategoryResolver();
 
     // Create test categories
     activeCategories = [
@@ -64,7 +62,7 @@ describe('CategoryResolver', () => {
       expect(result.category).toBeDefined();
       expect(result.category!.name).toBe('Groceries');
       expect(result.warning).toBeUndefined();
-      expect(mockLogger.info).toHaveBeenCalledWith(
+      expect(Logger.info).toHaveBeenCalledWith(
         expect.stringContaining('Resolved category "groceries"')
       );
     });
@@ -100,7 +98,7 @@ describe('CategoryResolver', () => {
       expect(result.warning).toBeDefined();
       expect(result.warning).toContain('Custom category name');
       expect(result.warning).toContain('not found in Categories sheet');
-      expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect(Logger.warning).toHaveBeenCalledWith(
         expect.stringContaining('Custom category name')
       );
     });
@@ -155,13 +153,13 @@ describe('CategoryResolver', () => {
       const names = ['Groceries', 'Transport', 'Unknown', 'Custom'];
       resolver.resolveCategoryNames(names, activeCategories);
 
-      expect(mockLogger.info).toHaveBeenCalledWith(
+      expect(Logger.info).toHaveBeenCalledWith(
         expect.stringContaining('Batch resolved 4 category names')
       );
-      expect(mockLogger.info).toHaveBeenCalledWith(
+      expect(Logger.info).toHaveBeenCalledWith(
         expect.stringContaining('2 found')
       );
-      expect(mockLogger.info).toHaveBeenCalledWith(
+      expect(Logger.info).toHaveBeenCalledWith(
         expect.stringContaining('2 custom')
       );
     });

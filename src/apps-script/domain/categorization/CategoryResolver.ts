@@ -38,11 +38,6 @@ export interface CategoryResolutionResult {
  * category list. Supports case-insensitive exact matching.
  */
 export class CategoryResolver {
-  private readonly logger: Logger;
-
-  constructor(logger: Logger = new Logger()) {
-    this.logger = logger;
-  }
 
   /**
    * Resolve a category name to a Category entity
@@ -84,7 +79,7 @@ export class CategoryResolver {
     });
 
     if (matchedCategory) {
-      this.logger.info(
+      Logger.info(
         `Resolved category "${categoryName}" to ID ${matchedCategory.id}`
       );
       return {
@@ -98,7 +93,7 @@ export class CategoryResolver {
       `This category will be stored but won't have referential integrity. ` +
       `Consider adding it to the Categories sheet for consistent tracking.`;
 
-    this.logger.warn(warning);
+    Logger.warning(warning);
 
     return {
       found: false,
@@ -136,7 +131,7 @@ export class CategoryResolver {
       results.set(categoryName, result);
     }
 
-    this.logger.info(
+    Logger.info(
       `Batch resolved ${categoryNames.length} category names: ` +
       `${Array.from(results.values()).filter(r => r.found).length} found, ` +
       `${Array.from(results.values()).filter(r => !r.found).length} custom`

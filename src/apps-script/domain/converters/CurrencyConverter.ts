@@ -15,7 +15,7 @@
  */
 
 import { CurrencyCode, Transaction } from '../../models/Transaction';
-import { ExchangeRatePort, ExchangeRate } from '../ports/ExchangeRatePort';
+import { ExchangeRatePort } from '../ports/ExchangeRatePort';
 import { ExchangeRateSnapshot, ExchangeRateSnapshotFactory } from '../../models/ExchangeRateSnapshot';
 import { Logger } from '../../utils/Logger';
 
