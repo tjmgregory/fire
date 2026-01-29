@@ -1,45 +1,28 @@
 /**
  * Main Entry Point
  *
- * Exports all Apps Script functions for the bundled Code.js.
+ * Exports Apps Script functions for the bundled Code.js.
  * This is the single entry point for rollup bundling.
+ *
+ * Only essential user-facing and trigger functions are exported.
+ * Internal helpers and redundant aliases are kept private.
  *
  * @module main
  */
 
-// Re-export all trigger functions
-export {
-  onEdit,
-  installOnEditTrigger,
-  uninstallOnEditTrigger,
-  loadActiveCategories
-} from './triggers/onEditTrigger';
-
+// Trigger functions (must be global for Apps Script)
+export { onEdit } from './triggers/onEditTrigger';
 export {
   scheduledNormalization,
-  scheduledCategorization,
-  installScheduledTriggers,
-  uninstallScheduledTriggers,
-  checkTriggerStatus
+  scheduledCategorization
 } from './triggers/scheduledTriggers';
 
-// Re-export controller entry points
-export {
-  processNewTransactions,
-  runNormalization,
-  normalizeFromSheet
-} from './controllers/NormalizationController';
-
+// User-facing entry points
+export { processNewTransactions } from './controllers/NormalizationController';
 export {
   categorizeTransactions,
-  runCategorization,
   recategorizeAll
 } from './controllers/CategorizationController';
 
-// Re-export setup functions
-export {
-  setupSheets,
-  setupCategoriesSheet,
-  setupResultSheet,
-  setCategoryFormula
-} from './setup/setupSheets';
+// One-time setup (includes trigger installation)
+export { setupSheets } from './setup/setupSheets';

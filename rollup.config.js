@@ -9,36 +9,24 @@ export default {
     file: 'dist/Code.js',
     format: 'iife',
     name: 'Fire',
-    // Expose all functions to global scope for Apps Script
+    // Expose essential functions to global scope for Apps Script
     // IMPORTANT: Must use function declarations, not var assignments
     // Apps Script only recognizes "function foo() {}" in the dropdown
+    //
+    // Only essential user-facing and trigger functions are exposed:
+    // - Triggers: onEdit, scheduledNormalization, scheduledCategorization
+    // - User actions: setupSheets, processNewTransactions, categorizeTransactions, recategorizeAll
     footer: `
-// Expose trigger functions to global scope for Apps Script
+// Trigger functions (must be global for Apps Script triggers)
 function onEdit(e) { return Fire.onEdit(e); }
-function installOnEditTrigger() { return Fire.installOnEditTrigger(); }
-function uninstallOnEditTrigger() { return Fire.uninstallOnEditTrigger(); }
-function loadActiveCategories() { return Fire.loadActiveCategories(); }
-
-// Scheduled triggers
 function scheduledNormalization() { return Fire.scheduledNormalization(); }
 function scheduledCategorization() { return Fire.scheduledCategorization(); }
-function installScheduledTriggers() { return Fire.installScheduledTriggers(); }
-function uninstallScheduledTriggers() { return Fire.uninstallScheduledTriggers(); }
-function checkTriggerStatus() { return Fire.checkTriggerStatus(); }
 
-// Controller entry points
-function processNewTransactions() { return Fire.processNewTransactions(); }
-function runNormalization() { return Fire.runNormalization(); }
-function normalizeFromSheet() { return Fire.normalizeFromSheet(); }
-function categorizeTransactions() { return Fire.categorizeTransactions(); }
-function runCategorization() { return Fire.runCategorization(); }
-function recategorizeAll() { return Fire.recategorizeAll(); }
-
-// Setup functions
+// User-facing entry points
 function setupSheets() { return Fire.setupSheets(); }
-function setupCategoriesSheet() { return Fire.setupCategoriesSheet(); }
-function setupResultSheet() { return Fire.setupResultSheet(); }
-function setCategoryFormula() { return Fire.setCategoryFormula(); }
+function processNewTransactions() { return Fire.processNewTransactions(); }
+function categorizeTransactions() { return Fire.categorizeTransactions(); }
+function recategorizeAll() { return Fire.recategorizeAll(); }
 `
   },
   plugins: [
