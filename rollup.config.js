@@ -10,33 +10,35 @@ export default {
     format: 'iife',
     name: 'Fire',
     // Expose all functions to global scope for Apps Script
+    // IMPORTANT: Must use function declarations, not var assignments
+    // Apps Script only recognizes "function foo() {}" in the dropdown
     footer: `
 // Expose trigger functions to global scope for Apps Script
-var onEdit = Fire.onEdit;
-var installOnEditTrigger = Fire.installOnEditTrigger;
-var uninstallOnEditTrigger = Fire.uninstallOnEditTrigger;
-var loadActiveCategories = Fire.loadActiveCategories;
+function onEdit(e) { return Fire.onEdit(e); }
+function installOnEditTrigger() { return Fire.installOnEditTrigger(); }
+function uninstallOnEditTrigger() { return Fire.uninstallOnEditTrigger(); }
+function loadActiveCategories() { return Fire.loadActiveCategories(); }
 
 // Scheduled triggers
-var scheduledNormalization = Fire.scheduledNormalization;
-var scheduledCategorization = Fire.scheduledCategorization;
-var installScheduledTriggers = Fire.installScheduledTriggers;
-var uninstallScheduledTriggers = Fire.uninstallScheduledTriggers;
-var checkTriggerStatus = Fire.checkTriggerStatus;
+function scheduledNormalization() { return Fire.scheduledNormalization(); }
+function scheduledCategorization() { return Fire.scheduledCategorization(); }
+function installScheduledTriggers() { return Fire.installScheduledTriggers(); }
+function uninstallScheduledTriggers() { return Fire.uninstallScheduledTriggers(); }
+function checkTriggerStatus() { return Fire.checkTriggerStatus(); }
 
 // Controller entry points
-var processNewTransactions = Fire.processNewTransactions;
-var runNormalization = Fire.runNormalization;
-var normalizeFromSheet = Fire.normalizeFromSheet;
-var categorizeTransactions = Fire.categorizeTransactions;
-var runCategorization = Fire.runCategorization;
-var recategorizeAll = Fire.recategorizeAll;
+function processNewTransactions() { return Fire.processNewTransactions(); }
+function runNormalization() { return Fire.runNormalization(); }
+function normalizeFromSheet() { return Fire.normalizeFromSheet(); }
+function categorizeTransactions() { return Fire.categorizeTransactions(); }
+function runCategorization() { return Fire.runCategorization(); }
+function recategorizeAll() { return Fire.recategorizeAll(); }
 
 // Setup functions
-var setupSheets = Fire.setupSheets;
-var setupCategoriesSheet = Fire.setupCategoriesSheet;
-var setupResultSheet = Fire.setupResultSheet;
-var setCategoryFormula = Fire.setCategoryFormula;
+function setupSheets() { return Fire.setupSheets(); }
+function setupCategoriesSheet() { return Fire.setupCategoriesSheet(); }
+function setupResultSheet() { return Fire.setupResultSheet(); }
+function setCategoryFormula() { return Fire.setCategoryFormula(); }
 `
   },
   plugins: [
