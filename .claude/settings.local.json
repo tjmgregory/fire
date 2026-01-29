@@ -1,20 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Skill(beads:*)",
-      "Bash(npx markdownlint:*)",
+      "Bash(bd:*)",
+      "Bash(clasp:*)",
+      "Bash(git:*)",
+      "Bash(ls:*)",
+      "Bash(npm:*)",
       "Bash(tree:*)",
-      "Bash(npm install:*)",
-      "Bash(npm run build:*)",
-      "Bash(npm uninstall:*)",
-      "Bash(npm test:*)",
-      "Bash(npm run type-check:*)",
-      "Bash(npm run:*)",
-      "Bash(npx tsc:*)",
-      "Bash(clasp status:*)",
-      "Bash(npx clasp status:*)",
-      "Bash(npx clasp push:*)",
-      "Bash(qmd query:*)"
+      "Skill(beads:*)",
     ],
     "deny": [],
     "ask": []
