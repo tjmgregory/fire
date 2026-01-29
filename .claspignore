@@ -1,14 +1,3 @@
-**/**
-!src/apps-script/*.gs
-!src/apps-script/appsscript.json
-node_modules/
-.git/
-.env
-.env.*
-!.env.example
-*.md
-.clasp.json.example
-scripts/
-docs/
-src/*
-!src/apps-script/
+# Clasp ignore file
+# Note: rootDir is ./dist, so only files there are considered
+# This file ignores nothing since dist only contains what we want to push
