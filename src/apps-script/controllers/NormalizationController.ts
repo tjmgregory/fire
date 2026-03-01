@@ -15,7 +15,7 @@
 import { Transaction, ProcessingStatus, CurrencyCode } from '../models/Transaction';
 import { BankSourceId } from '../models/BankSource';
 import { SheetDataAdapter } from '../infrastructure/adapters/SheetDataAdapter';
-import { ExchangeRateAdapter } from '../infrastructure/adapters/ExchangeRateAdapter';
+import { HistoricalExchangeRateAdapter } from '../infrastructure/adapters/HistoricalExchangeRateAdapter';
 import { TransactionNormalizer } from '../domain/normalizers/TransactionNormalizer';
 import { CurrencyConverter } from '../domain/converters/CurrencyConverter';
 import { DuplicateDetector } from '../domain/normalization/DuplicateDetector';
@@ -56,7 +56,7 @@ interface NormalizationResult {
  */
 export class NormalizationController {
   private sheetAdapter: SheetDataAdapter;
-  private exchangeRateAdapter: ExchangeRateAdapter;
+  private exchangeRateAdapter: HistoricalExchangeRateAdapter;
   private normalizer: TransactionNormalizer;
   private duplicateDetector: DuplicateDetector;
   private currencyConverter: CurrencyConverter;
@@ -65,7 +65,7 @@ export class NormalizationController {
   constructor() {
     this.processingRunId = this.generateProcessingRunId();
     this.sheetAdapter = new SheetDataAdapter();
-    this.exchangeRateAdapter = new ExchangeRateAdapter();
+    this.exchangeRateAdapter = new HistoricalExchangeRateAdapter();
 
     // Initialize normalizer with active bank sources
     const activeSources = getActiveBankSources();

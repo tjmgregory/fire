@@ -8,5 +8,5 @@
  */
 
 export { SheetDataAdapter } from './SheetDataAdapter';
-export { ExchangeRateAdapter } from './ExchangeRateAdapter';
+export { HistoricalExchangeRateAdapter } from './HistoricalExchangeRateAdapter';
 export { AICategorizationAdapter } from './AICategorizationAdapter';

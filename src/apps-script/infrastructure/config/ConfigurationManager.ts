@@ -21,8 +21,8 @@ export interface OpenAIConfig {
  * Exchange Rate API configuration
  */
 export interface ExchangeRateConfig {
-  provider: string;
-  apiKey?: string;
+  primaryProvider: string;
+  fallbackProvider: string;
 }
 
 /**
@@ -111,8 +111,8 @@ export class ConfigurationManager {
    */
   static getExchangeRateConfig(): ExchangeRateConfig {
     return {
-      provider: this.get('EXCHANGE_RATE_PROVIDER', 'https://api.exchangerate-api.com/v4/latest/') || 'https://api.exchangerate-api.com/v4/latest/',
-      apiKey: this.get('EXCHANGE_RATE_API_KEY') || undefined
+      primaryProvider: this.get('EXCHANGE_RATE_PRIMARY_PROVIDER', 'https://api.frankfurter.dev/v1') || 'https://api.frankfurter.dev/v1',
+      fallbackProvider: this.get('EXCHANGE_RATE_FALLBACK_PROVIDER', 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@') || 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@'
     };
   }
 

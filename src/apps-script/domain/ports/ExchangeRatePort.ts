@@ -29,6 +29,11 @@ export interface ExchangeRate {
   rate: number;
 
   /**
+   * The date this rate is for (YYYY-MM-DD)
+   */
+  rateDate: string;
+
+  /**
    * When this rate was fetched
    */
   fetchedAt: Date;
@@ -43,31 +48,36 @@ export interface ExchangeRate {
  * Exchange Rate Port
  *
  * Technology-agnostic interface for exchange rate services.
- * Implemented by ExchangeRateAdapter in infrastructure layer.
+ * Implemented by HistoricalExchangeRateAdapter in infrastructure layer.
  */
 export interface ExchangeRatePort {
   /**
-   * Get exchange rate from target currency to GBP
+   * Get exchange rate from target currency to GBP for a specific date
    *
    * @param fromCurrency - Source currency code
    * @param toCurrency - Target currency code (should be GBP)
+   * @param date - Rate date in YYYY-MM-DD format
    * @returns Exchange rate
    */
-  getExchangeRate(fromCurrency: CurrencyCode, toCurrency: CurrencyCode): Promise<ExchangeRate>;
+  getExchangeRate(fromCurrency: CurrencyCode, toCurrency: CurrencyCode, date: string): Promise<ExchangeRate>;
 
   /**
-   * Get multiple exchange rates in batch
+   * Get exchange rates for multiple currencies across a date range
    *
-   * Fetches rates for multiple currencies at once for efficiency.
+   * Fetches rates for multiple currencies and dates in minimal API calls.
    *
    * @param currencies - Array of currency codes to convert from
    * @param toCurrency - Target currency (should be GBP)
-   * @returns Map of currency code to exchange rate
+   * @param startDate - Start of date range (YYYY-MM-DD)
+   * @param endDate - End of date range (YYYY-MM-DD)
+   * @returns Map of date string to map of currency code to exchange rate
    */
-  getExchangeRatesBatch(
+  getExchangeRatesBatchByDateRange(
     currencies: CurrencyCode[],
-    toCurrency: CurrencyCode
-  ): Promise<Map<CurrencyCode, ExchangeRate>>;
+    toCurrency: CurrencyCode,
+    startDate: string,
+    endDate: string
+  ): Promise<Map<string, Map<CurrencyCode, ExchangeRate>>>;
 
   /**
    * Clear the rate cache

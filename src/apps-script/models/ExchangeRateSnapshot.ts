@@ -33,6 +33,13 @@ export interface ExchangeRateSnapshot {
   rate: number;
 
   /**
+   * The date this rate is for (YYYY-MM-DD)
+   * Distinct from fetchedAt — this is the historical date of the rate,
+   * not when we fetched it.
+   */
+  rateDate: string;
+
+  /**
    * When this rate was fetched
    */
   fetchedAt: Date;
@@ -102,6 +109,11 @@ export class ExchangeRateSnapshotValidator {
       throw new ExchangeRateSnapshotValidationError('Rate must be positive');
     }
 
+    // Rate date validation (YYYY-MM-DD)
+    if (!snapshot.rateDate || !/^\d{4}-\d{2}-\d{2}$/.test(snapshot.rateDate)) {
+      throw new ExchangeRateSnapshotValidationError('Rate date must be in YYYY-MM-DD format');
+    }
+
     // Date validation
     if (!(snapshot.fetchedAt instanceof Date) || isNaN(snapshot.fetchedAt.getTime())) {
       throw new ExchangeRateSnapshotValidationError('Fetched timestamp must be a valid date');
@@ -147,7 +159,7 @@ export class ExchangeRateSnapshotValidator {
    * @returns Composite key string
    */
   static getCompositeKey(snapshot: ExchangeRateSnapshot): string {
-    return `${snapshot.baseCurrency}_${snapshot.targetCurrency}_${snapshot.fetchedAt.toISOString()}`;
+    return `${snapshot.baseCurrency}_${snapshot.targetCurrency}_${snapshot.rateDate}`;
   }
 
   /**
@@ -183,6 +195,7 @@ export class ExchangeRateSnapshotFactory {
   static create(
     targetCurrency: CurrencyCode,
     rate: number,
+    rateDate: string,
     provider: string,
     processingRunId: string
   ): ExchangeRateSnapshot {
@@ -190,6 +203,7 @@ export class ExchangeRateSnapshotFactory {
       baseCurrency: CurrencyCode.GBP,
       targetCurrency,
       rate,
+      rateDate,
       fetchedAt: new Date(),
       provider: provider.trim(),
       processingRunId: processingRunId.trim()
@@ -209,6 +223,7 @@ export class ExchangeRateSnapshotFactory {
    */
   static createBatch(
     rates: Map<CurrencyCode, number>,
+    rateDate: string,
     provider: string,
     processingRunId: string
   ): ExchangeRateSnapshot[] {
@@ -225,6 +240,7 @@ export class ExchangeRateSnapshotFactory {
         baseCurrency: CurrencyCode.GBP,
         targetCurrency,
         rate,
+        rateDate,
         fetchedAt,
         provider: provider.trim(),
         processingRunId: processingRunId.trim()
