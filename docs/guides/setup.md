@@ -132,7 +132,7 @@ This will:
 - Create the **Categories** sheet with headers and 12 default categories
 - Create the **Result** sheet with headers and data validation
 - Install the **onEdit trigger** (for manual category overrides)
-- Install **scheduled triggers** (normalization every 15 min, categorization every hour)
+- Install **scheduled triggers** (normalization every 15 minutes, categorization every hour)
 
 > `setupSheets` is idempotent — safe to run multiple times. It won't duplicate data.
 
