@@ -53,10 +53,24 @@ export class MonzoNormalizer extends BankNormalizer {
     }
 
     // Get transaction details
-    const description = this.getRequiredString(rawData, 'description');
+    // Monzo maps description to 'Name' column, but some transaction types
+    // (interest, overdraft, cashback, cheque, card fees, international payments)
+    // have an empty Name. Fall back to the raw 'Description' column.
+    const nameValue = this.getValue(rawData, 'description');
+    const nameStr = typeof nameValue === 'string' ? nameValue.trim() : '';
+    const description = nameStr.length > 0
+      ? nameStr
+      : String(rawData['Description'] ?? '').trim() || 'Unknown';
+
     const amount = this.getRequiredAmount(rawData, 'amount');
     const currency = this.getCurrencyCode(rawData, 'currency');
-    const notes = this.getOptionalString(rawData, 'notes');
+
+    // Notes and Description columns can contain numeric values in Monzo exports;
+    // coerce to string before validation.
+    const rawNotes = this.getValue(rawData, 'notes');
+    const notes = rawNotes != null && rawNotes !== ''
+      ? String(rawNotes).trim() || null
+      : null;
 
     const transaction: Transaction = {
       ...base,

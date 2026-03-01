@@ -193,12 +193,23 @@ export class ErrorLogger {
 
     const logMessage = `[${timestamp}] [${entry.level}] ${entry.message}${contextStr}${errorStr}${stackStr}`;
 
-    // Use Google Apps Script Logger if available
-    if (typeof Logger !== 'undefined') {
-      Logger.log(logMessage);
-    } else {
-      // Fallback to console for testing
-      console.log(logMessage);
+    // Use console methods for correct log level in both Apps Script
+    // (Cloud Logging) and test environments. Logger.log() flattens
+    // everything to Info level so we avoid it.
+    switch (entry.level) {
+      case LogLevel.DEBUG:
+        console.log(logMessage);
+        break;
+      case LogLevel.INFO:
+        console.info(logMessage);
+        break;
+      case LogLevel.WARNING:
+        console.warn(logMessage);
+        break;
+      case LogLevel.ERROR:
+      case LogLevel.CRITICAL:
+        console.error(logMessage);
+        break;
     }
   }
 
