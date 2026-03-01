@@ -1225,7 +1225,7 @@ Response format: JSON array
 
 **Configuration**:
 
-- Model: `gpt-4` (configurable in Script Properties)
+- Model: `gpt-5-nano` (configurable in Script Properties)
 - Temperature: `0.3` (low for consistent categorization)
 - Max tokens: `500` (sufficient for batch responses)
 
@@ -2493,7 +2493,7 @@ export default defineConfig({
 ```javascript
 {
   "OPENAI_API_KEY": "sk-...",
-  "OPENAI_MODEL": "gpt-4",
+  "OPENAI_MODEL": "gpt-5-nano",
   "EXCHANGE_RATE_API_KEY": "...",
   "EXCHANGE_RATE_PROVIDER": "https://api.exchangerate-api.com/v4/latest/",
   "RESULT_SHEET_NAME": "Transactions",
@@ -2727,7 +2727,7 @@ class ConfigurationManager {
   static getOpenAIConfig() {
     return {
       apiKey: this.getRequired('OPENAI_API_KEY'),
-      model: this.get('OPENAI_MODEL', 'gpt-4'),
+      model: this.get('OPENAI_MODEL', 'gpt-5-nano'),
       temperature: parseFloat(this.get('OPENAI_TEMPERATURE', '0.3')),
       maxTokens: parseInt(this.get('OPENAI_MAX_TOKENS', '500'))
     };

@@ -108,7 +108,7 @@ In the Apps Script editor, go to **Project Settings** (gear icon) > **Script Pro
 
 | Property | Default | Description |
 |---|---|---|
-| `OPENAI_MODEL` | `gpt-4` | OpenAI model to use |
+| `OPENAI_MODEL` | `gpt-5-nano` | OpenAI model to use |
 | `OPENAI_TEMPERATURE` | `0.3` | Model temperature (lower = more deterministic) |
 | `OPENAI_MAX_TOKENS` | `500` | Max tokens per API response |
 | `MONZO_ENABLED` | `true` | Enable/disable Monzo processing |
