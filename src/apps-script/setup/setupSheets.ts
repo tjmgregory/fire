@@ -82,6 +82,11 @@ const DEFAULT_CATEGORIES = [
     examples: 'Electricity, Gas, Water, Internet, Phone'
   },
   {
+    name: 'Software & Tools',
+    description: 'Digital services, SaaS, cloud infrastructure, and developer tooling',
+    examples: 'AWS, Google Cloud, Domain names, GitHub, Notion, Vercel, ChatGPT, Claude'
+  },
+  {
     name: 'Fitness',
     description: 'Sports, gym memberships, and physical activities',
     examples: 'Gym, CrossFit, Swimming, Tennis, Climbing, Yoga class'
@@ -102,14 +107,9 @@ const DEFAULT_CATEGORIES = [
     examples: 'Flights, TfL, Uber, Bolt, Train tickets, Bus fares, Ryanair, Petrol, Shell, BP'
   },
   {
-    name: 'Subscriptions',
-    description: 'Recurring subscription payments',
-    examples: 'Software subscriptions, Membership fees, Magazines'
-  },
-  {
     name: 'Income',
-    description: 'Salary, refunds, and other income',
-    examples: 'Salary, Refunds, Interest, Dividends'
+    description: 'Salary, interest, dividends, and passive earnings. Refunds should be categorised against their original spending category, not as income.',
+    examples: 'Salary, Interest, Dividends, Bonus, Side income'
   },
   {
     name: 'Transfers',
