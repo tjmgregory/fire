@@ -335,5 +335,6 @@ function promiseToSync<T>(fn: () => Promise<T>): T {
 export {
   processNewTransactions,
   runNormalization,
-  normalizeFromSheet
+  normalizeFromSheet,
+  promiseToSync
 };

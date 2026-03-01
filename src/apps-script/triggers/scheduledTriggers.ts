@@ -10,8 +10,9 @@
  * @module triggers/scheduledTriggers
  */
 
-import { runNormalization } from '../controllers/NormalizationController';
+import { NormalizationController, promiseToSync } from '../controllers/NormalizationController';
 import { runCategorization } from '../controllers/CategorizationController';
+import { getActiveBankSources } from '../infrastructure/config/BankSourceConfig';
 import { Logger } from '../utils/Logger';
 
 /**
@@ -32,23 +33,43 @@ const TRIGGER_CONFIG = {
  * Scheduled normalization entry point
  *
  * Called by the time-driven trigger every 15 minutes.
- * Processes new transactions from all bank source sheets.
+ * Processes one bank source per invocation (round-robin) to stay
+ * within Apps Script's ~6 minute execution limit.
+ *
+ * Uses PropertiesService to track which source to process next.
  */
 function scheduledNormalization(): void {
   Logger.info('Scheduled normalization triggered');
 
   try {
-    const result = runNormalization();
+    const activeSources = getActiveBankSources();
+    if (activeSources.length === 0) {
+      Logger.info('No active sources to normalize');
+      return;
+    }
+
+    // Round-robin: pick the next source to process
+    const props = PropertiesService.getScriptProperties();
+    const lastIndex = parseInt(props.getProperty('normalization_source_index') || '-1', 10);
+    const nextIndex = (lastIndex + 1) % activeSources.length;
+    const source = activeSources[nextIndex];
+
+    props.setProperty('normalization_source_index', String(nextIndex));
+
+    Logger.info(`Processing source ${nextIndex + 1}/${activeSources.length}: ${source.id}`);
+
+    const controller = new NormalizationController();
+    const result = promiseToSync(() => controller.processSource(source.id));
 
     Logger.info('Scheduled normalization completed', {
-      processingRunId: result.processingRunId,
-      totalNormalized: result.totalNormalized,
-      totalDuplicates: result.totalDuplicates,
-      totalErrors: result.totalErrors
+      sourceId: source.id,
+      normalized: result.normalized,
+      duplicates: result.duplicates,
+      errors: result.errors
     });
 
-    if (result.totalErrors > 0) {
-      Logger.warning(`Normalization completed with ${result.totalErrors} errors`);
+    if (result.errors > 0) {
+      Logger.warning(`Normalization of ${source.id} completed with ${result.errors} errors`);
     }
 
   } catch (error) {
