@@ -126,6 +126,7 @@ export class SheetDataAdapter implements SheetDataPort {
   writeTransaction(transaction: Transaction): void {
     const row = this.transactionToRow(transaction);
     this.resultSheet.appendRow(row);
+    this.sortByTransactionDate();
     this.invalidateCache();
     logger.debug(`Wrote transaction ${transaction.id} to result sheet`);
   }
@@ -143,6 +144,7 @@ export class SheetDataAdapter implements SheetDataPort {
       .getRange(lastRow + 1, 1, rows.length, rows[0].length)
       .setValues(rows);
 
+    this.sortByTransactionDate();
     this.invalidateCache();
     logger.info(`Batch wrote ${transactions.length} transactions to result sheet`);
   }
@@ -432,6 +434,19 @@ export class SheetDataAdapter implements SheetDataPort {
     }
 
     logger.debug(`Built transaction cache with ${this.transactionIdCache.size} entries`);
+  }
+
+  /**
+   * Sort the result sheet by transaction date (ascending), preserving the header row
+   */
+  private sortByTransactionDate(): void {
+    const lastRow = this.resultSheet.getLastRow();
+    if (lastRow <= 1) return;
+
+    const lastCol = this.resultSheet.getLastColumn();
+    this.resultSheet
+      .getRange(2, 1, lastRow - 1, lastCol)
+      .sort({ column: RESULT_SHEET_COLUMNS.TRANSACTION_DATE + 1, ascending: true });
   }
 
   /**
