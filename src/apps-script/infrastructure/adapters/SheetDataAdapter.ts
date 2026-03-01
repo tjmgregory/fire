@@ -30,17 +30,19 @@ const RESULT_SHEET_COLUMNS = {
   ORIGINAL_AMOUNT_CURRENCY: 9,
   GBP_AMOUNT_VALUE: 10,
   EXCHANGE_RATE_VALUE: 11,
-  CATEGORY_AI_ID: 12,
-  CATEGORY_AI_NAME: 13,
-  CATEGORY_CONFIDENCE_SCORE: 14,
-  CATEGORY_MANUAL_ID: 15,
-  CATEGORY_MANUAL_NAME: 16,
-  PROCESSING_STATUS: 17,
-  ERROR_MESSAGE: 18,
-  TIMESTAMP_CREATED: 19,
-  TIMESTAMP_LAST_MODIFIED: 20,
-  TIMESTAMP_NORMALISED: 21,
-  TIMESTAMP_CATEGORISED: 22
+  ORIGINAL_CATEGORY: 12,
+  CATEGORY_AI_ID: 13,
+  CATEGORY_AI_NAME: 14,
+  CATEGORY_CONFIDENCE_SCORE: 15,
+  CATEGORY_MANUAL_ID: 16,
+  CATEGORY_MANUAL_NAME: 17,
+  CATEGORY: 18,             // Computed column (formula: manual || AI)
+  PROCESSING_STATUS: 19,
+  ERROR_MESSAGE: 20,
+  TIMESTAMP_CREATED: 21,
+  TIMESTAMP_LAST_MODIFIED: 22,
+  TIMESTAMP_NORMALISED: 23,
+  TIMESTAMP_CATEGORISED: 24
 };
 
 /**
@@ -329,11 +331,13 @@ export class SheetDataAdapter implements SheetDataPort {
       transaction.originalAmountCurrency,
       transaction.gbpAmountValue,
       transaction.exchangeRateValue || '',
+      transaction.originalCategory || '',
       transaction.categoryAiId || '',
       transaction.categoryAiName || '',
       transaction.categoryConfidenceScore || '',
       transaction.categoryManualId || '',
       transaction.categoryManualName || '',
+      '',  // Category (computed column — populated by sheet formula)
       transaction.processingStatus,
       transaction.errorMessage || '',
       transaction.timestampCreated,
@@ -360,11 +364,13 @@ export class SheetDataAdapter implements SheetDataPort {
       originalAmountCurrency: row[RESULT_SHEET_COLUMNS.ORIGINAL_AMOUNT_CURRENCY] as CurrencyCode,
       gbpAmountValue: Number(row[RESULT_SHEET_COLUMNS.GBP_AMOUNT_VALUE]) || 0,
       exchangeRateValue: row[RESULT_SHEET_COLUMNS.EXCHANGE_RATE_VALUE] ? Number(row[RESULT_SHEET_COLUMNS.EXCHANGE_RATE_VALUE]) : null,
+      originalCategory: row[RESULT_SHEET_COLUMNS.ORIGINAL_CATEGORY] ? String(row[RESULT_SHEET_COLUMNS.ORIGINAL_CATEGORY]) : null,
       categoryAiId: row[RESULT_SHEET_COLUMNS.CATEGORY_AI_ID] ? String(row[RESULT_SHEET_COLUMNS.CATEGORY_AI_ID]) : null,
       categoryAiName: row[RESULT_SHEET_COLUMNS.CATEGORY_AI_NAME] ? String(row[RESULT_SHEET_COLUMNS.CATEGORY_AI_NAME]) : null,
       categoryConfidenceScore: row[RESULT_SHEET_COLUMNS.CATEGORY_CONFIDENCE_SCORE] ? Number(row[RESULT_SHEET_COLUMNS.CATEGORY_CONFIDENCE_SCORE]) : null,
       categoryManualId: row[RESULT_SHEET_COLUMNS.CATEGORY_MANUAL_ID] ? String(row[RESULT_SHEET_COLUMNS.CATEGORY_MANUAL_ID]) : null,
       categoryManualName: row[RESULT_SHEET_COLUMNS.CATEGORY_MANUAL_NAME] ? String(row[RESULT_SHEET_COLUMNS.CATEGORY_MANUAL_NAME]) : null,
+      // CATEGORY column (index 18) is a computed formula — skip it
       processingStatus: row[RESULT_SHEET_COLUMNS.PROCESSING_STATUS] as ProcessingStatus,
       errorMessage: row[RESULT_SHEET_COLUMNS.ERROR_MESSAGE] ? String(row[RESULT_SHEET_COLUMNS.ERROR_MESSAGE]) : null,
       timestampCreated: this.parseDate(row[RESULT_SHEET_COLUMNS.TIMESTAMP_CREATED]) || new Date(),

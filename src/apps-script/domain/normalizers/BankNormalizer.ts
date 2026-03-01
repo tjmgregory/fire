@@ -183,6 +183,7 @@ export abstract class BankNormalizer {
       timestampLastModified: now,
       timestampNormalised: null,
       timestampCategorised: null,
+      originalCategory: null,
       categoryAiId: null,
       categoryAiName: null,
       categoryConfidenceScore: null,

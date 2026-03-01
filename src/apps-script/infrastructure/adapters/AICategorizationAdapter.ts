@@ -146,9 +146,13 @@ export class AICategorizationAdapter implements AICategorizationPort {
       `- ${c.name} (ID: ${c.id}): ${c.description}. Examples: ${c.examples}`
     ).join('\n');
 
-    const transactionList = transactions.map(t =>
-      `- ID: ${t.id}, Description: "${t.description}", Amount: ${t.gbpAmountValue.toFixed(2)} GBP, Type: ${t.transactionType}`
-    ).join('\n');
+    const transactionList = transactions.map(t => {
+      let line = `- ID: ${t.id}, Description: "${t.description}", Amount: ${t.gbpAmountValue.toFixed(2)} GBP, Type: ${t.transactionType}`;
+      if (t.originalCategory) {
+        line += `, Bank Category: "${t.originalCategory}"`;
+      }
+      return line;
+    }).join('\n');
 
     let contextSection = '';
     if (context?.similarTransactions && context.similarTransactions.length > 0) {
@@ -163,6 +167,8 @@ export class AICategorizationAdapter implements AICategorizationPort {
 Available categories:
 ${categoryList}
 ${contextSection}
+
+Some transactions include a "Bank Category" — this is the original category assigned by the bank. It may be a useful hint, but do NOT blindly trust it. Banks use their own category schemes which may not match ours, and they are often inaccurate. Use the description and amount as your primary signals.
 
 Transactions to categorize:
 ${transactionList}

@@ -71,6 +71,12 @@ export class YonderNormalizer extends BankNormalizer {
       currency
     );
 
+    // Extract original bank category (freetext, used as AI hint)
+    const rawCategory = this.getValue(rawData, 'category');
+    const originalCategory = typeof rawCategory === 'string' && rawCategory.trim().length > 0
+      ? rawCategory.trim()
+      : null;
+
     const transaction: Transaction = {
       ...base,
       id: this.generateUUID(),
@@ -87,6 +93,7 @@ export class YonderNormalizer extends BankNormalizer {
       processingStatus: ProcessingStatus.UNPROCESSED,
       errorMessage: null,
       exchangeRateValue: null, // Yonder is GBP-only, no conversion needed
+      originalCategory,
       categoryAiId: null,
       categoryAiName: null,
       categoryConfidenceScore: null,
