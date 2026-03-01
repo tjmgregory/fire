@@ -345,9 +345,9 @@ export class CategorizationController {
  *
  * Call this to categorize all transactions that need AI categorization.
  */
-function categorizeTransactions(): CategorizationResult {
+async function categorizeTransactions(): Promise<CategorizationResult> {
   const controller = new CategorizationController();
-  return promiseToSync(() => controller.categorizeTransactions());
+  return controller.categorizeTransactions();
 }
 
 /**
@@ -355,7 +355,7 @@ function categorizeTransactions(): CategorizationResult {
  *
  * Called by Apps Script time-based trigger (UC-006).
  */
-function runCategorization(): CategorizationResult {
+async function runCategorization(): Promise<CategorizationResult> {
   return categorizeTransactions();
 }
 
@@ -364,38 +364,9 @@ function runCategorization(): CategorizationResult {
  *
  * Re-runs AI categorization on all transactions, excluding manual overrides.
  */
-function recategorizeAll(): CategorizationResult {
+async function recategorizeAll(): Promise<CategorizationResult> {
   const controller = new CategorizationController();
-  return promiseToSync(() => controller.recategorizeAll());
-}
-
-/**
- * Helper to run async functions synchronously in Apps Script
- */
-function promiseToSync<T>(fn: () => Promise<T>): T {
-  let result: T;
-  let error: Error | null = null;
-  let completed = false;
-
-  fn()
-    .then(r => {
-      result = r;
-      completed = true;
-    })
-    .catch(e => {
-      error = e;
-      completed = true;
-    });
-
-  while (!completed) {
-    Utilities.sleep(100);
-  }
-
-  if (error) {
-    throw error;
-  }
-
-  return result!;
+  return controller.recategorizeAll();
 }
 
 // Export for module usage

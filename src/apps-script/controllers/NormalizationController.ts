@@ -273,10 +273,11 @@ export class NormalizationController {
  * Main entry point - process all source sheets
  *
  * Call this to normalize transactions from all configured bank sources.
+ * Apps Script V8 runtime supports async trigger handlers natively.
  */
-function processNewTransactions(): NormalizationResult {
+async function processNewTransactions(): Promise<NormalizationResult> {
   const controller = new NormalizationController();
-  return promiseToSync(() => controller.processAllSources());
+  return controller.processAllSources();
 }
 
 /**
@@ -284,7 +285,7 @@ function processNewTransactions(): NormalizationResult {
  *
  * Called by Apps Script time-based trigger (UC-005).
  */
-function runNormalization(): NormalizationResult {
+async function runNormalization(): Promise<NormalizationResult> {
   return processNewTransactions();
 }
 
@@ -293,48 +294,14 @@ function runNormalization(): NormalizationResult {
  *
  * @param sheetName - Name of the sheet to process
  */
-function normalizeFromSheet(sheetName: string): SourceNormalizationResult {
+async function normalizeFromSheet(sheetName: string): Promise<SourceNormalizationResult> {
   const controller = new NormalizationController();
-  return promiseToSync(() => controller.processSheetByName(sheetName));
-}
-
-/**
- * Helper to run async functions synchronously in Apps Script
- *
- * Apps Script doesn't fully support async/await at the top level,
- * so we need this wrapper for global functions.
- */
-function promiseToSync<T>(fn: () => Promise<T>): T {
-  let result: T;
-  let error: Error | null = null;
-  let completed = false;
-
-  fn()
-    .then(r => {
-      result = r;
-      completed = true;
-    })
-    .catch(e => {
-      error = e;
-      completed = true;
-    });
-
-  // Spin until promise resolves (Apps Script is single-threaded)
-  while (!completed) {
-    Utilities.sleep(100);
-  }
-
-  if (error) {
-    throw error;
-  }
-
-  return result!;
+  return controller.processSheetByName(sheetName);
 }
 
 // Export for module usage
 export {
   processNewTransactions,
   runNormalization,
-  normalizeFromSheet,
-  promiseToSync
+  normalizeFromSheet
 };

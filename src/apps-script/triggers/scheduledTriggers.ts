@@ -10,9 +10,8 @@
  * @module triggers/scheduledTriggers
  */
 
-import { NormalizationController, promiseToSync } from '../controllers/NormalizationController';
+import { runNormalization } from '../controllers/NormalizationController';
 import { runCategorization } from '../controllers/CategorizationController';
-import { getActiveBankSources } from '../infrastructure/config/BankSourceConfig';
 import { Logger } from '../utils/Logger';
 
 /**
@@ -33,43 +32,23 @@ const TRIGGER_CONFIG = {
  * Scheduled normalization entry point
  *
  * Called by the time-driven trigger every 15 minutes.
- * Processes one bank source per invocation (round-robin) to stay
- * within Apps Script's ~6 minute execution limit.
- *
- * Uses PropertiesService to track which source to process next.
+ * Processes new transactions from all bank source sheets.
  */
-function scheduledNormalization(): void {
+async function scheduledNormalization(): Promise<void> {
   Logger.info('Scheduled normalization triggered');
 
   try {
-    const activeSources = getActiveBankSources();
-    if (activeSources.length === 0) {
-      Logger.info('No active sources to normalize');
-      return;
-    }
-
-    // Round-robin: pick the next source to process
-    const props = PropertiesService.getScriptProperties();
-    const lastIndex = parseInt(props.getProperty('normalization_source_index') || '-1', 10);
-    const nextIndex = (lastIndex + 1) % activeSources.length;
-    const source = activeSources[nextIndex];
-
-    props.setProperty('normalization_source_index', String(nextIndex));
-
-    Logger.info(`Processing source ${nextIndex + 1}/${activeSources.length}: ${source.id}`);
-
-    const controller = new NormalizationController();
-    const result = promiseToSync(() => controller.processSource(source.id));
+    const result = await runNormalization();
 
     Logger.info('Scheduled normalization completed', {
-      sourceId: source.id,
-      normalized: result.normalized,
-      duplicates: result.duplicates,
-      errors: result.errors
+      processingRunId: result.processingRunId,
+      totalNormalized: result.totalNormalized,
+      totalDuplicates: result.totalDuplicates,
+      totalErrors: result.totalErrors
     });
 
-    if (result.errors > 0) {
-      Logger.warning(`Normalization of ${source.id} completed with ${result.errors} errors`);
+    if (result.totalErrors > 0) {
+      Logger.warning(`Normalization completed with ${result.totalErrors} errors`);
     }
 
   } catch (error) {
@@ -83,11 +62,11 @@ function scheduledNormalization(): void {
  * Called by the time-driven trigger every hour.
  * Categorizes normalized transactions that haven't been categorized yet.
  */
-function scheduledCategorization(): void {
+async function scheduledCategorization(): Promise<void> {
   Logger.info('Scheduled categorization triggered');
 
   try {
-    const result = runCategorization();
+    const result = await runCategorization();
 
     Logger.info('Scheduled categorization completed', {
       processingRunId: result.processingRunId,
