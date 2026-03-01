@@ -26,3 +26,6 @@ export {
 
 // One-time setup (includes trigger installation)
 export { setupSheets } from './setup/setupSheets';
+
+// Summary sheet (re-run to refresh categories/months)
+export { setupCategorisedSpendingSheet } from './setup/setupCategorisedSpendingSheet';
