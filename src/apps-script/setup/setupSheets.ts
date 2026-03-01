@@ -77,7 +77,7 @@ const DEFAULT_CATEGORIES = [
     examples: 'Amazon, ASOS, John Lewis, Argos'
   },
   {
-    name: 'Bills & Utilities',
+    name: 'Household Bills',
     description: 'Regular household bills and utility payments',
     examples: 'Electricity, Gas, Water, Internet, Phone'
   },
