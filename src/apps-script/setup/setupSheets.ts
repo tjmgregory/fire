@@ -9,6 +9,7 @@
 
 import { Logger } from '../utils/Logger';
 import { CategoryValidator } from '../models/Category';
+import { ConfigurationManager } from '../infrastructure/config/ConfigurationManager';
 import { installOnEditTrigger } from '../triggers/onEditTrigger';
 import { installScheduledTriggers } from '../triggers/scheduledTriggers';
 
@@ -186,13 +187,14 @@ function setupSheets(): SetupResult {
 function setupCategoriesSheet(spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet): SheetSetupResult & { seeded: boolean } {
   const result = { created: false, configured: false, seeded: false };
 
-  let sheet = spreadsheet.getSheetByName(SHEET_CONFIG.categories.name);
+  const categoriesSheetName = ConfigurationManager.get('CATEGORIES_SHEET_NAME', SHEET_CONFIG.categories.name) || SHEET_CONFIG.categories.name;
+  let sheet = spreadsheet.getSheetByName(categoriesSheetName);
 
   // Create sheet if it doesn't exist
   if (!sheet) {
-    sheet = spreadsheet.insertSheet(SHEET_CONFIG.categories.name);
+    sheet = spreadsheet.insertSheet(categoriesSheetName);
     result.created = true;
-    Logger.info('Categories sheet created');
+    Logger.info(`Categories sheet created as '${categoriesSheetName}'`);
   }
 
   // Check/add headers
@@ -265,13 +267,14 @@ function seedDefaultCategories(sheet: GoogleAppsScript.Spreadsheet.Sheet): void 
 function setupResultSheet(spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet): SheetSetupResult {
   const result = { created: false, configured: false };
 
-  let sheet = spreadsheet.getSheetByName(SHEET_CONFIG.result.name);
+  const resultSheetName = ConfigurationManager.get('RESULT_SHEET_NAME', SHEET_CONFIG.result.name) || SHEET_CONFIG.result.name;
+  let sheet = spreadsheet.getSheetByName(resultSheetName);
 
   // Create sheet if it doesn't exist
   if (!sheet) {
-    sheet = spreadsheet.insertSheet(SHEET_CONFIG.result.name);
+    sheet = spreadsheet.insertSheet(resultSheetName);
     result.created = true;
-    Logger.info('Result sheet created');
+    Logger.info(`Result sheet created as '${resultSheetName}'`);
   }
 
   // Check/add headers
