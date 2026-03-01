@@ -98,7 +98,7 @@ export class ConfigurationManager {
   static getOpenAIConfig(): OpenAIConfig {
     return {
       apiKey: this.getRequired('OPENAI_API_KEY'),
-      model: this.get('OPENAI_MODEL', 'gpt-4') || 'gpt-4',
+      model: this.get('OPENAI_MODEL', 'gpt-5-nano') || 'gpt-5-nano',
       temperature: parseFloat(this.get('OPENAI_TEMPERATURE', '0.3') || '0.3'),
       maxTokens: parseInt(this.get('OPENAI_MAX_TOKENS', '500') || '500', 10)
     };
