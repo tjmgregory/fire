@@ -83,9 +83,11 @@ function setupCategorisedSpendingSheet(
     headerRange.setFontWeight('bold');
     headerRange.setBackground('#e8eaed');
 
-    // Write month labels in column A (starting row 2)
-    const monthValues = months.map(m => [m]);
-    sheet.getRange(2, 1, months.length, 1).setValues(monthValues);
+    // Write month dates in column A (starting row 2) as actual Date objects
+    // Each entry is the 1st of that month — formatted to display as "YYYY-MM"
+    const monthDates = months.map(m => [m]);
+    sheet.getRange(2, 1, months.length, 1).setValues(monthDates);
+    sheet.getRange(2, 1, months.length, 1).setNumberFormat('yyyy-mm');
 
     // Build SUMIFS formulas for each cell
     // Result sheet references:
@@ -94,9 +96,12 @@ function setupCategorisedSpendingSheet(
     //   Column D (4)  = Transaction Date
     //
     // Formula pattern (e.g. cell B2):
-    //   =SUMIFS(Result!$K:$K, Result!$S:$S, B$1, TEXT(Result!$D:$D,"YYYY-MM"), $A2)
-    //   - B$1 locks row for category header (absolute row, relative column)
-    //   - $A2 locks column for month label (absolute column, relative row)
+    //   =SUMIFS(Result!$K:$K, Result!$S:$S, B$1,
+    //           Result!$D:$D, ">="&$A2,
+    //           Result!$D:$D, "<"&EDATE($A2,1))
+    //
+    // Uses two date criteria (>= start of month, < start of next month)
+    // instead of TEXT() which causes array size mismatch in Google Sheets.
     const formulas: string[][] = [];
 
     for (let row = 0; row < months.length; row++) {
@@ -104,7 +109,7 @@ function setupCategorisedSpendingSheet(
       const formulaRow: string[] = [];
       for (let col = 0; col < categoryNames.length; col++) {
         const colLetter = columnToLetter(col + 2); // +2 because col A is Month
-        const formula = `=SUMIFS('${resultSheetName}'!$K:$K,'${resultSheetName}'!$S:$S,${colLetter}$1,TEXT('${resultSheetName}'!$D:$D,"YYYY-MM"),$A${sheetRow})`;
+        const formula = `=SUMIFS('${resultSheetName}'!$K:$K,'${resultSheetName}'!$S:$S,${colLetter}$1,'${resultSheetName}'!$D:$D,">="&$A${sheetRow},'${resultSheetName}'!$D:$D,"<"&EDATE($A${sheetRow},1))`;
         formulaRow.push(formula);
       }
       formulas.push(formulaRow);
@@ -166,9 +171,9 @@ function getActiveCategoryNames(categoriesSheet: GoogleAppsScript.Spreadsheet.Sh
  * Get the range of months from the Result sheet transaction dates.
  *
  * Scans Transaction Date column (D) to find min and max dates,
- * then generates an array of "YYYY-MM" strings covering the full range.
+ * then generates an array of Date objects (1st of each month) covering the full range.
  */
-function getMonthRange(resultSheet: GoogleAppsScript.Spreadsheet.Sheet): string[] {
+function getMonthRange(resultSheet: GoogleAppsScript.Spreadsheet.Sheet): Date[] {
   const lastRow = resultSheet.getLastRow();
   if (lastRow <= 1) return [];
 
@@ -191,15 +196,13 @@ function getMonthRange(resultSheet: GoogleAppsScript.Spreadsheet.Sheet): string[
 
   if (!minDate || !maxDate) return [];
 
-  // Generate month strings from min to max
-  const months: string[] = [];
+  // Generate Date objects (1st of each month) from min to max
+  const months: Date[] = [];
   const current = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
   const end = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
 
   while (current <= end) {
-    const year = current.getFullYear();
-    const month = String(current.getMonth() + 1).padStart(2, '0');
-    months.push(`${year}-${month}`);
+    months.push(new Date(current.getTime()));
     current.setMonth(current.getMonth() + 1);
   }
 
