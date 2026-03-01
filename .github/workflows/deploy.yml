@@ -13,7 +13,6 @@ on:
 
 env:
   SCRIPT_ID: 1ih6hahfWWHXXaRdZ7gq3VTYSFS8-88mqKJTRJoBm1l363TosDH_y2tWj
-  DEPLOYMENT_ID: AKfycbyWuGn7rigFDy1CQOVuepcSkaouCbUhNw7aeq07clE
 
 jobs:
   deploy:
@@ -47,6 +46,3 @@ jobs:
 
       - name: Push to Apps Script
         run: npx @google/clasp push --force
-
-      - name: Deploy
-        run: npx @google/clasp deploy --deploymentId ${{ env.DEPLOYMENT_ID }} --description "CI deploy ${{ github.sha }}"
