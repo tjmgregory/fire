@@ -13,7 +13,7 @@ How to get FIRE running in your Google Sheets.
 1. Go to [Google Sheets](https://sheets.google.com) and create a new spreadsheet
 2. Name it something like "FIRE Transactions"
 
-You'll need to create **source sheets** for each bank you use, plus the system will create **Categories** and **Result** sheets automatically during setup.
+You'll need to create **source sheets** for each bank you use, plus the system will create **Categories**, **Result**, and **Categorised Spending** sheets automatically during setup.
 
 ### Create Bank Source Sheets
 
@@ -117,6 +117,7 @@ In the Apps Script editor, go to **Project Settings** (gear icon) > **Script Pro
 | `REVOLUT_SHEET_NAME` | `Revolut` | Custom sheet name for Revolut data |
 | `YONDER_ENABLED` | `true` | Enable/disable Yonder processing |
 | `YONDER_SHEET_NAME` | `Yonder` | Custom sheet name for Yonder data |
+| `CATEGORISED_SPENDING_SHEET_NAME` | `Categorised Spending` | Custom sheet name for the spending summary |
 | `EXCHANGE_RATE_PROVIDER` | `https://api.exchangerate-api.com/v4/latest/` | Exchange rate API URL |
 | `EXCHANGE_RATE_API_KEY` | *(none)* | API key if your exchange rate provider requires one |
 
@@ -129,8 +130,9 @@ In the Apps Script editor, go to **Project Settings** (gear icon) > **Script Pro
 3. Grant the required permissions when prompted (Google will ask you to authorize the script)
 
 This will:
-- Create the **Categories** sheet with headers and 12 default categories
+- Create the **Categories** sheet with headers and 17 default categories
 - Create the **Result** sheet with headers and data validation
+- Create the **Categorised Spending** sheet — a month-by-category summary grid with live `SUMIFS` formulas (skipped if no transactions exist yet; will be created on the next run)
 - Install the **onEdit trigger** (for manual category overrides)
 - Install **scheduled triggers** (normalization every 15 minutes, categorization every hour)
 
