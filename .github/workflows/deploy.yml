@@ -1,0 +1,52 @@
+name: Deploy to Google Apps Script
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/apps-script/**'
+      - 'rollup.config.js'
+      - 'tsconfig.json'
+      - 'package.json'
+
+  workflow_dispatch:
+
+env:
+  SCRIPT_ID: 1ih6hahfWWHXXaRdZ7gq3VTYSFS8-88mqKJTRJoBm1l363TosDH_y2tWj
+  DEPLOYMENT_ID: AKfycbyWuGn7rigFDy1CQOVuepcSkaouCbUhNw7aeq07clE
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build bundle
+        run: npm run build
+
+      - name: Verify build output
+        run: |
+          test -f dist/Code.js || (echo "Build failed: dist/Code.js not found" && exit 1)
+          test -f dist/appsscript.json || (echo "Build failed: dist/appsscript.json not found" && exit 1)
+          echo "Build output:"
+          ls -la dist/
+          echo "Global functions exposed:"
+          grep -E '^function \w+' dist/Code.js
+
+      - name: Configure clasp
+        run: |
+          echo '${{ secrets.CLASP_CREDENTIALS }}' > ~/.clasprc.json
+          echo '{"scriptId":"${{ env.SCRIPT_ID }}","rootDir":"./dist"}' > .clasp.json
+
+      - name: Push to Apps Script
+        run: npx @google/clasp push --force
+
+      - name: Deploy
+        run: npx @google/clasp deploy --deploymentId ${{ env.DEPLOYMENT_ID }} --description "CI deploy ${{ github.sha }}"

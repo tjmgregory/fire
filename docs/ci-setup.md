@@ -28,9 +28,16 @@ These IDs are public identifiers that appear in Apps Script URLs and are safe to
 
 1. The GitHub Action uses the refresh token from `CLASP_CREDENTIALS` to authenticate
 2. The refresh token doesn't expire, so CI will continue to work indefinitely
-3. On push to main, the workflow:
-   - Pushes code to the Apps Script project
-   - Deploys the code since `DEPLOYMENT_ID` is set in the workflow
+3. On push to main (when `src/apps-script/`, `rollup.config.js`, `tsconfig.json`, or `package.json` change), the workflow:
+   - Installs dependencies and runs `npm run build` (rollup bundle)
+   - Verifies `dist/Code.js` exists and exposes global functions
+   - Pushes `dist/` to the Apps Script project via `clasp push`
+   - Deploys with the deployment ID
+4. Can also be triggered manually via `workflow_dispatch`
+
+## Important: Build Before Push
+
+The deployment pushes the **rollup bundle** (`dist/Code.js`), not the raw TypeScript files. Google Apps Script doesn't support `require()`/`module.exports`, so the code must be bundled into a single IIFE with global `function` declarations. The workflow handles this automatically.
 
 ## Important Notes
 
