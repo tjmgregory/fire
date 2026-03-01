@@ -122,6 +122,16 @@ const DEFAULT_CATEGORIES = [
     examples: 'Vanguard, Trading 212, ISA contribution, Pension contribution'
   },
   {
+    name: 'Charity',
+    description: 'Charitable donations and fundraising contributions',
+    examples: 'JustGiving, GoFundMe, Direct debit donations, Sponsor'
+  },
+  {
+    name: 'Gifts',
+    description: 'Gifts given and received, including monetary gifts',
+    examples: 'Birthday present, Christmas gift, Wedding gift, Gift card'
+  },
+  {
     name: 'Cash',
     description: 'ATM withdrawals and cash transactions',
     examples: 'ATM withdrawal, Cash deposit, Cashback'
