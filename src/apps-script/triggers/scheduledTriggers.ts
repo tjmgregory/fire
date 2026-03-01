@@ -92,8 +92,11 @@ function scheduledCategorization(): void {
 function installScheduledTriggers(): void {
   Logger.info('Installing scheduled triggers');
 
-  // Remove existing scheduled triggers first
-  uninstallScheduledTriggers();
+  // Remove all existing triggers to avoid duplicates and clear any stale references
+  const triggers = ScriptApp.getProjectTriggers();
+  for (const trigger of triggers) {
+    ScriptApp.deleteTrigger(trigger);
+  }
 
   // Install normalization trigger (every 15 minutes)
   ScriptApp.newTrigger(TRIGGER_CONFIG.normalization.functionName)

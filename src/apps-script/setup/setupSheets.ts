@@ -177,8 +177,14 @@ function setupSheets(): SetupResult {
       result.errors.push('Failed to configure Result sheet');
     }
 
-    // Install triggers
+    // Remove all existing triggers then reinstall
     try {
+      const triggers = ScriptApp.getProjectTriggers();
+      for (const trigger of triggers) {
+        ScriptApp.deleteTrigger(trigger);
+      }
+      Logger.info(`Removed ${triggers.length} existing trigger(s)`);
+
       installOnEditTrigger();
       installScheduledTriggers();
       result.triggersInstalled = true;

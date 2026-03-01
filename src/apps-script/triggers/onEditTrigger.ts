@@ -181,12 +181,10 @@ function loadActiveCategories(): Category[] {
  * Or run this function once to programmatically install it.
  */
 function installOnEditTrigger(): void {
-  // Remove existing onEdit triggers to avoid duplicates
+  // Remove all existing triggers to avoid duplicates and clear any stale references
   const triggers = ScriptApp.getProjectTriggers();
   for (const trigger of triggers) {
-    if (trigger.getHandlerFunction() === 'onEdit') {
-      ScriptApp.deleteTrigger(trigger);
-    }
+    ScriptApp.deleteTrigger(trigger);
   }
 
   // Create new installable trigger
