@@ -12,6 +12,7 @@ import { CategoryValidator } from '../models/Category';
 import { ConfigurationManager } from '../infrastructure/config/ConfigurationManager';
 import { installOnEditTrigger } from '../triggers/onEditTrigger';
 import { installScheduledTriggers } from '../triggers/scheduledTriggers';
+import { setupCategorisedSpendingSheet, CategorisedSpendingResult } from './setupCategorisedSpendingSheet';
 
 /**
  * Sheet configuration
@@ -157,6 +158,7 @@ function setupSheets(): SetupResult {
     success: true,
     categoriesSheet: { created: false, configured: false, seeded: false },
     resultSheet: { created: false, configured: false },
+    categorisedSpendingSheet: { created: false, configured: false },
     triggersInstalled: false,
     errors: []
   };
@@ -176,6 +178,14 @@ function setupSheets(): SetupResult {
     result.resultSheet = resultResult;
     if (!resultResult.configured) {
       result.errors.push('Failed to configure Result sheet');
+    }
+
+    // Setup Categorised Spending sheet (skipped if Result sheet has no data yet)
+    const spendingResult = setupCategorisedSpendingSheet(spreadsheet);
+    result.categorisedSpendingSheet = spendingResult;
+    if (!spendingResult.configured && spendingResult.error) {
+      // Not a hard failure — the sheet just needs transactions first
+      Logger.info(`Categorised Spending sheet skipped: ${spendingResult.error}`);
     }
 
     // Remove all existing triggers then reinstall
@@ -413,6 +423,7 @@ interface SetupResult {
   success: boolean;
   categoriesSheet: SheetSetupResult & { seeded: boolean };
   resultSheet: SheetSetupResult;
+  categorisedSpendingSheet: CategorisedSpendingResult;
   triggersInstalled: boolean;
   errors: string[];
 }

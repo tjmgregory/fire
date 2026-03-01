@@ -16,46 +16,54 @@ import { ConfigurationManager } from '../infrastructure/config/ConfigurationMana
 
 const CATEGORISED_SPENDING_SHEET_NAME = 'Categorised Spending';
 
+interface CategorisedSpendingResult {
+  created: boolean;
+  configured: boolean;
+  error?: string;
+}
+
 /**
  * Setup the Categorised Spending sheet.
  *
  * Reads active categories and the date range from the Result sheet,
  * then builds a month-by-category grid populated with SUMIFS formulas.
  *
- * Can be re-run whenever categories change to refresh the sheet.
+ * Called as part of setupSheets(). Also safe to re-run independently
+ * whenever categories change.
  */
-function setupCategorisedSpendingSheet(): { success: boolean; error?: string } {
+function setupCategorisedSpendingSheet(
+  spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet
+): CategorisedSpendingResult {
   Logger.info('Starting Categorised Spending sheet setup');
 
   try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-
     // Read active categories
     const categoriesSheetName = ConfigurationManager.get('CATEGORIES_SHEET_NAME', 'Categories') || 'Categories';
     const categoriesSheet = spreadsheet.getSheetByName(categoriesSheetName);
     if (!categoriesSheet) {
-      throw new Error(`Categories sheet '${categoriesSheetName}' not found. Run setupSheets() first.`);
+      return { created: false, configured: false, error: 'Categories sheet not found' };
     }
 
     const categoryNames = getActiveCategoryNames(categoriesSheet);
     if (categoryNames.length === 0) {
-      throw new Error('No active categories found.');
+      return { created: false, configured: false, error: 'No active categories found' };
     }
 
     // Get date range from Result sheet
     const resultSheetName = ConfigurationManager.get('RESULT_SHEET_NAME', 'Result') || 'Result';
     const resultSheet = spreadsheet.getSheetByName(resultSheetName);
     if (!resultSheet) {
-      throw new Error(`Result sheet '${resultSheetName}' not found. Run setupSheets() first.`);
+      return { created: false, configured: false, error: 'Result sheet not found' };
     }
 
     const months = getMonthRange(resultSheet);
     if (months.length === 0) {
-      throw new Error('No transactions found in Result sheet. Process some transactions first.');
+      return { created: false, configured: false, error: 'No transactions found in Result sheet yet' };
     }
 
     // Delete existing sheet and recreate (idempotent refresh)
     const existingSheet = spreadsheet.getSheetByName(CATEGORISED_SPENDING_SHEET_NAME);
+    const isRecreate = !!existingSheet;
     if (existingSheet) {
       spreadsheet.deleteSheet(existingSheet);
       Logger.info('Deleted existing Categorised Spending sheet for refresh');
@@ -120,12 +128,12 @@ function setupCategorisedSpendingSheet(): { success: boolean; error?: string } {
       months: months.length
     });
 
-    return { success: true };
+    return { created: !isRecreate, configured: true };
 
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     Logger.error(`Categorised Spending sheet setup failed: ${message}`);
-    return { success: false, error: message };
+    return { created: false, configured: false, error: message };
   }
 }
 
@@ -209,4 +217,4 @@ function columnToLetter(col: number): string {
   return letter;
 }
 
-export { setupCategorisedSpendingSheet, CATEGORISED_SPENDING_SHEET_NAME };
+export { setupCategorisedSpendingSheet, CATEGORISED_SPENDING_SHEET_NAME, CategorisedSpendingResult };
