@@ -24,5 +24,5 @@ export {
   recategorizeAll
 } from './controllers/CategorizationController';
 
-// One-time setup (includes trigger installation)
+// One-time setup (includes trigger installation and categorised spending sheet)
 export { setupSheets } from './setup/setupSheets';
