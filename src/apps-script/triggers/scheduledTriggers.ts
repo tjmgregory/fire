@@ -24,7 +24,7 @@ const TRIGGER_CONFIG = {
   },
   categorization: {
     functionName: 'scheduledCategorization',
-    intervalMinutes: 60
+    intervalHours: 1
   }
 };
 
@@ -106,10 +106,10 @@ function installScheduledTriggers(): void {
   // Install categorization trigger (every hour)
   ScriptApp.newTrigger(TRIGGER_CONFIG.categorization.functionName)
     .timeBased()
-    .everyMinutes(TRIGGER_CONFIG.categorization.intervalMinutes)
+    .everyHours(TRIGGER_CONFIG.categorization.intervalHours)
     .create();
 
-  Logger.info(`Installed categorization trigger: every ${TRIGGER_CONFIG.categorization.intervalMinutes} minutes`);
+  Logger.info(`Installed categorization trigger: every ${TRIGGER_CONFIG.categorization.intervalHours} hour(s)`);
 
   Logger.info('All scheduled triggers installed');
 }
@@ -157,7 +157,7 @@ function checkTriggerStatus(): TriggerStatus {
     },
     categorization: {
       installed: false,
-      intervalMinutes: null,
+      intervalHours: null,
       lastRun: null
     },
     otherTriggers: []
@@ -173,7 +173,7 @@ function checkTriggerStatus(): TriggerStatus {
       status.normalization.intervalMinutes = TRIGGER_CONFIG.normalization.intervalMinutes;
     } else if (handlerFunction === TRIGGER_CONFIG.categorization.functionName) {
       status.categorization.installed = true;
-      status.categorization.intervalMinutes = TRIGGER_CONFIG.categorization.intervalMinutes;
+      status.categorization.intervalHours = TRIGGER_CONFIG.categorization.intervalHours;
     } else {
       status.otherTriggers.push({
         handlerFunction,
@@ -201,7 +201,7 @@ interface TriggerStatus {
   };
   categorization: {
     installed: boolean;
-    intervalMinutes: number | null;
+    intervalHours: number | null;
     lastRun: Date | null;
   };
   otherTriggers: Array<{
