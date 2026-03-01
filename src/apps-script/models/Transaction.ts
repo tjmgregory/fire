@@ -78,6 +78,9 @@ export interface Transaction {
   gbpAmountValue: number;
   exchangeRateValue: number | null;
 
+  // Original category from bank source (freetext, not authoritative)
+  originalCategory: string | null;
+
   // Categorization (AI)
   categoryAiId: string | null;
   categoryAiName: string | null;

@@ -72,6 +72,12 @@ export class MonzoNormalizer extends BankNormalizer {
       ? String(rawNotes).trim() || null
       : null;
 
+    // Extract original bank category (freetext, used as AI hint)
+    const rawCategory = this.getValue(rawData, 'category');
+    const originalCategory = typeof rawCategory === 'string' && rawCategory.trim().length > 0
+      ? rawCategory.trim()
+      : null;
+
     const transaction: Transaction = {
       ...base,
       id: this.generateUUID(),
@@ -88,6 +94,7 @@ export class MonzoNormalizer extends BankNormalizer {
       processingStatus: ProcessingStatus.UNPROCESSED,
       errorMessage: null,
       exchangeRateValue: null,
+      originalCategory,
       categoryAiId: null,
       categoryAiName: null,
       categoryConfidenceScore: null,

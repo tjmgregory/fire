@@ -71,6 +71,7 @@ export class RevolutNormalizer extends BankNormalizer {
       processingStatus: ProcessingStatus.UNPROCESSED,
       errorMessage: null,
       exchangeRateValue: null,
+      originalCategory: null, // Revolut exports don't include categories
       categoryAiId: null,
       categoryAiName: null,
       categoryConfidenceScore: null,

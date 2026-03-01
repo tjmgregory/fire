@@ -36,6 +36,7 @@ const SHEET_CONFIG = {
       'Original Currency',
       'GBP Amount',
       'Exchange Rate',
+      'Original Category',
       'AI Category ID',
       'AI Category',
       'Confidence Score',
@@ -336,18 +337,19 @@ function setupResultSheet(spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet)
       10: 80,   // Original Currency
       11: 100,  // GBP Amount
       12: 100,  // Exchange Rate
-      13: 300,  // AI Category ID
-      14: 150,  // AI Category
-      15: 100,  // Confidence Score
-      16: 300,  // Manual Category ID
-      17: 150,  // Manual Category
-      18: 150,  // Category (computed)
-      19: 120,  // Processing Status
-      20: 200,  // Error Message
-      21: 150,  // Created At
-      22: 150,  // Last Modified
-      23: 150,  // Normalised At
-      24: 150   // Categorised At
+      13: 150,  // Original Category
+      14: 300,  // AI Category ID
+      15: 150,  // AI Category
+      16: 100,  // Confidence Score
+      17: 300,  // Manual Category ID
+      18: 150,  // Manual Category
+      19: 150,  // Category (computed)
+      20: 120,  // Processing Status
+      21: 200,  // Error Message
+      22: 150,  // Created At
+      23: 150,  // Last Modified
+      24: 150,  // Normalised At
+      25: 150   // Categorised At
     };
 
     for (const [col, width] of Object.entries(columnWidths)) {
