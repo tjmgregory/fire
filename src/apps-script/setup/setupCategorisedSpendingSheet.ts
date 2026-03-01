@@ -14,7 +14,7 @@
 import { Logger } from '../utils/Logger';
 import { ConfigurationManager } from '../infrastructure/config/ConfigurationManager';
 
-const CATEGORISED_SPENDING_SHEET_NAME = 'Categorised Spending';
+const DEFAULT_SHEET_NAME = 'Categorised Spending';
 
 interface CategorisedSpendingResult {
   created: boolean;
@@ -61,15 +61,18 @@ function setupCategorisedSpendingSheet(
       return { created: false, configured: false, error: 'No transactions found in Result sheet yet' };
     }
 
+    // Resolve sheet name from config
+    const sheetName = ConfigurationManager.get('CATEGORISED_SPENDING_SHEET_NAME', DEFAULT_SHEET_NAME) || DEFAULT_SHEET_NAME;
+
     // Delete existing sheet and recreate (idempotent refresh)
-    const existingSheet = spreadsheet.getSheetByName(CATEGORISED_SPENDING_SHEET_NAME);
+    const existingSheet = spreadsheet.getSheetByName(sheetName);
     const isRecreate = !!existingSheet;
     if (existingSheet) {
       spreadsheet.deleteSheet(existingSheet);
       Logger.info('Deleted existing Categorised Spending sheet for refresh');
     }
 
-    const sheet = spreadsheet.insertSheet(CATEGORISED_SPENDING_SHEET_NAME);
+    const sheet = spreadsheet.insertSheet(sheetName);
 
     // Write headers: "Month" in A1, then category names
     const headers = ['Month', ...categoryNames];
@@ -217,4 +220,4 @@ function columnToLetter(col: number): string {
   return letter;
 }
 
-export { setupCategorisedSpendingSheet, CATEGORISED_SPENDING_SHEET_NAME, CategorisedSpendingResult };
+export { setupCategorisedSpendingSheet, CategorisedSpendingResult };
