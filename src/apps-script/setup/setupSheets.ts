@@ -62,11 +62,6 @@ const DEFAULT_CATEGORIES = [
     examples: 'Tesco, Sainsbury\'s, Waitrose, Aldi, Lidl, Ocado'
   },
   {
-    name: 'Transport',
-    description: 'Public transport, taxis, and ride-sharing services',
-    examples: 'TfL, Uber, Bolt, Train tickets, Bus fares'
-  },
-  {
     name: 'Eating Out',
     description: 'Restaurants, cafes, takeaways, and food delivery',
     examples: 'Deliveroo, Just Eat, Nandos, Pret, Costa'
@@ -102,9 +97,9 @@ const DEFAULT_CATEGORIES = [
     examples: 'Airbnb, Rent payment, Booking.com accommodation'
   },
   {
-    name: 'Travel',
-    description: 'Flights, transport, and travel expenses (not accommodation)',
-    examples: 'Flights, Holiday bookings, Travel insurance'
+    name: 'Transport',
+    description: 'Flights, trains, taxis, and getting from A to B',
+    examples: 'Flights, TfL, Uber, Bolt, Train tickets, Bus fares, Ryanair, Petrol, Shell, BP'
   },
   {
     name: 'Subscriptions',
