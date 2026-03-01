@@ -87,14 +87,24 @@ const DEFAULT_CATEGORIES = [
     examples: 'Electricity, Gas, Water, Internet, Phone'
   },
   {
-    name: 'Health & Fitness',
-    description: 'Medical expenses, gym memberships, and wellness',
-    examples: 'Gym, Pharmacy, Doctor, Dentist, Optician'
+    name: 'Fitness',
+    description: 'Sports, gym memberships, and physical activities',
+    examples: 'Gym, CrossFit, Swimming, Tennis, Climbing, Yoga class'
+  },
+  {
+    name: 'Health',
+    description: 'Medical treatments, medications, and healthcare',
+    examples: 'Pharmacy, Doctor, Dentist, Optician, Prescriptions'
+  },
+  {
+    name: 'Accommodation',
+    description: 'Rent, housing, and short-term stays',
+    examples: 'Airbnb, Rent payment, Booking.com accommodation'
   },
   {
     name: 'Travel',
-    description: 'Holidays, flights, hotels, and travel expenses',
-    examples: 'Hotels, Airbnb, Flights, Holiday bookings'
+    description: 'Flights, transport, and travel expenses (not accommodation)',
+    examples: 'Flights, Holiday bookings, Travel insurance'
   },
   {
     name: 'Subscriptions',
@@ -108,13 +118,23 @@ const DEFAULT_CATEGORIES = [
   },
   {
     name: 'Transfers',
-    description: 'Money transfers between accounts',
-    examples: 'Bank transfer, Savings transfer, Investment transfer'
+    description: 'Money transfers between accounts and credit card repayments',
+    examples: 'Bank transfer, Savings transfer, Credit card payment, Credit card repayment'
+  },
+  {
+    name: 'Investments',
+    description: 'Investment contributions, trades, and platform fees',
+    examples: 'Vanguard, Trading 212, ISA contribution, Pension contribution'
+  },
+  {
+    name: 'Cash',
+    description: 'ATM withdrawals and cash transactions',
+    examples: 'ATM withdrawal, Cash deposit, Cashback'
   },
   {
     name: 'Other',
     description: 'Miscellaneous transactions that don\'t fit other categories',
-    examples: 'Cash withdrawal, Unknown transactions'
+    examples: 'Unknown transactions, Uncategorised'
   }
 ];
 
