@@ -207,7 +207,7 @@ Respond ONLY with the JSON array, no other text.`;
         }
       ],
       temperature: this.temperature,
-      max_tokens: this.maxTokens
+      max_completion_tokens: this.maxTokens
     };
 
     const response = UrlFetchApp.fetch(url, {
