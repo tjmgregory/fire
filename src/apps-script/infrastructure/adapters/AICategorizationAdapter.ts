@@ -173,7 +173,7 @@ Some transactions include a "Bank Category" — this is the original category as
 Transactions to categorize:
 ${transactionList}
 
-Respond in JSON format with an array of objects, each containing:
+Respond with a JSON object containing a "results" array. Each element must have:
 - transactionId: the transaction ID
 - categoryId: the category ID
 - categoryName: the category name
@@ -181,11 +181,7 @@ Respond in JSON format with an array of objects, each containing:
 - reasoning: brief explanation (optional)
 
 Example response:
-[
-  {"transactionId": "abc123", "categoryId": "cat-1", "categoryName": "Groceries", "confidenceScore": 95, "reasoning": "Tesco is a supermarket"}
-]
-
-Respond ONLY with the JSON array, no other text.`;
+{"results": [{"transactionId": "abc123", "categoryId": "cat-1", "categoryName": "Groceries", "confidenceScore": 95, "reasoning": "Tesco is a supermarket"}]}`;
   }
 
   /**
@@ -207,7 +203,8 @@ Respond ONLY with the JSON array, no other text.`;
         }
       ],
       temperature: this.temperature,
-      max_completion_tokens: this.maxTokens
+      max_completion_tokens: this.maxTokens,
+      response_format: { type: 'json_object' }
     };
 
     const response = UrlFetchApp.fetch(url, {
@@ -251,7 +248,11 @@ Respond ONLY with the JSON array, no other text.`;
 
     let parsed: ParsedCategorization[];
     try {
-      parsed = JSON.parse(jsonContent);
+      const json = JSON.parse(jsonContent);
+      parsed = Array.isArray(json) ? json : json.results;
+      if (!Array.isArray(parsed)) {
+        throw new Error('Response is not an array and has no "results" array');
+      }
     } catch (e) {
       logger.error(`Failed to parse AI response: ${response}`, e as Error);
       // Return uncategorized results
