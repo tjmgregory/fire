@@ -314,6 +314,49 @@ export class SheetDataAdapter implements SheetDataPort {
     return categories.find(c => c.name.toLowerCase().trim() === searchName) || null;
   }
 
+  /**
+   * Backfill generated IDs to a source sheet's ID column (FR-012)
+   *
+   * For banks without native transaction IDs, writes the system-generated
+   * IDs back to the source sheet so they persist across runs.
+   *
+   * @param sourceId - Bank source identifier
+   * @param backfills - Array of { sourceRowIndex (0-based data row), id } to write back
+   */
+  backfillSourceIds(sourceId: BankSourceId, backfills: Array<{ sourceRowIndex: number; id: string }>): void {
+    if (backfills.length === 0) return;
+
+    const bankConfig = getBankSourceConfig(sourceId);
+    const sheet = this.spreadsheet.getSheetByName(bankConfig.sheetName);
+
+    if (!sheet) {
+      logger.warning(`Source sheet '${bankConfig.sheetName}' not found for ID backfill`);
+      return;
+    }
+
+    // Find the ID column index from headers
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0] as string[];
+    const idColumnName = bankConfig.columnMappings.transactionId;
+    if (!idColumnName) {
+      logger.warning(`No transactionId column mapping for ${sourceId}, skipping backfill`);
+      return;
+    }
+
+    let idColIndex = headers.indexOf(idColumnName);
+    if (idColIndex === -1) {
+      // Column doesn't exist yet — append it
+      idColIndex = headers.length;
+      sheet.getRange(1, idColIndex + 1).setValue(idColumnName);
+    }
+
+    // Write each ID back (sourceRowIndex is 0-based data row, +2 for 1-indexed header offset)
+    for (const { sourceRowIndex, id } of backfills) {
+      sheet.getRange(sourceRowIndex + 2, idColIndex + 1).setValue(id);
+    }
+
+    logger.info(`Backfilled ${backfills.length} IDs to ${sourceId} source sheet`);
+  }
+
   // ============ Private Helper Methods ============
 
   /**

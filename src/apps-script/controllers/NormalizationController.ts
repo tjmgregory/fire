@@ -19,7 +19,7 @@ import { HistoricalExchangeRateAdapter } from '../infrastructure/adapters/Histor
 import { TransactionNormalizer } from '../domain/normalizers/TransactionNormalizer';
 import { CurrencyConverter } from '../domain/converters/CurrencyConverter';
 import { DuplicateDetector } from '../domain/normalization/DuplicateDetector';
-import { getActiveBankSources } from '../infrastructure/config/BankSourceConfig';
+import { getActiveBankSources, hasNativeTransactionId } from '../infrastructure/config/BankSourceConfig';
 import { logger } from '../infrastructure/logging/ErrorLogger';
 
 /**
@@ -169,8 +169,11 @@ export class NormalizationController {
 
     // Normalize each row
     const normalizedTransactions: Transaction[] = [];
+    const requiresBackfill = !hasNativeTransactionId(sourceId);
+    const idBackfills: Array<{ sourceRowIndex: number; id: string }> = [];
 
-    for (const rawRow of rawRows) {
+    for (let rowIndex = 0; rowIndex < rawRows.length; rowIndex++) {
+      const rawRow = rawRows[rowIndex];
       try {
         // Skip empty rows
         if (!rawRow || Object.keys(rawRow).length === 0) {
@@ -185,6 +188,15 @@ export class NormalizationController {
         if (duplicateCheck.isDuplicate) {
           result.duplicates++;
           continue;
+        }
+
+        // Track new IDs that need backfilling to source sheet (FR-012)
+        if (requiresBackfill) {
+          const idColumnName = 'ID';
+          const existingId = rawRow[idColumnName];
+          if (!existingId || (typeof existingId === 'string' && existingId.trim() === '')) {
+            idBackfills.push({ sourceRowIndex: rowIndex, id: transaction.originalTransactionId });
+          }
         }
 
         // Convert currency if needed
@@ -215,6 +227,11 @@ export class NormalizationController {
     if (normalizedTransactions.length > 0) {
       this.sheetAdapter.writeTransactionsBatch(normalizedTransactions);
       logger.info(`Wrote ${normalizedTransactions.length} transactions from ${sourceId}`);
+    }
+
+    // Backfill generated IDs to source sheet (FR-012)
+    if (idBackfills.length > 0) {
+      this.sheetAdapter.backfillSourceIds(sourceId, idBackfills);
     }
 
     return result;

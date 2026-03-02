@@ -16,7 +16,7 @@
  * - BR-BS-03: Sources without native transaction IDs require ID backfilling
  * - BR-BS-04: Column mappings are immutable once transactions are processed
  * - BR-BS-05: Banks with native IDs must use them as-is
- * - BR-BS-06: Generated IDs must be deterministic (same input → same ID)
+ * - BR-BS-06: Generated IDs are persisted UUIDs (backfilled to source sheet)
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
@@ -55,6 +55,7 @@ const createRevolutSource = (): BankSource => ({
   hasNativeTransactionId: false,
   isActive: true,
   columnMappings: {
+    transactionId: 'ID',
     date: 'Started Date',
     completedDate: 'Completed Date',
     description: 'Description',
@@ -72,6 +73,7 @@ const createYonderSource = (): BankSource => ({
   hasNativeTransactionId: false,
   isActive: true,
   columnMappings: {
+    transactionId: 'ID',
     date: 'Date/Time of transaction',
     description: 'Description',
     amount: 'Amount (GBP)',
@@ -225,8 +227,8 @@ describe('RevolutNormalizer', () => {
     normalizer = new RevolutNormalizer(source);
   });
 
-  describe('normalize - Revolut-specific behavior (BR-BS-03, BR-BS-06: ID backfilling)', () => {
-    test('UC-005: Given Revolut transaction without native ID, when normalized, then generates deterministic ID', () => {
+  describe('normalize - Revolut-specific behavior (BR-BS-03: ID backfilling)', () => {
+    test('FR-012: Given Revolut transaction without ID, when normalized, then generates a UUID', () => {
       // Arrange - Revolut does not provide transaction IDs
       const rawData: RawRowData = {
         'Started Date': new Date('2025-11-15'),
@@ -239,14 +241,31 @@ describe('RevolutNormalizer', () => {
       // Act
       const result = normalizer.normalize(rawData);
 
-      // Assert - BR-BS-03: Sources without native IDs require ID backfilling
+      // Assert - FR-012: New UUID generated for backfilling
       expect(result.originalTransactionId).toBeDefined();
       expect(result.originalTransactionId).not.toBe('');
-      expect(result.originalTransactionId).toMatch(/^[0-9a-f]+$/); // Hex hash format
+      expect(result.originalTransactionId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
     });
 
-    test('BR-BS-06: Given same Revolut transaction data, when normalized twice, then generates identical IDs', () => {
-      // Arrange - Same transaction data
+    test('FR-012: Given Revolut transaction with backfilled ID, when normalized, then uses existing ID', () => {
+      // Arrange - ID was previously backfilled to source sheet
+      const rawData: RawRowData = {
+        'ID': 'backfilled-uuid-12345',
+        'Started Date': new Date('2025-11-15'),
+        'Description': 'Uber Trip',
+        'Amount': -15.50,
+        'Currency': 'GBP'
+      };
+
+      // Act
+      const result = normalizer.normalize(rawData);
+
+      // Assert - Uses the existing backfilled ID
+      expect(result.originalTransactionId).toBe('backfilled-uuid-12345');
+    });
+
+    test('FR-012: Given Revolut transaction without ID, when normalized twice, then generates different UUIDs', () => {
+      // Arrange - No ID on source sheet
       const rawData: RawRowData = {
         'Started Date': new Date('2025-11-15'),
         'Description': 'Uber Trip',
@@ -254,12 +273,12 @@ describe('RevolutNormalizer', () => {
         'Currency': 'GBP'
       };
 
-      // Act - Normalize twice
+      // Act
       const result1 = normalizer.normalize(rawData);
       const result2 = normalizer.normalize(rawData);
 
-      // Assert - BR-BS-06: Generated IDs must be deterministic
-      expect(result1.originalTransactionId).toBe(result2.originalTransactionId);
+      // Assert - Each call generates a new UUID (backfill ensures only one is persisted)
+      expect(result1.originalTransactionId).not.toBe(result2.originalTransactionId);
     });
 
     test('FR-002: Given Revolut transaction with completed date, when normalized, then prefers completed over started date', () => {
@@ -344,7 +363,7 @@ describe('YonderNormalizer', () => {
   });
 
   describe('normalize - Yonder-specific behavior (BR-BS-03: ID backfilling, GBP-only)', () => {
-    test('UC-005: Given Yonder transaction without native ID, when normalized, then generates deterministic ID', () => {
+    test('FR-012: Given Yonder transaction without ID, when normalized, then generates a UUID', () => {
       // Arrange - Yonder does not provide transaction IDs
       const rawData: RawRowData = {
         'Date/Time of transaction': new Date('2025-11-15T14:30:00'),
@@ -358,14 +377,15 @@ describe('YonderNormalizer', () => {
       // Act
       const result = normalizer.normalize(rawData);
 
-      // Assert - BR-BS-03: Sources without native IDs require ID backfilling
+      // Assert - FR-012: New UUID generated for backfilling
       expect(result.originalTransactionId).toBeDefined();
-      expect(result.originalTransactionId).toMatch(/^[0-9a-f]+$/);
+      expect(result.originalTransactionId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
     });
 
-    test('BR-BS-06: Given same Yonder transaction data, when normalized twice, then generates identical IDs', () => {
-      // Arrange
+    test('FR-012: Given Yonder transaction with backfilled ID, when normalized, then uses existing ID', () => {
+      // Arrange - ID was previously backfilled to source sheet
       const rawData: RawRowData = {
+        'ID': 'backfilled-yonder-uuid-789',
         'Date/Time of transaction': new Date('2025-11-15T14:30:00'),
         'Description': 'John Lewis',
         'Amount (GBP)': 89.99,
@@ -374,11 +394,10 @@ describe('YonderNormalizer', () => {
       };
 
       // Act
-      const result1 = normalizer.normalize(rawData);
-      const result2 = normalizer.normalize(rawData);
+      const result = normalizer.normalize(rawData);
 
-      // Assert - BR-BS-06: Deterministic ID generation
-      expect(result1.originalTransactionId).toBe(result2.originalTransactionId);
+      // Assert - Uses the existing backfilled ID
+      expect(result.originalTransactionId).toBe('backfilled-yonder-uuid-789');
     });
 
     test('FR-002: Given Yonder transaction with explicit DEBIT type, when normalized, then respects type column', () => {

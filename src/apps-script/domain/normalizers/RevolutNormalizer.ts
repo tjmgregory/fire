@@ -2,7 +2,7 @@
  * Revolut Normalizer
  *
  * Normalizes Revolut bank export format to Transaction entity.
- * Revolut does not provide native IDs - generates deterministic hashes.
+ * Revolut does not provide native IDs - generates UUIDs and backfills to source sheet.
  *
  * @module domain/normalizers/RevolutNormalizer
  */
@@ -16,7 +16,7 @@ import { BankSource } from '../../models/BankSource';
  * Revolut-specific normalizer
  *
  * Revolut characteristics:
- * - No native transaction IDs (generate hash)
+ * - No native transaction IDs (generates UUID, backfilled to source sheet)
  * - Separate Started Date and Completed Date
  * - Fee column (separate from amount)
  * - State and Balance columns
@@ -47,13 +47,9 @@ export class RevolutNormalizer extends BankNormalizer {
     const amount = this.getRequiredAmount(rawData, 'amount');
     const currency = this.getCurrencyCode(rawData, 'currency');
 
-    // Generate deterministic transaction ID (Revolut doesn't provide one)
-    const originalTransactionId = this.generateTransactionId(
-      transactionDate,
-      description,
-      amount,
-      currency
-    );
+    // Use existing ID if already backfilled, otherwise generate a new UUID (FR-012)
+    const existingId = this.getOptionalString(rawData, 'transactionId');
+    const originalTransactionId = existingId || this.generateUUID();
 
     const transaction: Transaction = {
       ...base,
