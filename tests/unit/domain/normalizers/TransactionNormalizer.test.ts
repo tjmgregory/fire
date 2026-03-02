@@ -53,6 +53,7 @@ const createRevolutSource = (): BankSource => ({
   hasNativeTransactionId: false,
   isActive: true,
   columnMappings: {
+    transactionId: 'ID',
     date: 'Started Date',
     completedDate: 'Completed Date',
     description: 'Description',
@@ -70,6 +71,7 @@ const createYonderSource = (): BankSource => ({
   hasNativeTransactionId: false,
   isActive: true,
   columnMappings: {
+    transactionId: 'ID',
     date: 'Date/Time of transaction',
     description: 'Description',
     amount: 'Amount (GBP)',
@@ -195,25 +197,25 @@ describe('TransactionNormalizer', () => {
       expect(result.bankSourceId).toBe(BankSourceId.REVOLUT);
       expect(result.description).toBe('Uber Trip');
       expect(result.originalAmountValue).toBe(15.50);
-      expect(result.originalTransactionId).toBeDefined(); // Generated ID
-      expect(result.originalTransactionId).toMatch(/^[0-9a-f]+$/); // Hex format
+      expect(result.originalTransactionId).toBeDefined(); // Generated UUID
+      expect(result.originalTransactionId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
     });
 
-    test('FR-012: Given Revolut transaction, when normalized, then generates deterministic ID', () => {
-      // Arrange - Same transaction data
+    test('FR-012: Given Revolut transaction with backfilled ID, when normalized, then uses existing ID', () => {
+      // Arrange - ID was previously backfilled
       const rawData: RawRowData = {
+        'ID': 'existing-backfilled-id',
         'Started Date': new Date('2025-11-15'),
         'Description': 'Coffee Shop',
         'Amount': -4.50,
         'Currency': 'GBP'
       };
 
-      // Act - Normalize twice
-      const result1 = normalizer.normalize(rawData, BankSourceId.REVOLUT);
-      const result2 = normalizer.normalize(rawData, BankSourceId.REVOLUT);
+      // Act
+      const result = normalizer.normalize(rawData, BankSourceId.REVOLUT);
 
-      // Assert - FR-012: IDs must be deterministic for duplicate detection
-      expect(result1.originalTransactionId).toBe(result2.originalTransactionId);
+      // Assert - FR-012: Uses the persisted ID from source sheet
+      expect(result.originalTransactionId).toBe('existing-backfilled-id');
     });
   });
 
@@ -371,10 +373,10 @@ describe('TransactionNormalizer', () => {
       expect(monzoResult.originalTransactionId).toBe('tx_monzo_111'); // Native ID
 
       expect(revolutResult.bankSourceId).toBe(BankSourceId.REVOLUT);
-      expect(revolutResult.originalTransactionId).toMatch(/^[0-9a-f]+$/); // Generated ID
+      expect(revolutResult.originalTransactionId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i); // Generated UUID
 
       expect(yonderResult.bankSourceId).toBe(BankSourceId.YONDER);
-      expect(yonderResult.originalTransactionId).toMatch(/^[0-9a-f]+$/); // Generated ID
+      expect(yonderResult.originalTransactionId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i); // Generated UUID
 
       // All should be UNPROCESSED initially
       expect(monzoResult.processingStatus).toBe(ProcessingStatus.UNPROCESSED);

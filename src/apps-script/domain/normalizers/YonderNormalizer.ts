@@ -16,7 +16,7 @@ import { BankSource } from '../../models/BankSource';
  * Yonder-specific normalizer
  *
  * Yonder characteristics:
- * - No native transaction IDs (generate hash)
+ * - No native transaction IDs (generates UUID, backfilled to source sheet)
  * - GBP-only transactions
  * - Combined Date/Time column
  * - Explicit "Debit or Credit" column
@@ -63,13 +63,9 @@ export class YonderNormalizer extends BankNormalizer {
       transactionType = this.determineType(amount);
     }
 
-    // Generate deterministic transaction ID (Yonder doesn't provide one)
-    const originalTransactionId = this.generateTransactionId(
-      transactionDate,
-      description,
-      amount,
-      currency
-    );
+    // Use existing ID if already backfilled, otherwise generate a new UUID (FR-012)
+    const existingId = this.getOptionalString(rawData, 'transactionId');
+    const originalTransactionId = existingId || this.generateUUID();
 
     // Extract original bank category (freetext, used as AI hint)
     const rawCategory = this.getValue(rawData, 'category');
