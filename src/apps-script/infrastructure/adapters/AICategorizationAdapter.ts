@@ -26,7 +26,16 @@ interface OpenAIResponse {
     message: {
       content: string;
     };
+    finish_reason: string;
   }>;
+}
+
+/**
+ * Internal result from callOpenAI with truncation info
+ */
+interface OpenAIResult {
+  content: string;
+  truncated: boolean;
 }
 
 /**
@@ -51,6 +60,7 @@ export class AICategorizationAdapter implements AICategorizationPort {
   private model: string;
   private temperature: number;
   private maxTokens: number;
+  private chunkSize: number = 10;
 
   constructor() {
     const config = ConfigurationManager.getOpenAIConfig();
@@ -73,21 +83,20 @@ export class AICategorizationAdapter implements AICategorizationPort {
     }
 
     // For small batches, process directly
-    if (transactions.length <= 10) {
+    if (transactions.length <= this.chunkSize) {
       return this.categorizeBatchInternal(transactions, categories, context);
     }
 
-    // For larger batches, chunk into groups of 10
+    // For larger batches, chunk into groups
     const results: CategorizationResult[] = [];
-    const chunkSize = 10;
 
-    for (let i = 0; i < transactions.length; i += chunkSize) {
-      const chunk = transactions.slice(i, i + chunkSize);
+    for (let i = 0; i < transactions.length; i += this.chunkSize) {
+      const chunk = transactions.slice(i, i + this.chunkSize);
       const chunkResults = await this.categorizeBatchInternal(chunk, categories, context);
       results.push(...chunkResults);
 
       // Small delay between chunks to avoid rate limiting
-      if (i + chunkSize < transactions.length) {
+      if (i + this.chunkSize < transactions.length) {
         await this.sleep(500);
       }
     }
@@ -119,7 +128,7 @@ export class AICategorizationAdapter implements AICategorizationPort {
   ): Promise<CategorizationResult[]> {
     const prompt = this.buildPrompt(transactions, categories, context);
 
-    const response = await RetryUtils.retry(
+    const result = await RetryUtils.retry(
       async () => this.callOpenAI(prompt),
       {
         maxAttempts: 3,
@@ -128,7 +137,15 @@ export class AICategorizationAdapter implements AICategorizationPort {
       }
     );
 
-    const parsed = this.parseResponse(response, transactions, categories);
+    // If response was truncated and batch is splittable, halve chunk size and retry
+    if (result.truncated && transactions.length > 1) {
+      this.chunkSize = Math.max(1, Math.ceil(transactions.length / 2));
+      logger.warning(`AI response truncated, reducing chunk size to ${this.chunkSize} for remaining batches`);
+      // Re-process this batch with the new smaller chunk size
+      return this.categorizeBatch(transactions, categories, context);
+    }
+
+    const parsed = this.parseResponse(result.content, transactions, categories);
     logger.info(`Categorized ${parsed.length} transactions via AI`);
 
     return parsed;
@@ -178,16 +195,17 @@ Respond with a JSON object containing a "results" array. Each element must have:
 - categoryId: the category ID
 - categoryName: the category name
 - confidenceScore: your confidence (0-100)
-- reasoning: brief explanation (optional)
+
+Keep the response compact. Do NOT include reasoning or any extra fields.
 
 Example response:
-{"results": [{"transactionId": "abc123", "categoryId": "cat-1", "categoryName": "Groceries", "confidenceScore": 95, "reasoning": "Tesco is a supermarket"}]}`;
+{"results": [{"transactionId": "abc123", "categoryId": "cat-1", "categoryName": "Groceries", "confidenceScore": 95}]}`;
   }
 
   /**
    * Call OpenAI API
    */
-  private async callOpenAI(prompt: string): Promise<string> {
+  private async callOpenAI(prompt: string): Promise<OpenAIResult> {
     const url = 'https://api.openai.com/v1/chat/completions';
 
     const payload = {
@@ -224,7 +242,17 @@ Example response:
     }
 
     const data = JSON.parse(response.getContentText()) as OpenAIResponse;
-    return data.choices[0]?.message?.content || '';
+    const choice = data.choices[0];
+    const truncated = choice?.finish_reason === 'length';
+
+    if (truncated) {
+      logger.warning('OpenAI response was truncated due to max_completion_tokens limit');
+    }
+
+    return {
+      content: choice?.message?.content || '',
+      truncated
+    };
   }
 
   /**
