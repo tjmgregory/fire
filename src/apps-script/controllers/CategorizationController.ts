@@ -161,37 +161,42 @@ export class CategorizationController {
       ]);
     }
 
-    // Perform categorization
+    // Perform categorization with progressive writes to survive Apps Script timeouts
+    let totalCategorized = 0;
+    let totalFailed = 0;
+
     try {
-      const result = await this.categorizer.categorize(toCategorize, categories);
-
-      // Update successfully categorized transactions in sheet
-      for (const transaction of result.categorized) {
-        try {
-          this.sheetAdapter.updateTransactionCategory(
-            transaction.id,
-            transaction.categoryAiId!,
-            transaction.categoryAiName!,
-            false, // Not manual
-            transaction.categoryConfidenceScore ?? undefined
-          );
-        } catch (error) {
-          logger.error(`Failed to update transaction ${transaction.id}`, error as Error);
-          errorMessages.push(`Failed to save category for ${transaction.id}: ${(error as Error).message}`);
+      const result = await this.categorizer.categorize(toCategorize, categories, (batchResult) => {
+        // Write each batch to sheet immediately after AI returns
+        for (const transaction of batchResult.categorized) {
+          try {
+            this.sheetAdapter.updateTransactionCategory(
+              transaction.id,
+              transaction.categoryAiId!,
+              transaction.categoryAiName!,
+              false, // Not manual
+              transaction.categoryConfidenceScore ?? undefined
+            );
+          } catch (error) {
+            logger.error(`Failed to update transaction ${transaction.id}`, error as Error);
+            errorMessages.push(`Failed to save category for ${transaction.id}: ${(error as Error).message}`);
+          }
         }
-      }
 
-      // Log failures
-      for (const failure of result.failed) {
-        logger.error(`Failed to categorize transaction ${failure.transaction.id}: ${failure.error}`);
-        errorMessages.push(failure.error);
-      }
+        for (const failure of batchResult.failed) {
+          logger.error(`Failed to categorize transaction ${failure.transaction.id}: ${failure.error}`);
+          errorMessages.push(failure.error);
+        }
+      });
+
+      totalCategorized = result.categorized.length;
+      totalFailed = result.failed.length;
 
       return this.createResult(
         startTime,
         result.totalProcessed,
-        result.categorized.length,
-        result.failed.length,
+        totalCategorized,
+        totalFailed,
         uncategorized.length - toCategorize.length,
         errorMessages
       );
@@ -253,30 +258,28 @@ export class CategorizationController {
       modifiedAt: new Date()
     }));
 
-    // Perform categorization
+    // Perform categorization with progressive writes
     try {
-      const result = await this.categorizer.categorize(resetTransactions, categories);
-
-      // Update successfully categorized transactions in sheet
-      for (const transaction of result.categorized) {
-        try {
-          this.sheetAdapter.updateTransactionCategory(
-            transaction.id,
-            transaction.categoryAiId!,
-            transaction.categoryAiName!,
-            false,
-            transaction.categoryConfidenceScore ?? undefined
-          );
-        } catch (error) {
-          logger.error(`Failed to update transaction ${transaction.id}`, error as Error);
-          errorMessages.push(`Failed to save category for ${transaction.id}`);
+      const result = await this.categorizer.categorize(resetTransactions, categories, (batchResult) => {
+        for (const transaction of batchResult.categorized) {
+          try {
+            this.sheetAdapter.updateTransactionCategory(
+              transaction.id,
+              transaction.categoryAiId!,
+              transaction.categoryAiName!,
+              false,
+              transaction.categoryConfidenceScore ?? undefined
+            );
+          } catch (error) {
+            logger.error(`Failed to update transaction ${transaction.id}`, error as Error);
+            errorMessages.push(`Failed to save category for ${transaction.id}`);
+          }
         }
-      }
 
-      // Log failures
-      for (const failure of result.failed) {
-        errorMessages.push(failure.error);
-      }
+        for (const failure of batchResult.failed) {
+          errorMessages.push(failure.error);
+        }
+      });
 
       return this.createResult(
         startTime,

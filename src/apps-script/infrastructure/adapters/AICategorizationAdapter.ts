@@ -292,10 +292,21 @@ Example response:
     const categoryMap = new Map(categories.map(c => [c.id, c]));
 
     for (const item of parsed) {
-      const transaction = transactionMap.get(item.transactionId);
+      let transaction = transactionMap.get(item.transactionId);
+
+      // LLMs occasionally hallucinate 1-2 characters in UUIDs. With batch sizes ≤10
+      // and 32 hex-char UUIDs, a false positive match at edit distance ≤2 has probability
+      // ≈ 9 × (32×15)² / 16^32 ≈ 0 — effectively impossible.
       if (!transaction) {
-        logger.warning(`AI returned unknown transaction ID: ${item.transactionId}`);
-        continue;
+        const fuzzyMatch = this.findClosestTransactionId(item.transactionId, transactionMap);
+        if (fuzzyMatch) {
+          logger.warning(`AI returned hallucinated transaction ID: ${item.transactionId}, fuzzy-matched to ${fuzzyMatch.id}`);
+          transaction = fuzzyMatch;
+          item.transactionId = fuzzyMatch.id;
+        } else {
+          logger.warning(`AI returned unknown transaction ID: ${item.transactionId}`);
+          continue;
+        }
       }
 
       // Validate category exists
@@ -324,6 +335,44 @@ Example response:
     }
 
     return results;
+  }
+
+  /**
+   * Find the closest transaction ID within edit distance 2.
+   * Returns the matching transaction or undefined if no close match exists.
+   */
+  private findClosestTransactionId(
+    hallucinated: string,
+    transactionMap: Map<string, Transaction>
+  ): Transaction | undefined {
+    for (const [id, transaction] of transactionMap) {
+      if (this.editDistance(hallucinated, id) <= 2) {
+        return transaction;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Calculate Levenshtein edit distance between two strings.
+   * Bails out early if distance exceeds maxDist.
+   */
+  private editDistance(a: string, b: string, maxDist: number = 2): number {
+    if (Math.abs(a.length - b.length) > maxDist) return maxDist + 1;
+
+    const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+      let rowMin = i;
+      const curr = [i];
+      for (let j = 1; j <= b.length; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+        if (curr[j] < rowMin) rowMin = curr[j];
+      }
+      if (rowMin > maxDist) return maxDist + 1;
+      prev.splice(0, prev.length, ...curr);
+    }
+    return prev[b.length];
   }
 
   /**

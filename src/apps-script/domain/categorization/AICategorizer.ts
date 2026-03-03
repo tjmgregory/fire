@@ -141,7 +141,8 @@ export class AICategorizer {
    */
   async categorize(
     transactions: Transaction[],
-    categories: Category[]
+    categories: Category[],
+    onBatchComplete?: (result: Pick<CategorizationOperationResult, 'categorized' | 'failed'>) => void
   ): Promise<CategorizationOperationResult> {
     // Validate inputs
     this.validateInputs(transactions, categories);
@@ -171,6 +172,11 @@ export class AICategorizer {
         results.categorized.push(...batchResult.categorized);
         results.failed.push(...batchResult.failed);
         results.totalProcessed += batch.length;
+
+        // Persist results progressively so work survives Apps Script timeouts
+        if (onBatchComplete) {
+          onBatchComplete(batchResult);
+        }
       } catch (error) {
         // If entire batch fails, mark all transactions as failed
         batch.forEach(transaction => {
